@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f0f1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Samsara">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Samsara · Asistencia</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --surface: #1A1A2E;
+      --surface2: #252544;
+      --gold: #C8A96E;
+      --gold-light: #e2c98e;
+      --cream: #F5F0E8;
+      --cream-dim: rgba(245,240,232,0.6);
+      --green: #4CAF7D;
+      --red: #E85D5D;
+      --amber: #F5A623;
+      --border: rgba(200,169,110,0.2);
+      --radius: 16px;
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body { overflow-x: hidden; }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+    }
+    .screen.active { display: flex; }
+
+    .logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin-bottom: 32px;
+    }
+
+    .logo-marca {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--gold);
+      padding-left: 0.32em;
+    }
+
+    .logo-firma {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      color: var(--gold-light);
+      opacity: 0.75;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 26px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 6px;
+      text-wrap: balance;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: var(--cream-dim);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .field input, .field select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 16px;
+      color: var(--cream);
+      font-family: inherit;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .field input:focus, .field select:focus { border-color: var(--gold); }
+    .field input::placeholder { color: rgba(245,240,232,0.3); }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      margin-top: 8px;
+    }
+
+    .btn:active { transform: scale(0.98); opacity: 0.85; }
+    .btn:disabled { opacity: 0.5; }
+    .btn-primary { background: var(--gold); color: #0f0f1a; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--cream-dim);
+      margin-top: 12px;
+    }
+
+    .marca-tipo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+
+    .marca-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .nombre-grande {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 30px;
+      font-weight: 600;
+      color: var(--cream);
+      margin-bottom: 4px;
+    }
+
+    .tienda-label {
+      font-size: 12px;
+      color: var(--cream-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .hora-display {
+      font-size: 42px;
+      font-weight: 300;
+      color: var(--gold-light);
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fecha-display {
+      font-size: 12px;
+      color: var(--cream-dim);
+      margin-bottom: 32px;
+    }
+
+    .icono-ok {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 28px;
+    }
+
+    .icono-ok.verde { background: rgba(76,175,125,0.15); color: var(--green); }
+    .icono-ok.rojo { background: rgba(232,93,93,0.15); color: var(--red); }
+    .icono-ok.amarillo { background: rgba(245,166,35,0.15); }
+    .icono-ok.dorado { background: rgba(200,169,110,0.12); color: var(--gold); }
+
+    .mensaje-confirmacion {
+      font-size: 16px;
+      color: var(--cream);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .aviso-incidencia {
+      font-size: 13px;
+      color: var(--amber);
+      text-align: center;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .cargando-texto {
+      font-size: 14px;
+      color: var(--cream-dim);
+      text-align: center;
+    }
+
+    .error-inline {
+      font-size: 13px;
+      color: var(--red);
+      margin-top: 12px;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    .timeline {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      height: 1px;
+      background: var(--border);
+      z-index: 0;
+    }
+
+    .tl-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 1;
+    }
+
+    .tl-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .tl-dot.done { border-color: var(--green); background: rgba(76,175,125,0.15); }
+    .tl-dot.next { border-color: var(--gold); background: rgba(200,169,110,0.1); }
+
+    .tl-label {
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      text-align: center;
+      max-width: 52px;
+      line-height: 1.3;
+    }
+
+    .tl-label.next { color: var(--gold); }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .spinner { animation-duration: 2s; }
+      .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="screen active" id="screen-cargando">
+  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
+  <div class="card" style="text-align:center; padding: 48px 26px;">
+    <div class="spinner"></div>
+    <div class="cargando-texto">Verificando dispositivo…</div>
+  </div>
+</div>
+
+<div class="screen" id="screen-sin-tienda">
+  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
+  <div class="card" style="text-align:center;">
+    <div class="icono-ok dorado">◎</div>
+    <div class="card-title">Acercá tu celular a la tarjeta</div>
+    <div class="card-sub" style="margin-bottom:0;">Para marcar, acercá el celular a la tarjeta NFC de tu tienda.</div>
+  </div>
+</div>
+
+<div class="screen" id="screen-registro">
+  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
+  <div class="card">
+    <div class="card-title">Primer registro</div>
+    <div class="card-sub">Este dispositivo no está vinculado a ninguna colaboradora. Completá tus datos para activarlo.</div>
+
+    <div class="field">
+      <label for="reg-pais">País</label>
+      <select id="reg-pais">
+        <option value="">Seleccioná tu país</option>
+        <option value="CR">Costa Rica</option>
+        <option value="CO">Colombia</option>
+        <option value="ES">España</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="reg-nombre">Nombre completo</label>
+      <input type="text" id="reg-nombre" placeholder="Tal como aparece en tu contrato" autocomplete="name">
+    </div>
+
+    <div class="field">
+      <label for="reg-documento">Número de documento</label>
+      <input type="text" id="reg-documento" placeholder="Cédula / DNI / NIF" autocomplete="off">
+    </div>
+
+    <button class="btn btn-primary" id="btn-registro">Activar dispositivo</button>
+    <div class="error-inline" id="reg-error"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-marca">
+  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
+  <div class="card">
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot" id="tl-entrada">↗</div>
+        <div class="tl-label">Entrada</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" id="tl-als">☀</div>
+        <div class="tl-label">Sal. almuerzo</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" id="tl-alr">↩</div>
+        <div class="tl-label">Reg. almuerzo</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" id="tl-salida">↙</div>
+        <div class="tl-label">Salida</div>
+      </div>
+    </div>
+
+    <div class="hora-display" id="hora-live">--:--</div>
+    <div class="fecha-display" id="fecha-live">--</div>
+
+    <div class="marca-tipo">
+      <div class="marca-dot"></div>
+      <span id="tipo-marca-label">Cargando…</span>
+    </div>
+
+    <div class="nombre-grande" id="marca-nombre">--</div>
+    <div class="tienda-label" id="marca-tienda">--</div>
+
+    <button class="btn btn-primary" id="btn-marcar">Registrar marca</button>
+    <div class="error-inline" id="marca-error"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-procesando">
+  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
+  <div class="card" style="text-align:center; padding: 48px 26px;">
+    <div class="spinner"></div>
+    <div class="cargando-texto" id="procesando-texto">Registrando tu marca…</div>
+  </div>
+</div>
+
+<div class="screen" id="screen-resultado">
+  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
+  <div class="card" style="text-align:center;">
+    <div class="icono-ok verde" id="resultado-icono">✓</div>
+    <div class="mensaje-confirmacion" id="resultado-mensaje"></div>
+    <div class="aviso-incidencia" id="resultado-aviso"></div>
+    <div class="divider"></div>
+    <button class="btn btn-ghost" id="btn-cerrar">Cerrar</button>
+  </div>
+</div>
+
+<script>
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
+  const CLAVE_DISPOSITIVO = 'samsara_token';
+
+  const parametros = new URLSearchParams(location.search);
+  const ID_TIENDA = (parametros.get('tienda') || '').trim().toUpperCase();
+
+  const TIPO_LABELS = {
+    ENTRADA: 'Registrar entrada',
+    ALMUERZO_SALIDA: 'Salida a almuerzo',
+    ALMUERZO_REGRESO: 'Regreso de almuerzo',
+    SALIDA: 'Registrar salida'
+  };
+
+  const TL_IDS = ['tl-entrada', 'tl-als', 'tl-alr', 'tl-salida'];
+  const TL_TIPOS = ['ENTRADA', 'ALMUERZO_SALIDA', 'ALMUERZO_REGRESO', 'SALIDA'];
+
+  let dispositivo = null;
+  let tipoMarcaActual = null;
+  let relojInterval = null;
+
+  document.getElementById('btn-registro').addEventListener('click', enviarRegistro);
+  document.getElementById('btn-marcar').addEventListener('click', confirmarMarca);
+  document.getElementById('btn-cerrar').addEventListener('click', reiniciar);
+
+  window.addEventListener('load', () => {
+    dispositivo = leerDispositivo();
+    if (!dispositivo) {
+      dispositivo = generarDispositivo();
+      guardarDispositivo(dispositivo);
+    }
+    if (!ID_TIENDA) {
+      mostrarPantalla('screen-sin-tienda');
+      return;
+    }
+    verificarDispositivo();
+  });
+
+  function leerDispositivo() {
+    try { return localStorage.getItem(CLAVE_DISPOSITIVO); } catch (e) { return null; }
+  }
+
+  function guardarDispositivo(valor) {
+    try { localStorage.setItem(CLAVE_DISPOSITIVO, valor); } catch (e) {}
+  }
+
+  function generarDispositivo() {
+    return 'T' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 7).toUpperCase();
+  }
+
+  async function llamar(datos) {
+    const res = await fetch(ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify(datos),
+      redirect: 'follow'
+    });
+    return res.json();
+  }
+
+  async function verificarDispositivo() {
+    try {
+      const data = await llamar({
+        accion: 'verificar_dispositivo',
+        token: dispositivo,
+        id_tienda: ID_TIENDA,
+        timestamp_dispositivo: new Date().toISOString()
+      });
+
+      if (data.codigo === 'DISPOSITIVO_NO_REGISTRADO') {
+        mostrarPantalla('screen-registro');
+      } else if (data.ok) {
+        prepararPantallaMarca(data);
+      } else {
+        mostrarResultado(false, data.mensaje || 'No se pudo verificar el dispositivo.', '');
+      }
+    } catch (e) {
+      mostrarResultado(false, 'Sin conexión. Verificá tu red e intentá de nuevo.', '');
+    }
+  }
+
+  async function enviarRegistro() {
+    const pais = document.getElementById('reg-pais').value.trim();
+    const nombre = document.getElementById('reg-nombre').value.trim();
+    const doc = document.getElementById('reg-documento').value.trim();
+    const errEl = document.getElementById('reg-error');
+
+    if (!pais || !nombre || !doc) {
+      errEl.textContent = 'Completá todos los campos.';
+      return;
+    }
+
+    errEl.textContent = '';
+    document.getElementById('procesando-texto').textContent = 'Activando dispositivo…';
+    mostrarPantalla('screen-procesando');
+
+    try {
+      const data = await llamar({
+        accion: 'registrar_dispositivo',
+        token: dispositivo,
+        pais: pais,
+        nombre: nombre,
+        documento: doc,
+        id_tienda: ID_TIENDA,
+        user_agent: navigator.userAgent,
+        timestamp_dispositivo: new Date().toISOString()
+      });
+
+      if (data.ok) {
+        await verificarDispositivo();
+      } else {
+        mostrarPantalla('screen-registro');
+        errEl.textContent = data.mensaje || 'No se pudo registrar el dispositivo.';
+      }
+    } catch (e) {
+      mostrarPantalla('screen-registro');
+      errEl.textContent = 'Sin conexión. Intentá de nuevo.';
+    }
+  }
+
+  function prepararPantallaMarca(data) {
+    tipoMarcaActual = data.tipo_marca_siguiente || 'ENTRADA';
+
+    document.getElementById('marca-nombre').textContent = data.nombre_corto || data.nombre || '';
+    document.getElementById('marca-tienda').textContent = data.tienda || '';
+    document.getElementById('tipo-marca-label').textContent = TIPO_LABELS[tipoMarcaActual] || tipoMarcaActual;
+
+    actualizarTimeline(data.marcas_hoy || []);
+    iniciarReloj();
+    mostrarPantalla('screen-marca');
+  }
+
+  function actualizarTimeline(marcasHoy) {
+    const hechos = marcasHoy.map(m => m.tipo_marca);
+    TL_TIPOS.forEach((tipo, i) => {
+      const el = document.getElementById(TL_IDS[i]);
+      const etiqueta = el.closest('.tl-item').querySelector('.tl-label');
+      el.className = 'tl-dot';
+      etiqueta.className = 'tl-label';
+      if (hechos.includes(tipo)) {
+        el.className = 'tl-dot done';
+        el.textContent = '✓';
+      } else if (tipo === tipoMarcaActual) {
+        el.className = 'tl-dot next';
+        etiqueta.className = 'tl-label next';
+      }
+    });
+  }
+
+  function iniciarReloj() {
+    if (relojInterval) clearInterval(relojInterval);
+    const actualizar = () => {
+      const ahora = new Date();
+      document.getElementById('hora-live').textContent =
+        ahora.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const fecha = ahora.toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' });
+      document.getElementById('fecha-live').textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+    };
+    actualizar();
+    relojInterval = setInterval(actualizar, 1000);
+  }
+
+  function obtenerUbicacion() {
+    return new Promise(resolve => {
+      if (!navigator.geolocation) return resolve({ lat: '', lng: '' });
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve({ lat: '', lng: '' }),
+        { timeout: 4000, maximumAge: 60000 }
+      );
+    });
+  }
+
+  async function confirmarMarca() {
+    const boton = document.getElementById('btn-marcar');
+    boton.disabled = true;
+    document.getElementById('marca-error').textContent = '';
+    if (relojInterval) { clearInterval(relojInterval); relojInterval = null; }
+    document.getElementById('procesando-texto').textContent = 'Registrando tu marca…';
+    mostrarPantalla('screen-procesando');
+
+    const ubicacion = await obtenerUbicacion();
+
+    try {
+      const data = await llamar({
+        accion: 'registrar_marca',
+        token: dispositivo,
+        id_tienda: ID_TIENDA,
+        timestamp_dispositivo: new Date().toISOString(),
+        lat: ubicacion.lat,
+        lng: ubicacion.lng,
+        user_agent: navigator.userAgent
+      });
+
+      if (data.ok) {
+        const mensaje = data.mensaje || 'Marca registrada.';
+        const partes = mensaje.split('⚠️');
+        const aviso = partes.length > 1 ? '⚠️' + partes.slice(1).join('⚠️') : '';
+        mostrarResultado(true, partes[0].trim(), aviso, data.codigo);
+      } else {
+        mostrarResultado(false, data.mensaje || 'No se pudo registrar la marca.', '');
+      }
+    } catch (e) {
+      mostrarResultado(false, 'Sin conexión. Intentá de nuevo.', '');
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  function mostrarResultado(ok, mensaje, aviso, codigo) {
+    const iconoEl = document.getElementById('resultado-icono');
+    document.getElementById('resultado-mensaje').textContent = mensaje;
+    document.getElementById('resultado-aviso').textContent = aviso || '';
+
+    if (!ok) {
+      iconoEl.className = 'icono-ok rojo';
+      iconoEl.textContent = '✕';
+    } else if (codigo === 'DIA_LIBRE') {
+      iconoEl.className = 'icono-ok amarillo';
+      iconoEl.textContent = '🌿';
+    } else {
+      iconoEl.className = 'icono-ok verde';
+      iconoEl.textContent = '✓';
+    }
+
+    mostrarPantalla('screen-resultado');
+  }
+
+  function mostrarPantalla(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function reiniciar() {
+    if (!ID_TIENDA) {
+      mostrarPantalla('screen-sin-tienda');
+      return;
+    }
+    mostrarPantalla('screen-cargando');
+    setTimeout(verificarDispositivo, 300);
+  }
+</script>
+</body>
+</html>
