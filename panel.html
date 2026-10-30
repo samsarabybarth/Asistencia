@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1A1A2E">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Samsara · Panel de Asistencia</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --night: #1A1A2E;
+      --night-deep: #14142A;
+      --night-soft: #23233D;
+      --night-line: #2E2E4C;
+      --gold: #C8A96E;
+      --gold-light: #E0C98A;
+      --gold-dim: rgba(200,169,110,0.15);
+      --cream: #F5F0E8;
+      --cream-dim: rgba(245,240,232,0.06);
+      --text-2: rgba(245,240,232,0.66);
+      --text-3: rgba(245,240,232,0.42);
+      --green: #4CAF7D;
+      --green-bg: rgba(76,175,125,0.14);
+      --red: #E85D5D;
+      --red-bg: rgba(232,93,93,0.14);
+      --amber: #F5A623;
+      --amber-bg: rgba(245,166,35,0.14);
+      --blue: #7FA7E8;
+      --blue-bg: rgba(127,167,232,0.14);
+      --border: rgba(200,169,110,0.2);
+      --border-soft: rgba(245,240,232,0.08);
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--night-deep); color: var(--cream); font-family: 'DM Sans', system-ui, -apple-system, sans-serif; font-size: 14px; }
+    [hidden] { display: none !important; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    a { color: var(--gold-light); }
+
+    .login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+    .login-card { width: 100%; max-width: 380px; background: var(--night); border: 1px solid var(--border); border-radius: 20px; padding: 32px 26px; }
+    .marca { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 26px; letter-spacing: 0.32em; color: var(--gold); text-align: center; padding-left: 0.32em; }
+    .firma { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; color: var(--gold-light); text-align: center; margin-top: -2px; }
+    .login h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; font-size: 24px; text-align: center; margin: 22px 0 6px; }
+    .login p { color: var(--text-2); text-align: center; margin: 0 0 20px; line-height: 1.5; }
+    .campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .campo label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+    .input { background: var(--cream-dim); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; outline: none; width: 100%; }
+    .input:focus { border-color: var(--gold); }
+    select.input { appearance: none; -webkit-appearance: none; padding-right: 30px; background-image: linear-gradient(45deg, transparent 50%, var(--gold) 50%), linear-gradient(135deg, var(--gold) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+    .codigo { font-size: 24px; letter-spacing: 0.4em; text-align: center; }
+    .btn { border: none; border-radius: 12px; padding: 11px 18px; font-weight: 600; cursor: pointer; background: var(--gold); color: var(--night); }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn.full { width: 100%; padding: 13px; }
+    .btn.ghost { background: var(--cream-dim); color: var(--cream); border: 1px solid var(--border-soft); }
+    .btn.ok { background: var(--green); color: #0d2a1c; }
+    .btn.no { background: var(--red-bg); color: var(--red); border: 1px solid rgba(232,93,93,0.35); }
+    .btn.mini { padding: 7px 12px; font-size: 12.5px; border-radius: 9px; }
+    .error { color: var(--red); font-size: 13px; min-height: 18px; text-align: center; margin-top: 10px; }
+    .link { background: none; border: none; color: var(--text-2); cursor: pointer; text-decoration: underline; padding: 6px; display: block; margin: 8px auto 0; }
+
+    .barra { position: sticky; top: 0; z-index: 10; background: var(--night); border-bottom: 1px solid var(--border-soft); padding-top: env(safe-area-inset-top, 0px); }
+    .barra-in { max-width: 1320px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .barra .marca { font-size: 18px; text-align: left; padding-left: 0; }
+    .barra .firma { font-size: 12px; text-align: left; }
+    .usuario { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--text-2); font-size: 13px; }
+    .tabs { max-width: 1320px; margin: 0 auto; padding: 0 16px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    .tab { background: none; border: none; color: var(--text-3); padding: 10px 14px 12px; cursor: pointer; font-weight: 600; border-bottom: 2px solid transparent; white-space: nowrap; }
+    .tab.activa { color: var(--gold-light); border-bottom-color: var(--gold); }
+    .tab .contador { display: inline-block; min-width: 18px; padding: 1px 6px; border-radius: 10px; background: var(--red); color: #fff; font-size: 11px; margin-left: 6px; }
+
+    main { max-width: 1320px; margin: 0 auto; padding: 18px 16px 60px; }
+    .filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+    .filtros .campo { margin: 0; min-width: 140px; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { border: 1px solid var(--border-soft); background: var(--cream-dim); color: var(--text-2); border-radius: 20px; padding: 7px 14px; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .chip.activa { background: var(--gold-dim); color: var(--gold-light); border-color: var(--border); }
+    .titulo { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+    .sub { color: var(--text-3); font-size: 13px; margin-bottom: 16px; }
+
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+    .kpi { background: var(--night); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px 16px; }
+    .kpi-v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .kpi-l { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin-top: 2px; }
+    .kpi-v.red { color: var(--red); } .kpi-v.green { color: var(--green); } .kpi-v.amber { color: var(--amber); }
+
+    .tiendas { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; align-items: start; }
+    .tienda { background: var(--night); border: 1px solid var(--border-soft); border-radius: 16px; overflow: hidden; }
+    .tienda.alerta { border-color: rgba(232,93,93,0.6); box-shadow: 0 0 0 1px rgba(232,93,93,0.25); }
+    .tienda-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--border-soft); }
+    .tienda-nombre { font-weight: 700; font-size: 15px; }
+    .tienda-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .persona { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px 16px; border-bottom: 1px solid var(--border-soft); }
+    .persona:last-child { border-bottom: none; }
+    .persona-nombre { font-weight: 600; font-size: 13.5px; }
+    .persona-meta { font-size: 12px; color: var(--text-3); grid-column: 1 / -1; font-variant-numeric: tabular-nums; }
+    .pill { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap; background: var(--cream-dim); color: var(--text-2); }
+    .pill.green { background: var(--green-bg); color: var(--green); }
+    .pill.red { background: var(--red-bg); color: var(--red); }
+    .pill.amber { background: var(--amber-bg); color: var(--amber); }
+    .pill.gold { background: var(--gold-dim); color: var(--gold-light); }
+    .pill.blue { background: var(--blue-bg); color: var(--blue); }
+
+    .tabla-wrap { overflow-x: auto; background: var(--night); border: 1px solid var(--border-soft); border-radius: 14px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); padding: 11px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--night); position: sticky; top: 0; cursor: default; }
+    th.ordenable { cursor: pointer; }
+    th.ordenable:hover { color: var(--gold-light); }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); vertical-align: top; font-variant-numeric: tabular-nums; }
+    tr:last-child td { border-bottom: none; }
+    td.num { text-align: right; }
+    th.num { text-align: right; }
+    .muted { color: var(--text-3); }
+    .wrap { max-width: 320px; white-space: pre-wrap; line-height: 1.45; }
+    .acciones { display: flex; flex-direction: column; gap: 6px; min-width: 210px; }
+    .acciones .fila { display: flex; gap: 6px; }
+    .acciones textarea, .acciones input { min-height: 0; padding: 7px 10px; font-size: 12.5px; border-radius: 8px; }
+    .barra-pct { height: 6px; border-radius: 3px; background: var(--border-soft); overflow: hidden; width: 90px; display: inline-block; vertical-align: middle; margin-left: 8px; }
+    .barra-pct span { display: block; height: 100%; background: var(--green); }
+    .vacio { text-align: center; color: var(--text-3); padding: 40px 16px; background: var(--night); border: 1px dashed var(--border-soft); border-radius: 14px; }
+    .cargando { text-align: center; color: var(--text-2); padding: 50px 16px; }
+    .spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: giro 0.8s linear infinite; margin: 0 auto 12px; }
+    @keyframes giro { to { transform: rotate(360deg); } }
+    .seccion { margin: 22px 0 10px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+    .aviso { background: var(--gold-dim); border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px; color: var(--gold-light); font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--night-soft); border: 1px solid var(--border); padding: 11px 18px; border-radius: 12px; z-index: 50; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+    @media (max-width: 640px) {
+      .tiendas { grid-template-columns: 1fr; }
+      .usuario span { display: none; }
+      .titulo { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<section class="login" id="vista-login">
+  <div class="login-card">
+    <div class="marca">SAMSARA</div>
+    <div class="firma">by Barth</div>
+    <h1>Panel de asistencia</h1>
+    <div id="paso-email">
+      <p>Ingresá con tu correo corporativo. Te enviamos un código de acceso.</p>
+      <div class="campo">
+        <label for="login-email">Correo</label>
+        <input class="input" type="email" id="login-email" autocomplete="email" placeholder="nombre@urbellapro.com">
+      </div>
+      <button class="btn full" id="btn-codigo">Enviar código</button>
+    </div>
+    <div id="paso-codigo" hidden>
+      <p id="login-msg">Revisá tu correo e ingresá el código de 6 dígitos.</p>
+      <div class="campo">
+        <label for="login-codigo">Código</label>
+        <input class="input codigo" type="text" inputmode="numeric" maxlength="6" id="login-codigo" autocomplete="one-time-code">
+      </div>
+      <button class="btn full" id="btn-entrar">Entrar</button>
+      <button class="link" id="btn-otro">Usar otro correo</button>
+    </div>
+    <div class="error" id="login-error"></div>
+  </div>
+</section>
+
+<div id="vista-panel" hidden>
+  <header class="barra">
+    <div class="barra-in">
+      <div>
+        <div class="marca">SAMSARA</div>
+        <div class="firma">Panel de asistencia</div>
+      </div>
+      <div class="chips" id="chips-pais"></div>
+      <div class="usuario"><span id="usuario-nombre"></span><button class="btn ghost mini" id="btn-salir">Salir</button></div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab activa" data-vista="hoy">En vivo</button>
+      <button class="tab" data-vista="incidencias">Incidencias<span class="contador" id="cont-incidencias" hidden></span></button>
+      <button class="tab" data-vista="solicitudes">Solicitudes<span class="contador" id="cont-solicitudes" hidden></span></button>
+      <button class="tab" data-vista="metricas">Métricas</button>
+      <button class="tab" data-vista="planilla">Planilla</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="v-hoy">
+      <div class="titulo">En vivo</div>
+      <div class="sub" id="hoy-sub">—</div>
+      <div class="kpis" id="hoy-kpis"></div>
+      <div class="tiendas" id="hoy-tiendas"></div>
+    </section>
+
+    <section id="v-incidencias" hidden>
+      <div class="titulo">Incidencias</div>
+      <div class="sub">Tardías, almuerzos extendidos y ausencias. La justificación no anula la incidencia: Talento decide.</div>
+      <div class="filtros">
+        <div class="campo"><label for="inc-desde">Desde</label><input class="input" type="date" id="inc-desde"></div>
+        <div class="campo"><label for="inc-hasta">Hasta</label><input class="input" type="date" id="inc-hasta"></div>
+        <div class="campo"><label for="inc-estado">Estado</label>
+          <select class="input" id="inc-estado">
+            <option value="">Todos</option>
+            <option value="En revisión">En revisión</option>
+            <option value="En plazo">En plazo</option>
+            <option value="Procede">Procede</option>
+            <option value="Justificada">Justificada</option>
+            <option value="No justificada">No justificada</option>
+          </select>
+        </div>
+        <div class="campo"><label for="inc-tipo">Tipo</label>
+          <select class="input" id="inc-tipo">
+            <option value="">Todos</option>
+            <option value="TARDANZA">Llegada tardía</option>
+            <option value="ALMUERZO_EXCEDIDO">Almuerzo extendido</option>
+            <option value="AUSENCIA">Ausencia</option>
+          </select>
+        </div>
+        <button class="btn" id="btn-inc-buscar">Buscar</button>
+      </div>
+      <div id="inc-contenido"></div>
+    </section>
+
+    <section id="v-solicitudes" hidden>
+      <div class="titulo">Solicitudes</div>
+      <div class="sub">Vacaciones, permisos, documentos y justificaciones enviados desde la app.</div>
+      <div class="filtros">
+        <div class="chips" id="sol-filtro">
+          <button class="chip activa" data-f="pendientes">Por atender</button>
+          <button class="chip" data-f="todas">Todas</button>
+        </div>
+      </div>
+      <div id="sol-contenido"></div>
+    </section>
+
+    <section id="v-metricas" hidden>
+      <div class="titulo">Métricas</div>
+      <div class="sub">Puntualidad, tardías, ausencias y almuerzos por tienda y por persona.</div>
+      <div class="filtros">
+        <div class="campo"><label for="met-mes">Mes</label><input class="input" type="month" id="met-mes"></div>
+        <button class="btn" id="btn-met-buscar">Ver</button>
+      </div>
+      <div id="met-contenido"></div>
+    </section>
+
+    <section id="v-planilla" hidden>
+      <div class="titulo">Planilla</div>
+      <div class="sub">Resumen por persona para planilla y detalle en formato Control de Incidencias.</div>
+      <div class="filtros">
+        <div class="chips" id="pla-presets">
+          <button class="chip" data-p="q1">1.ª quincena</button>
+          <button class="chip" data-p="q2">2.ª quincena</button>
+          <button class="chip" data-p="mes">Mes completo</button>
+          <button class="chip" data-p="anterior">Mes anterior</button>
+        </div>
+        <div class="campo"><label for="pla-desde">Desde</label><input class="input" type="date" id="pla-desde"></div>
+        <div class="campo"><label for="pla-hasta">Hasta</label><input class="input" type="date" id="pla-hasta"></div>
+        <button class="btn" id="btn-pla-generar">Generar</button>
+      </div>
+      <div id="pla-contenido"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
+  const CLAVE_SESION = 'samsara_panel';
+  const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
+  const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
+  const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
+  const COLOR_ESTADO = {
+    'En plazo': 'blue', 'En revisión': 'amber', 'Procede': 'red', 'Justificada': 'green', 'No justificada': 'red',
+    'Pendiente': 'amber', 'Aprobada': 'green', 'Rechazada': 'red', 'Recibido': 'gold', 'Revisado': 'green'
+  };
+
+  const st = { sesion: null, usuario: null, pais: '', vista: 'hoy', datos: {}, solFiltro: 'pendientes', orden: {}, timer: null };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(t) { return String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function leer() { try { return JSON.parse(localStorage.getItem(CLAVE_SESION) || 'null'); } catch (e) { return null; } }
+  function guardar(v) { try { v ? localStorage.setItem(CLAVE_SESION, JSON.stringify(v)) : localStorage.removeItem(CLAVE_SESION); } catch (e) {} }
+  function hoyISO(d) { const x = d || new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); }
+  function fechaCorta(f) { return f ? new Date(f + 'T12:00:00').toLocaleDateString('es-CR', { weekday: 'short', day: 'numeric', month: 'short' }) : ''; }
+  function hora12(h) { if (!/^\d{1,2}:\d{2}$/.test(h || '')) return h || '—'; let [a, b] = h.split(':').map(Number); const s = a >= 12 ? 'p. m.' : 'a. m.'; a = a % 12 || 12; return a + ':' + String(b).padStart(2, '0') + ' ' + s; }
+  function pill(texto, color) { return '<span class="pill ' + (color || '') + '">' + esc(texto) + '</span>'; }
+  function cargando(id) { $(id).innerHTML = '<div class="cargando"><div class="spinner"></div>Cargando…</div>'; }
+  function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600); }
+  function nombreCorto(n) { const p = String(n || '').trim().split(/\s+/); return p.length >= 3 ? p.slice(2).join(' ') + ' ' + p[0] : n; }
+
+  async function llamar(datos) {
+    const res = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(Object.assign({ sesion: st.sesion }, datos)), redirect: 'follow' });
+    const data = await res.json();
+    if (data.codigo === 'SESION_INVALIDA') { salir(); throw new Error('sesion'); }
+    return data;
+  }
+
+  $('btn-codigo').addEventListener('click', async () => {
+    const email = $('login-email').value.trim().toLowerCase();
+    $('login-error').textContent = '';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return ($('login-error').textContent = 'Escribí un correo válido.');
+    $('btn-codigo').disabled = true;
+    try {
+      const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ accion: 'panel_codigo', email: email }) }).then(x => x.json());
+      $('login-msg').textContent = r.mensaje || 'Revisá tu correo.';
+      $('paso-email').hidden = true;
+      $('paso-codigo').hidden = false;
+      $('login-codigo').focus();
+    } catch (e) { $('login-error').textContent = 'Sin conexión. Intentá de nuevo.'; }
+    $('btn-codigo').disabled = false;
+  });
+  $('login-email').addEventListener('keydown', e => { if (e.key === 'Enter') $('btn-codigo').click(); });
+  $('login-codigo').addEventListener('keydown', e => { if (e.key === 'Enter') $('btn-entrar').click(); });
+  $('btn-otro').addEventListener('click', () => { $('paso-email').hidden = false; $('paso-codigo').hidden = true; $('login-error').textContent = ''; });
+  $('btn-entrar').addEventListener('click', async () => {
+    $('login-error').textContent = '';
+    $('btn-entrar').disabled = true;
+    try {
+      const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ accion: 'panel_entrar', email: $('login-email').value.trim().toLowerCase(), codigo: $('login-codigo').value.trim() }) }).then(x => x.json());
+      if (!r.ok) { $('login-error').textContent = r.mensaje || 'No se pudo ingresar.'; }
+      else { guardar({ sesion: r.sesion, usuario: r.usuario, vence: r.vence }); iniciarPanel(r.sesion, r.usuario); }
+    } catch (e) { $('login-error').textContent = 'Sin conexión. Intentá de nuevo.'; }
+    $('btn-entrar').disabled = false;
+  });
+  $('btn-salir').addEventListener('click', salir);
+
+  function salir() {
+    guardar(null);
+    st.sesion = null;
+    if (st.timer) clearInterval(st.timer);
+    $('vista-panel').hidden = true;
+    $('vista-login').hidden = false;
+    $('paso-email').hidden = false;
+    $('paso-codigo').hidden = true;
+    $('login-codigo').value = '';
+  }
+
+  function iniciarPanel(sesion, usuario) {
+    st.sesion = sesion;
+    st.usuario = usuario;
+    $('vista-login').hidden = true;
+    $('vista-panel').hidden = false;
+    $('usuario-nombre').textContent = usuario.nombre + ' · ' + usuario.roles.map(r => r.charAt(0) + r.slice(1).toLowerCase()).join(', ');
+    const chips = $('chips-pais');
+    chips.innerHTML = '';
+    const opciones = usuario.paises.length > 1 ? [''].concat(usuario.paises) : usuario.paises;
+    st.pais = opciones[0] || '';
+    opciones.forEach(p => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (p === st.pais ? ' activa' : '');
+      b.textContent = p ? BANDERA[p] + ' ' + (NOMBRE_PAIS[p] || p) : 'Todos';
+      b.addEventListener('click', () => {
+        st.pais = p;
+        chips.querySelectorAll('.chip').forEach(c => c.classList.toggle('activa', c === b));
+        st.datos = {};
+        mostrarVista(st.vista, true);
+      });
+      chips.appendChild(b);
+    });
+    const hoy = new Date();
+    $('inc-hasta').value = hoyISO(hoy);
+    $('inc-desde').value = hoyISO(new Date(hoy.getTime() - 14 * 86400000));
+    $('met-mes').value = hoyISO(hoy).slice(0, 7);
+    presetPlanilla(hoy.getDate() <= 15 ? 'q1' : 'q2');
+    mostrarVista('hoy', true);
+    contadores();
+    if (st.timer) clearInterval(st.timer);
+    st.timer = setInterval(() => { if (st.vista === 'hoy' && document.visibilityState === 'visible') cargarHoy(true); }, 60000);
+  }
+
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => mostrarVista(t.dataset.vista)));
+
+  function mostrarVista(v, forzar) {
+    st.vista = v;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activa', t.dataset.vista === v));
+    ['hoy', 'incidencias', 'solicitudes', 'metricas', 'planilla'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    if (v === 'hoy') cargarHoy(!forzar && !!st.datos.hoy);
+    if (v === 'incidencias' && (forzar || !st.datos.incidencias)) cargarIncidencias();
+    if (v === 'solicitudes' && (forzar || !st.datos.solicitudes)) cargarSolicitudes();
+    if (v === 'metricas' && (forzar || !st.datos.metricas)) cargarMetricas();
+    if (v === 'planilla' && st.datos.planilla && forzar) $('pla-contenido').innerHTML = '';
+  }
+
+  async function contadores() {
+    try {
+      const [inc, sol] = await Promise.all([
+        llamar({ accion: 'panel_incidencias', pais: st.pais }),
+        llamar({ accion: 'panel_solicitudes', pais: st.pais })
+      ]);
+      const nInc = inc.ok && inc.puede_decidir ? inc.incidencias.filter(i => i.estado === 'En revisión').length : 0;
+      const nSol = sol.ok ? sol.solicitudes.filter(s => s.puede_resolver || s.puede_revisar).length : 0;
+      $('cont-incidencias').hidden = !nInc; $('cont-incidencias').textContent = nInc;
+      $('cont-solicitudes').hidden = !nSol; $('cont-solicitudes').textContent = nSol;
+    } catch (e) {}
+  }
+
+  async function cargarHoy(silencioso) {
+    if (!silencioso || !st.datos.hoy) cargando('hoy-tiendas');
+    try {
+      const r = await llamar({ accion: 'panel_hoy' });
+      if (!r.ok) return ($('hoy-tiendas').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.hoy = r;
+      pintarHoy();
+    } catch (e) { if (!st.datos.hoy) $('hoy-tiendas').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function estadoPersona(p, duracion) {
+    if (p.estado === 'CUBIERTO') return pill(CUBIERTO[p.cubierto] || p.cubierto, 'gold');
+    if (p.estado === 'POR_LLEGAR') return pill('Por llegar', '');
+    if (p.estado === 'SIN_MARCA') return p.registrada ? pill('Sin marca', 'red') : pill('Sin app', '');
+    if (p.estado === 'ALMUERZO') return pill('Almuerzo ' + p.minutosAlmuerzo + ' min', p.almuerzoExcedido ? 'red' : 'amber');
+    if (p.estado === 'SALIO') return pill('Salió', '');
+    return p.tarde > 0 ? pill('Tarde +' + p.tarde + ' min', 'red') : pill('En tienda', 'green');
+  }
+
+  function pintarHoy() {
+    const r = st.datos.hoy;
+    const tiendas = r.tiendas.filter(t => !st.pais || t.pais.toUpperCase() === st.pais);
+    const personas = [].concat(...tiendas.map(t => t.personas));
+    const abiertas = tiendas.filter(t => t.abierta).length;
+    const conApertura = tiendas.filter(t => t.apertura).length;
+    const k = [
+      [abiertas + ' / ' + conApertura, 'Tiendas abiertas', abiertas < conApertura && tiendas.some(t => t.alerta) ? 'red' : 'green'],
+      [personas.filter(p => ['EN_TIENDA', 'ALMUERZO'].includes(p.estado)).length, 'En tienda ahora', ''],
+      [personas.filter(p => p.estado === 'SIN_MARCA' && p.registrada).length, 'Sin marca', 'red'],
+      [personas.filter(p => p.tarde > 0).length, 'Tardías hoy', 'amber'],
+      [personas.filter(p => p.estado === 'ALMUERZO').length, 'En almuerzo', ''],
+      [personas.filter(p => p.estado === 'CUBIERTO').length, 'Vacaciones / permisos', '']
+    ];
+    $('hoy-kpis').innerHTML = k.map(x => '<div class="kpi"><div class="kpi-v ' + x[2] + '">' + esc(x[0]) + '</div><div class="kpi-l">' + esc(x[1]) + '</div></div>').join('');
+    $('hoy-sub').textContent = 'Actualizado ' + new Date(r.generado).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' }) + ' · se refresca cada minuto';
+
+    if (!tiendas.length) return ($('hoy-tiendas').innerHTML = '<div class="vacio">No hay horarios cargados para hoy.</div>');
+    const orden = t => t.alerta ? 0 : !t.abierta && t.apertura ? 1 : 2;
+    $('hoy-tiendas').innerHTML = tiendas.slice().sort((a, b) => orden(a) - orden(b) || a.nombre.localeCompare(b.nombre)).map(t => {
+      let estado;
+      if (t.alerta) estado = pill('🚨 Sin apertura', 'red');
+      else if (t.abierta) estado = pill('Abierta ' + hora12(t.aperturaReal), t.apertura && t.aperturaReal > t.apertura ? 'amber' : 'green');
+      else if (t.apertura) estado = pill('Abre ' + hora12(t.apertura), '');
+      else estado = pill('Sin horario', '');
+      const filas = t.personas.map(p => {
+        const marcas = p.marcas.map(m => ({ ENTRADA: 'Entrada', ALMUERZO_SALIDA: 'Almuerzo', ALMUERZO_REGRESO: 'Regreso', SALIDA: 'Salida' }[m.tipo] || m.tipo) + ' ' + m.hora).join(' · ');
+        return '<div class="persona"><div class="persona-nombre">' + esc(nombreCorto(p.nombre)) + '</div><div>' + estadoPersona(p, r.duracion) + '</div>' +
+          '<div class="persona-meta">' + (p.sinHorario ? 'Sin horario hoy' : 'Turno ' + esc(hora12(p.entrada)) + (p.salida ? ' – ' + esc(hora12(p.salida)) : '')) + (marcas ? ' · ' + esc(marcas) : '') + '</div></div>';
+      }).join('');
+      return '<div class="tienda' + (t.alerta ? ' alerta' : '') + '"><div class="tienda-cab"><div><div class="tienda-nombre">' + BANDERA[t.pais] + ' ' + esc(t.nombre) + '</div><div class="tienda-meta">Hora local ' + esc(hora12(t.hora)) + ' · ' + t.personas.length + ' en turno</div></div>' + estado + '</div>' + (filas || '<div class="persona muted">Nadie programado hoy.</div>') + '</div>';
+    }).join('');
+  }
+
+  $('btn-inc-buscar').addEventListener('click', cargarIncidencias);
+  $('inc-estado').addEventListener('change', pintarIncidencias);
+  $('inc-tipo').addEventListener('change', pintarIncidencias);
+
+  async function cargarIncidencias() {
+    cargando('inc-contenido');
+    try {
+      const r = await llamar({ accion: 'panel_incidencias', pais: st.pais, desde: $('inc-desde').value, hasta: $('inc-hasta').value });
+      if (!r.ok) return ($('inc-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.incidencias = r;
+      pintarIncidencias();
+    } catch (e) { $('inc-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function pintarIncidencias() {
+    const r = st.datos.incidencias;
+    if (!r) return;
+    const lista = r.incidencias.filter(i => (!$('inc-estado').value || i.estado === $('inc-estado').value) && (!$('inc-tipo').value || i.tipo === $('inc-tipo').value));
+    if (!lista.length) return ($('inc-contenido').innerHTML = '<div class="vacio">No hay incidencias con esos filtros.</div>');
+    const filas = lista.map((i, n) => {
+      const just = i.justificacion === 'Sí'
+        ? pill('Sí ✓', 'green') + (i.comentario ? '<div class="wrap muted" style="margin-top:6px">' + esc(i.comentario) + '</div>' : '') + (i.archivos.length ? '<div style="margin-top:4px">' + i.archivos.map((a, k) => '<a href="' + esc(a) + '" target="_blank" rel="noopener">Archivo ' + (k + 1) + '</a>').join(' · ') + '</div>' : '')
+        : pill('No', '');
+      let decision = pill(i.decision, COLOR_ESTADO[i.decision] || '') + (i.observacion ? '<div class="wrap muted" style="margin-top:6px">' + esc(i.observacion) + '</div>' : '');
+      if (r.puede_decidir) {
+        decision = '<div class="acciones" data-clave="' + esc(i.clave) + '"><select class="input">' +
+          ['Pendiente', 'Justificada', 'No justificada'].map(o => '<option' + (o === i.decision ? ' selected' : '') + '>' + o + '</option>').join('') +
+          '</select><input class="input" placeholder="Observación (opcional)" value="' + esc(i.observacion.replace(/ — [^—]+$/, '')) + '"><button class="btn mini">Guardar</button></div>';
+      }
+      return '<tr><td>' + esc(fechaCorta(i.fecha)) + '</td><td><strong>' + esc(nombreCorto(i.nombre)) + '</strong><div class="muted">' + esc(i.tienda) + '</div></td>' +
+        '<td>' + esc(i.tipoNombre) + (i.minutos ? ' <span class="muted">' + i.minutos + ' min</span>' : '') + '<div class="muted wrap">' + esc(i.detalle) + '</div></td>' +
+        '<td>' + just + '</td><td>' + pill(i.estado, COLOR_ESTADO[i.estado] || '') + '</td><td>' + decision + '</td></tr>';
+    }).join('');
+    $('inc-contenido').innerHTML = '<div class="tabla-wrap"><table><thead><tr><th>Fecha</th><th>Colaboradora</th><th>Incidencia</th><th>Justificación</th><th>Estado</th><th>Decisión de Talento</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
+    $('inc-contenido').querySelectorAll('.acciones').forEach(caja => {
+      caja.querySelector('button').addEventListener('click', async () => {
+        const b = caja.querySelector('button');
+        b.disabled = true;
+        try {
+          const res = await llamar({ accion: 'panel_decidir', clave: caja.dataset.clave, decision: caja.querySelector('select').value, observacion: caja.querySelector('input').value });
+          toast(res.ok ? 'Decisión guardada' : res.mensaje);
+          if (res.ok) { await cargarIncidencias(); contadores(); }
+        } catch (e) { toast('Sin conexión'); }
+        b.disabled = false;
+      });
+    });
+  }
+
+  document.querySelectorAll('#sol-filtro .chip').forEach(c => c.addEventListener('click', () => {
+    st.solFiltro = c.dataset.f;
+    document.querySelectorAll('#sol-filtro .chip').forEach(x => x.classList.toggle('activa', x === c));
+    pintarSolicitudes();
+  }));
+
+  async function cargarSolicitudes() {
+    cargando('sol-contenido');
+    try {
+      const r = await llamar({ accion: 'panel_solicitudes', pais: st.pais });
+      if (!r.ok) return ($('sol-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.solicitudes = r;
+      pintarSolicitudes();
+    } catch (e) { $('sol-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function pintarSolicitudes() {
+    const r = st.datos.solicitudes;
+    if (!r) return;
+    const lista = r.solicitudes.filter(s => st.solFiltro === 'todas' || s.puede_resolver || s.puede_revisar || s.estado === 'Pendiente' || s.estado === 'Recibido' || s.estado === 'En revisión');
+    if (!lista.length) return ($('sol-contenido').innerHTML = '<div class="vacio">' + (st.solFiltro === 'todas' ? 'No hay solicitudes.' : 'Nada pendiente por atender ✓') + '</div>');
+    const filas = lista.map(s => {
+      const fechas = s.desde ? fechaCorta(s.desde) + (s.hasta && s.hasta !== s.desde ? ' al ' + fechaCorta(s.hasta) : '') + (s.dias ? ' <span class="muted">(' + s.dias + ' d)</span>' : '') : '—';
+      let acciones = s.respuesta ? '<div class="wrap muted">' + esc(s.respuesta) + '</div>' : '';
+      if (s.puede_resolver) acciones = '<div class="acciones" data-id="' + esc(s.id) + '"><textarea class="input" rows="2" placeholder="Comentario (obligatorio si rechazás)"></textarea><div class="fila"><button class="btn ok mini" data-d="APROBADA">Aprobar</button><button class="btn no mini" data-d="RECHAZADA">Rechazar</button></div></div>';
+      else if (s.puede_revisar) acciones = '<div class="acciones" data-id="' + esc(s.id) + '"><button class="btn mini" data-d="REVISAR">Marcar revisado</button></div>';
+      else if (s.grupo === 'SOLICITUD' && s.estado === 'Pendiente') acciones = '<span class="muted">Responde ' + esc(s.responsable) + '</span>';
+      const adj = s.archivos.length ? s.archivos.map((a, k) => '<a href="' + esc(a) + '" target="_blank" rel="noopener">Archivo ' + (k + 1) + '</a>').join(' · ') : '<span class="muted">—</span>';
+      return '<tr><td>' + esc(new Date(s.enviada).toLocaleDateString('es-CR', { day: 'numeric', month: 'short' })) + '</td><td><strong>' + esc(nombreCorto(s.nombre)) + '</strong><div class="muted">' + BANDERA[s.pais] + ' ' + esc(s.tienda) + '</div></td>' +
+        '<td>' + esc(s.tipo) + (s.horario ? '<div class="muted">' + esc(s.horario) + '</div>' : '') + '</td><td>' + fechas + '</td><td class="wrap">' + esc(s.comentario) + '</td><td>' + adj + '</td>' +
+        '<td>' + pill(s.estado, COLOR_ESTADO[s.estado] || '') + '</td><td>' + acciones + '</td></tr>';
+    }).join('');
+    $('sol-contenido').innerHTML = '<div class="tabla-wrap"><table><thead><tr><th>Enviada</th><th>Colaboradora</th><th>Tipo</th><th>Fechas</th><th>Comentario</th><th>Adjuntos</th><th>Estado</th><th>Acción</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
+    $('sol-contenido').querySelectorAll('.acciones').forEach(caja => {
+      caja.querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+        const d = b.dataset.d;
+        const motivo = caja.querySelector('textarea') ? caja.querySelector('textarea').value.trim() : '';
+        if (d === 'RECHAZADA' && motivo.length < 3) return toast('Escribí el motivo del rechazo');
+        caja.querySelectorAll('button').forEach(x => { x.disabled = true; });
+        try {
+          const res = d === 'REVISAR' ? await llamar({ accion: 'panel_revisar', id: caja.dataset.id }) : await llamar({ accion: 'panel_resolver', id: caja.dataset.id, decision: d, motivo: motivo });
+          toast(res.ok ? (d === 'REVISAR' ? 'Marcado como revisado' : 'Solicitud ' + (d === 'APROBADA' ? 'aprobada' : 'rechazada')) : res.mensaje);
+          if (res.ok) { await cargarSolicitudes(); contadores(); return; }
+        } catch (e) { toast('Sin conexión'); }
+        caja.querySelectorAll('button').forEach(x => { x.disabled = false; });
+      }));
+    });
+  }
+
+  $('btn-met-buscar').addEventListener('click', cargarMetricas);
+
+  async function cargarMetricas() {
+    cargando('met-contenido');
+    try {
+      const r = await llamar({ accion: 'panel_metricas', pais: st.pais, mes: $('met-mes').value });
+      if (!r.ok) return ($('met-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.metricas = r;
+      pintarMetricas();
+    } catch (e) { $('met-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function barraPct(v) {
+    if (v === null || v === undefined) return '<span class="muted">—</span>';
+    const color = v >= 95 ? 'var(--green)' : v >= 80 ? 'var(--amber)' : 'var(--red)';
+    return v + '%<span class="barra-pct"><span style="width:' + v + '%;background:' + color + '"></span></span>';
+  }
+
+  function tablaOrdenable(id, columnas, filas) {
+    const o = st.orden[id] || {};
+    const datos = filas.slice();
+    if (o.col !== undefined) {
+      const c = columnas[o.col];
+      datos.sort((a, b) => { const x = c.v(a), y = c.v(b); const r = (x === null ? -1e9 : x) > (y === null ? -1e9 : y) ? 1 : (x === null ? -1e9 : x) < (y === null ? -1e9 : y) ? -1 : 0; return o.dir * r; });
+    }
+    return '<div class="tabla-wrap"><table data-tabla="' + id + '"><thead><tr>' + columnas.map((c, i) => '<th class="ordenable' + (c.num ? ' num' : '') + '" data-col="' + i + '">' + c.t + (o.col === i ? (o.dir > 0 ? ' ▲' : ' ▼') : '') + '</th>').join('') + '</tr></thead><tbody>' +
+      datos.map(f => '<tr>' + columnas.map(c => '<td' + (c.num ? ' class="num"' : '') + '>' + c.h(f) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+  }
+
+  function activarOrden(cont, repintar) {
+    cont.querySelectorAll('table[data-tabla] th.ordenable').forEach(th => th.addEventListener('click', () => {
+      const id = th.closest('table').dataset.tabla;
+      const col = Number(th.dataset.col);
+      const o = st.orden[id] || {};
+      st.orden[id] = { col: col, dir: o.col === col ? -o.dir : -1 };
+      repintar();
+    }));
+  }
+
+  function pintarMetricas() {
+    const r = st.datos.metricas;
+    if (!r.personas.length) return ($('met-contenido').innerHTML = '<div class="vacio">Todavía no hay datos de marcas para este período. Las métricas cuentan desde que cada persona registra su celular.</div>');
+    const tot = r.personas.reduce((a, p) => { ['evaluados', 'a_tiempo', 'tardanzas', 'minutos_tarde', 'ausencias', 'almuerzos_excedidos'].forEach(k => { a[k] = (a[k] || 0) + p.resumen[k]; }); return a; }, {});
+    const pct = tot.evaluados ? Math.round(tot.a_tiempo / tot.evaluados * 100) : null;
+    let html = '<div class="kpis">' +
+      '<div class="kpi"><div class="kpi-v ' + (pct === null ? '' : pct >= 95 ? 'green' : pct >= 80 ? 'amber' : 'red') + '">' + (pct === null ? '—' : pct + '%') + '</div><div class="kpi-l">Puntualidad general</div></div>' +
+      '<div class="kpi"><div class="kpi-v amber">' + tot.tardanzas + '</div><div class="kpi-l">Tardías · ' + tot.minutos_tarde + ' min</div></div>' +
+      '<div class="kpi"><div class="kpi-v red">' + tot.ausencias + '</div><div class="kpi-l">Ausencias</div></div>' +
+      '<div class="kpi"><div class="kpi-v">' + tot.almuerzos_excedidos + '</div><div class="kpi-l">Almuerzos excedidos</div></div>' +
+      '<div class="kpi"><div class="kpi-v">' + r.personas.length + '</div><div class="kpi-l">Personas con datos</div></div></div>';
+    html += '<div class="seccion">Por tienda</div>' + tablaOrdenable('met-t', [
+      { t: 'Tienda', h: t => BANDERA[t.pais] + ' ' + esc(t.tienda), v: t => t.tienda },
+      { t: 'Puntualidad', h: t => barraPct(t.puntualidad), v: t => t.puntualidad },
+      { t: 'Personas', num: 1, h: t => t.personas, v: t => t.personas },
+      { t: 'Tardías', num: 1, h: t => t.tardanzas + ' <span class="muted">(' + t.minutos_tarde + ' min)</span>', v: t => t.tardanzas },
+      { t: 'Ausencias', num: 1, h: t => t.ausencias, v: t => t.ausencias },
+      { t: 'Almuerzos exc.', num: 1, h: t => t.almuerzos_excedidos + ' <span class="muted">(' + t.minutos_excedidos + ' min)</span>', v: t => t.almuerzos_excedidos }
+    ], r.tiendas);
+    html += '<div class="seccion">Por persona</div>' + tablaOrdenable('met-p', [
+      { t: 'Colaboradora', h: p => '<strong>' + esc(nombreCorto(p.nombre)) + '</strong><div class="muted">' + esc(p.tienda) + '</div>', v: p => p.nombre },
+      { t: 'Puntualidad', h: p => barraPct(p.resumen.puntualidad), v: p => p.resumen.puntualidad },
+      { t: 'Racha', num: 1, h: p => p.resumen.racha ? '🔥 ' + p.resumen.racha : '0', v: p => p.resumen.racha },
+      { t: 'Días trab.', num: 1, h: p => p.resumen.trabajados + (p.resumen.programados ? ' <span class="muted">/ ' + p.resumen.programados + '</span>' : ''), v: p => p.resumen.trabajados },
+      { t: 'Tardías', num: 1, h: p => p.resumen.tardanzas + ' <span class="muted">(' + p.resumen.minutos_tarde + ' min)</span>', v: p => p.resumen.tardanzas },
+      { t: 'Ausencias', num: 1, h: p => p.resumen.ausencias, v: p => p.resumen.ausencias },
+      { t: 'Almuerzo prom.', num: 1, h: p => p.resumen.promedio_almuerzo === null ? '—' : p.resumen.promedio_almuerzo + ' min', v: p => p.resumen.promedio_almuerzo },
+      { t: 'Almuerzos exc.', num: 1, h: p => p.resumen.almuerzos_excedidos + ' <span class="muted">(' + p.resumen.minutos_excedidos + ' min)</span>', v: p => p.resumen.almuerzos_excedidos }
+    ], r.personas);
+    $('met-contenido').innerHTML = html;
+    activarOrden($('met-contenido'), pintarMetricas);
+  }
+
+  document.querySelectorAll('#pla-presets .chip').forEach(c => c.addEventListener('click', () => presetPlanilla(c.dataset.p)));
+
+  function presetPlanilla(p) {
+    const h = new Date();
+    const y = h.getFullYear(), m = h.getMonth();
+    const fin = d => hoyISO(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+    let desde, hasta;
+    if (p === 'q1') { desde = hoyISO(new Date(y, m, 1)); hasta = hoyISO(new Date(y, m, 15)); }
+    else if (p === 'q2') { desde = hoyISO(new Date(y, m, 16)); hasta = fin(h); }
+    else if (p === 'mes') { desde = hoyISO(new Date(y, m, 1)); hasta = fin(h); }
+    else { const a = new Date(y, m - 1, 1); desde = hoyISO(a); hasta = fin(a); }
+    $('pla-desde').value = desde;
+    $('pla-hasta').value = hasta;
+    document.querySelectorAll('#pla-presets .chip').forEach(c => c.classList.toggle('activa', c.dataset.p === p));
+  }
+
+  $('btn-pla-generar').addEventListener('click', async () => {
+    cargando('pla-contenido');
+    try {
+      const r = await llamar({ accion: 'panel_planilla', pais: st.pais, desde: $('pla-desde').value, hasta: $('pla-hasta').value });
+      if (!r.ok) return ($('pla-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.planilla = r;
+      pintarPlanilla();
+    } catch (e) { $('pla-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  });
+
+  const COLS_PLANILLA = [
+    ['País', f => f.pais], ['Tienda', f => f.tienda], ['ID', f => f.id], ['Colaboradora', f => f.nombre],
+    ['Días programados', f => f.programados], ['Días trabajados', f => f.trabajados],
+    ['Horas programadas', f => f.horas_programadas], ['Horas trabajadas', f => f.horas_trabajadas], ['Horas extra', f => f.horas_extra],
+    ['Tardías', f => f.tardanzas], ['Minutos tarde', f => f.minutos_tarde], ['Tardías justificadas', f => f.tardanzas_justificadas],
+    ['Ausencias injustificadas', f => f.ausencias], ['Ausencias justificadas', f => f.ausencias_justificadas],
+    ['Almuerzos excedidos', f => f.almuerzos_excedidos], ['Minutos almuerzo excedido', f => f.minutos_almuerzo],
+    ['Vacaciones (días)', f => f.vacaciones], ['Incapacidad (días)', f => f.incapacidad],
+    ['Permiso con goce (días)', f => f.permiso_con_goce], ['Permiso sin goce (días)', f => f.permiso_sin_goce], ['Días sin marca de salida', f => f.sin_salida]
+  ];
+  const COLS_DETALLE = [['Fecha', f => f.fecha], ['País', f => f.pais], ['Tienda', f => f.tienda], ['Colaboradora', f => f.nombre], ['Tipo de Incidencia', f => f.tipo], ['Días', f => f.dias], ['Minutos', f => f.minutos], ['Observaciones', f => f.observaciones]];
+
+  function pintarPlanilla() {
+    const r = st.datos.planilla;
+    if (!r.filas.length) return ($('pla-contenido').innerHTML = '<div class="vacio">Sin datos para este período. La planilla cuenta desde que cada persona registra su celular.</div>');
+    const resumen = '<div class="tabla-wrap"><table><thead><tr>' + COLS_PLANILLA.map((c, i) => '<th' + (i > 3 ? ' class="num"' : '') + '>' + esc(c[0]) + '</th>').join('') + '</tr></thead><tbody>' +
+      r.filas.map(f => '<tr>' + COLS_PLANILLA.map((c, i) => '<td' + (i > 3 ? ' class="num"' : '') + '>' + esc(c[1](f)) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+    $('pla-contenido').innerHTML =
+      '<div class="aviso">Período ' + esc(fechaCorta(r.desde)) + ' al ' + esc(fechaCorta(r.hasta)) + ' · ' + r.filas.length + ' personas · ' + r.detalle.length + ' movimientos de detalle. Las horas extra cuentan lo trabajado por encima del turno programado (descontando ' + 'el almuerzo); en el detalle solo aparecen desde 15 minutos.</div>' +
+      '<div class="filtros"><button class="btn" id="btn-csv-resumen">Descargar resumen (CSV)</button><button class="btn ghost" id="btn-csv-detalle">Descargar detalle · formato Control de Incidencias (CSV)</button></div>' + resumen;
+    $('btn-csv-resumen').addEventListener('click', () => descargarCSV('planilla_' + r.desde + '_' + r.hasta + '.csv', COLS_PLANILLA, r.filas));
+    $('btn-csv-detalle').addEventListener('click', () => descargarCSV('incidencias_' + r.desde + '_' + r.hasta + '.csv', COLS_DETALLE, r.detalle));
+  }
+
+  function descargarCSV(nombre, columnas, filas) {
+    const celda = v => { const t = String(v === null || v === undefined ? '' : v).replace(/"/g, '""'); return /[;"\n]/.test(t) ? '"' + t + '"' : t; };
+    const texto = '﻿' + [columnas.map(c => celda(c[0])).join(';')].concat(filas.map(f => columnas.map(c => celda(typeof c[1](f) === 'number' ? String(c[1](f)).replace('.', ',') : c[1](f))).join(';'))).join('\r\n');
+    const url = URL.createObjectURL(new Blob([texto], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  (function () {
+    const s = leer();
+    if (s && s.sesion && (!s.vence || new Date(s.vence) > new Date())) iniciarPanel(s.sesion, s.usuario);
+  })();
+</script>
+</body>
+</html>
