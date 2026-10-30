@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1A1A2E">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Samsara · Aprobación</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --night: #1A1A2E;
+      --gold: #C8A96E;
+      --gold-light: #E0C98A;
+      --gold-dim: rgba(200,169,110,0.15);
+      --cream: #F5F0E8;
+      --cream-dim: rgba(245,240,232,0.07);
+      --text-secondary: rgba(245,240,232,0.62);
+      --text-muted: rgba(245,240,232,0.42);
+      --green: #4CAF7D;
+      --green-bg: rgba(76,175,125,0.14);
+      --red: #E85D5D;
+      --red-bg: rgba(232,93,93,0.14);
+      --amber: #F5A623;
+      --amber-bg: rgba(245,166,35,0.14);
+      --border: rgba(200,169,110,0.2);
+      --border-soft: rgba(245,240,232,0.08);
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--night); color: var(--cream); font-family: 'DM Sans', system-ui, -apple-system, sans-serif; }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 0 18px 40px; }
+    header { text-align: center; padding: 28px 0 22px; }
+    .marca { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 26px; letter-spacing: 0.32em; color: var(--gold); padding-left: 0.32em; }
+    .firma { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 15px; color: var(--gold-light); margin-top: -2px; }
+    h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; font-size: 28px; margin: 0 0 4px; text-wrap: balance; }
+    .sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 18px; }
+    .card { background: var(--cream-dim); border: 1px solid var(--border-soft); border-radius: 16px; padding: 6px 18px; margin-bottom: 16px; }
+    .fila { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border-soft); font-size: 14px; }
+    .fila:last-child { border-bottom: none; }
+    .k { color: var(--text-muted); white-space: nowrap; }
+    .v { text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+    .comentario { font-size: 14px; line-height: 1.55; color: var(--text-secondary); white-space: pre-wrap; padding: 14px 0; }
+    .etiqueta { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin: 18px 0 8px; }
+    .archivos { display: flex; flex-wrap: wrap; gap: 8px; }
+    .archivos a { color: var(--gold-light); background: var(--gold-dim); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 600; text-decoration: none; }
+    textarea { width: 100%; min-height: 90px; background: var(--cream-dim); border: 1px solid var(--border); border-radius: 12px; color: var(--cream); font: inherit; font-size: 15px; padding: 12px 14px; resize: vertical; outline: none; }
+    textarea:focus { border-color: var(--gold); }
+    .acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    button { border: none; border-radius: 14px; padding: 15px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .aprobar { background: var(--green); color: #0d2a1c; }
+    .rechazar { background: var(--red-bg); color: var(--red); border: 1px solid rgba(232,93,93,0.4); }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .error { color: var(--red); font-size: 13.5px; min-height: 18px; margin-top: 10px; }
+    .estado { display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; }
+    .estado.amber { background: var(--amber-bg); color: var(--amber); }
+    .estado.green { background: var(--green-bg); color: var(--green); }
+    .estado.red { background: var(--red-bg); color: var(--red); }
+    .estado.gold { background: var(--gold-dim); color: var(--gold-light); }
+    .centro { text-align: center; padding: 50px 0; color: var(--text-secondary); }
+    .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: giro 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes giro { to { transform: rotate(360deg); } }
+    .resultado { text-align: center; padding: 30px 0 10px; }
+    .icono { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px; }
+    .icono.green { background: var(--green-bg); color: var(--green); }
+    .icono.red { background: var(--red-bg); color: var(--red); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="marca">SAMSARA</div>
+    <div class="firma">by Barth</div>
+  </header>
+
+  <div class="centro" id="cargando"><div class="spinner"></div>Cargando solicitud…</div>
+
+  <div id="contenido" hidden>
+    <h1 id="titulo">Solicitud</h1>
+    <div class="sub" id="subtitulo"></div>
+    <span class="estado" id="estado"></span>
+    <div class="card" id="datos"></div>
+    <div class="etiqueta">Comentario de la colaboradora</div>
+    <div class="card"><div class="comentario" id="comentario"></div></div>
+    <div id="bloque-archivos" hidden>
+      <div class="etiqueta">Adjuntos</div>
+      <div class="archivos" id="archivos"></div>
+    </div>
+
+    <div id="bloque-resolver" hidden>
+      <div class="etiqueta">Tu respuesta</div>
+      <textarea id="motivo" placeholder="Comentario para la colaboradora (obligatorio si rechazás)"></textarea>
+      <div class="acciones">
+        <button class="rechazar" id="btn-rechazar">Rechazar</button>
+        <button class="aprobar" id="btn-aprobar">Aprobar</button>
+      </div>
+      <div class="error" id="error"></div>
+    </div>
+
+    <div id="bloque-resuelta" hidden>
+      <div class="etiqueta">Respuesta</div>
+      <div class="card"><div class="comentario" id="respuesta"></div></div>
+    </div>
+  </div>
+
+  <div class="resultado" id="final" hidden>
+    <div class="icono" id="final-icono">✓</div>
+    <h1 id="final-titulo"></h1>
+    <div class="sub" id="final-texto"></div>
+  </div>
+</div>
+
+<script>
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
+  const params = new URLSearchParams(location.search);
+  const ID = params.get('id') || '';
+  const CLAVE = params.get('c') || '';
+  const COLORES = { Pendiente: 'amber', Aprobada: 'green', Rechazada: 'red', Recibido: 'gold', 'En revisión': 'amber', Justificada: 'green', 'No justificada': 'red' };
+
+  async function llamar(datos) {
+    const res = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(datos), redirect: 'follow' });
+    return res.json();
+  }
+
+  function fecha(f) {
+    if (!f) return '';
+    return new Date(f + 'T12:00:00').toLocaleDateString('es-CR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function fila(k, v) {
+    const d = document.createElement('div');
+    d.className = 'fila';
+    d.innerHTML = '<span class="k"></span><span class="v"></span>';
+    d.querySelector('.k').textContent = k;
+    d.querySelector('.v').textContent = v;
+    return d;
+  }
+
+  function terminar(ok, titulo, texto) {
+    document.getElementById('cargando').hidden = true;
+    document.getElementById('contenido').hidden = true;
+    document.getElementById('final').hidden = false;
+    const icono = document.getElementById('final-icono');
+    icono.className = 'icono ' + (ok ? 'green' : 'red');
+    icono.textContent = ok ? '✓' : '✕';
+    document.getElementById('final-titulo').textContent = titulo;
+    document.getElementById('final-texto').textContent = texto;
+  }
+
+  function pintar(d) {
+    document.getElementById('titulo').textContent = d.tipo;
+    document.getElementById('subtitulo').textContent = d.nombre + ' · ' + d.tienda;
+    const est = document.getElementById('estado');
+    est.textContent = d.estado;
+    est.className = 'estado ' + (COLORES[d.estado] || 'gold');
+
+    const datos = document.getElementById('datos');
+    datos.innerHTML = '';
+    datos.appendChild(fila('Colaboradora', d.nombre + ' (' + d.id_colaboradora + ')'));
+    datos.appendChild(fila('Tienda', d.tienda));
+    if (d.fecha_inicio) datos.appendChild(fila('Desde', fecha(d.fecha_inicio)));
+    if (d.fecha_fin && d.fecha_fin !== d.fecha_inicio) datos.appendChild(fila('Hasta', fecha(d.fecha_fin)));
+    if (d.dias) datos.appendChild(fila('Días', String(d.dias)));
+    if (d.horario) datos.appendChild(fila('Horario', d.horario));
+    if (d.enviada) datos.appendChild(fila('Enviada', new Date(d.enviada).toLocaleString('es-CR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })));
+    datos.appendChild(fila('Referencia', d.id));
+
+    document.getElementById('comentario').textContent = d.comentario || '—';
+
+    const archivos = document.getElementById('archivos');
+    archivos.innerHTML = '';
+    d.archivos.forEach((url, i) => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = 'Ver archivo ' + (i + 1);
+      archivos.appendChild(a);
+    });
+    document.getElementById('bloque-archivos').hidden = !d.archivos.length;
+
+    document.getElementById('bloque-resolver').hidden = !d.puede_resolver;
+    document.getElementById('bloque-resuelta').hidden = d.puede_resolver || !d.respuesta;
+    document.getElementById('respuesta').textContent = d.respuesta || '';
+
+    document.getElementById('cargando').hidden = true;
+    document.getElementById('contenido').hidden = false;
+  }
+
+  async function resolver(decision) {
+    const motivo = document.getElementById('motivo').value.trim();
+    const error = document.getElementById('error');
+    if (decision === 'RECHAZADA' && motivo.length < 3) {
+      error.textContent = 'Escribí el motivo del rechazo.';
+      return;
+    }
+    error.textContent = '';
+    const botones = document.querySelectorAll('.acciones button');
+    botones.forEach(b => { b.disabled = true; });
+    try {
+      const data = await llamar({ accion: 'solicitud_resolver', id: ID, c: CLAVE, decision: decision, motivo: motivo });
+      if (!data.ok) {
+        error.textContent = data.mensaje || 'No se pudo guardar tu respuesta.';
+        botones.forEach(b => { b.disabled = false; });
+        return;
+      }
+      const aprobada = decision === 'APROBADA';
+      terminar(aprobada, aprobada ? 'Solicitud aprobada' : 'Solicitud rechazada', 'Tu respuesta quedó registrada y la colaboradora la verá en su app.');
+    } catch (e) {
+      error.textContent = 'Sin conexión. Intentá de nuevo.';
+      botones.forEach(b => { b.disabled = false; });
+    }
+  }
+
+  document.getElementById('btn-aprobar').addEventListener('click', () => resolver('APROBADA'));
+  document.getElementById('btn-rechazar').addEventListener('click', () => resolver('RECHAZADA'));
+
+  (async () => {
+    if (!ID || !CLAVE) return terminar(false, 'Enlace incompleto', 'Abrí el enlace directamente desde el correo.');
+    try {
+      const data = await llamar({ accion: 'solicitud_detalle', id: ID, c: CLAVE });
+      if (!data.ok) return terminar(false, 'No disponible', data.mensaje || 'No se encontró la solicitud.');
+      pintar(data);
+    } catch (e) {
+      terminar(false, 'Sin conexión', 'Revisá tu conexión y recargá la página.');
+    }
+  })();
+</script>
+</body>
+</html>
