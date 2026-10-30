@@ -128,6 +128,41 @@
     .seccion { margin: 22px 0 10px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
     .aviso { background: var(--gold-dim); border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px; color: var(--gold-light); font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--night-soft); border: 1px solid var(--border); padding: 11px 18px; border-radius: 12px; z-index: 50; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+    .filtro-global { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--night); border: 1px solid var(--border-soft); border-radius: 14px; padding: 10px 12px; margin-bottom: 18px; }
+    .filtro-global .input { padding: 9px 12px; }
+    .filtro-global select.input { width: auto; min-width: 190px; max-width: 100%; }
+    .fg-buscar { position: relative; flex: 1 1 260px; min-width: 0; }
+    .fg-buscar .input { padding-left: 34px; }
+    .fg-buscar svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); fill: var(--text-3); pointer-events: none; }
+    .fg-activo { font-size: 12px; color: var(--gold-light); }
+
+    .doc-grid { display: grid; grid-template-columns: minmax(0, 460px) minmax(0, 1fr); gap: 18px; align-items: start; }
+    .panel-caja { background: var(--night); border: 1px solid var(--border-soft); border-radius: 16px; padding: 16px; }
+    .panel-caja .seccion:first-child { margin-top: 0; }
+    .doc-controles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .doc-controles select.input { flex: 1 1 150px; width: auto; padding: 9px 12px; }
+    .doc-controles .input { padding: 9px 12px; }
+    .doc-lista { max-height: 300px; overflow-y: auto; border: 1px solid var(--border-soft); border-radius: 12px; }
+    .doc-persona { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--border-soft); cursor: pointer; }
+    .doc-persona:last-child { border-bottom: none; }
+    .doc-persona:hover { background: var(--cream-dim); }
+    .doc-persona input { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
+    .doc-persona .dp-nombre { font-weight: 600; font-size: 13px; }
+    .doc-persona .dp-meta { font-size: 11.5px; color: var(--text-3); }
+    .doc-persona .pill { margin-left: auto; }
+    .doc-resumen { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; font-size: 12.5px; color: var(--text-2); }
+    .doc-archivo { display: flex; align-items: center; gap: 10px; border: 1px dashed var(--border); border-radius: 12px; padding: 12px; cursor: pointer; color: var(--text-2); font-size: 13px; }
+    .doc-archivo:hover { border-color: var(--gold); }
+    .doc-check { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-2); margin: 4px 0 14px; cursor: pointer; }
+    .doc-check input { width: 16px; height: 16px; accent-color: var(--gold); }
+    .lote { background: var(--night); border: 1px solid var(--border-soft); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+    .lote-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 13px 16px; cursor: pointer; }
+    .lote-titulo { font-weight: 700; font-size: 14px; }
+    .lote-meta { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+    .lote-estado { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .lote-detalle { border-top: 1px solid var(--border-soft); padding: 12px 16px 14px; }
+    .lote-detalle .tabla-wrap { margin-top: 10px; }
+    @media (max-width: 900px) { .doc-grid { grid-template-columns: 1fr; } }
     @media (max-width: 640px) {
       .tiendas { grid-template-columns: 1fr; }
       .usuario span { display: none; }
@@ -180,10 +215,22 @@
       <button class="tab" data-vista="extras">Horas extra<span class="contador" id="cont-extras" hidden></span></button>
       <button class="tab" data-vista="metricas">Métricas</button>
       <button class="tab" data-vista="planilla">Planilla</button>
+      <button class="tab" data-vista="documentos">Documentos</button>
     </nav>
   </header>
 
   <main>
+    <div class="filtro-global" id="filtro-global">
+      <select class="input" id="fg-tienda" aria-label="Filtrar por tienda"><option value="">Todas las tiendas</option></select>
+      <div class="fg-buscar">
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input class="input" id="fg-persona" list="fg-personas" placeholder="Buscar colaborador por nombre o ID" autocomplete="off" aria-label="Buscar colaborador">
+        <datalist id="fg-personas"></datalist>
+      </div>
+      <span class="fg-activo" id="fg-activo" hidden></span>
+      <button class="btn ghost mini" id="fg-limpiar" hidden>Limpiar filtros</button>
+    </div>
+
     <section id="v-hoy">
       <div class="titulo">En vivo</div>
       <div class="sub" id="hoy-sub">—</div>
@@ -273,6 +320,41 @@
       </div>
       <div id="pla-contenido"></div>
     </section>
+
+    <section id="v-documentos" hidden>
+      <div class="titulo">Documentos</div>
+      <div class="sub">Enviá documentos a colaboradores. Les llega un aviso en la app y por correo; el documento solo se abre desde la app.</div>
+      <div class="doc-grid">
+        <div class="panel-caja">
+          <div class="seccion">1 · Para quién</div>
+          <div class="doc-controles">
+            <select class="input" id="doc-tienda" aria-label="Tienda"><option value="">Todas las tiendas</option></select>
+            <input class="input" id="doc-buscar" placeholder="Buscar por nombre o ID" autocomplete="off" aria-label="Buscar colaborador">
+          </div>
+          <div class="doc-controles">
+            <button class="btn ghost mini" id="doc-todos">Seleccionar los de la lista</button>
+            <button class="btn ghost mini" id="doc-ninguno">Quitar selección</button>
+          </div>
+          <div class="doc-lista" id="doc-lista"><div class="cargando"><div class="spinner"></div>Cargando colaboradores…</div></div>
+          <div class="doc-resumen"><span id="doc-contador">0 seleccionados</span><span class="muted" id="doc-sinapp"></span></div>
+
+          <div class="seccion">2 · Documento</div>
+          <div class="campo"><label for="doc-titulo">Título</label><input class="input" id="doc-titulo" maxlength="120" placeholder="Ej.: Comprobante de pago octubre"></div>
+          <div class="campo"><label for="doc-mensaje">Mensaje (opcional)</label><textarea class="input" id="doc-mensaje" rows="3" maxlength="2000" placeholder="Se muestra junto al documento en la app"></textarea></div>
+          <label class="doc-archivo" id="doc-archivo-caja">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></svg>
+            <span id="doc-archivo-texto">Adjuntar PDF o imagen (máx. 10 MB)</span>
+            <input type="file" id="doc-archivo" accept="application/pdf,image/jpeg,image/png,image/webp" hidden>
+          </label>
+          <label class="doc-check" style="margin-top:14px"><input type="checkbox" id="doc-confirmar"> Pedir que confirme que lo recibió</label>
+          <button class="btn full" id="doc-enviar">Enviar documento</button>
+        </div>
+        <div>
+          <div class="seccion" style="margin-top:0">Enviados</div>
+          <div id="doc-historial"></div>
+        </div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -287,7 +369,7 @@
     'Pendiente': 'amber', 'Aprobada': 'green', 'Rechazada': 'red', 'Recibido': 'gold', 'Revisado': 'green'
   };
 
-  const st = { sesion: null, usuario: null, pais: '', vista: 'hoy', datos: {}, solFiltro: 'pendientes', orden: {}, timer: null };
+  const st = { sesion: null, usuario: null, pais: '', vista: 'hoy', datos: {}, solFiltro: 'pendientes', orden: {}, timer: null, filtro: { tienda: '', persona: '' }, dir: null, docSel: {} };
 
   function $(id) { return document.getElementById(id); }
   function esc(t) { return String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -300,6 +382,26 @@
   function cargando(id) { $(id).innerHTML = '<div class="cargando"><div class="spinner"></div>Cargando…</div>'; }
   function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600); }
   function nombreCorto(n) { const p = String(n || '').trim().split(/\s+/); return p.length >= 3 ? p.slice(2).join(' ') + ' ' + p[0] : n; }
+  function norm(t) { return String(t === null || t === undefined ? '' : t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim(); }
+  function compacto(t) { return norm(t).replace(/ /g, ''); }
+  function coincideTexto(q, nombre, id) {
+    const partes = norm(q).split(' ').filter(Boolean);
+    if (!partes.length) return true;
+    const n = norm(nombre), i = compacto(id);
+    return partes.every(p => n.indexOf(p) >= 0 || (i && i.indexOf(p.replace(/ /g, '')) === 0));
+  }
+  function tiendaFiltro() { return st.filtro.tienda && st.dir ? st.dir.tiendas.find(t => t.id === st.filtro.tienda) || null : null; }
+  function coincideTienda(t, nombre, id) {
+    if (!t) return true;
+    if (id && id === t.id) return true;
+    const n = compacto(nombre);
+    return !!n && [t.nombre, t.corto, t.id].some(x => compacto(x) === n);
+  }
+  function pasa(nombreTienda, idTienda, nombre, idPersona) {
+    return coincideTienda(tiendaFiltro(), nombreTienda, idTienda) && coincideTexto(st.filtro.persona, nombre, idPersona);
+  }
+  function filtroActivo() { return !!(st.filtro.tienda || norm(st.filtro.persona)); }
+  function sinResultados(base) { return filtroActivo() ? 'No hay resultados con este filtro.' : base; }
 
   async function llamar(datos) {
     const res = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(Object.assign({ sesion: st.sesion }, datos)), redirect: 'follow' });
@@ -366,6 +468,8 @@
         st.pais = p;
         chips.querySelectorAll('.chip').forEach(c => c.classList.toggle('activa', c === b));
         st.datos = {};
+        pintarFiltroGlobal();
+        pintarDocTiendas();
         mostrarVista(st.vista, true);
       });
       chips.appendChild(b);
@@ -377,8 +481,13 @@
     $('ext-desde').value = hoyISO(new Date(hoy.getTime() - 31 * 86400000));
     $('met-mes').value = hoyISO(hoy).slice(0, 7);
     presetPlanilla(hoy.getDate() <= 15 ? 'q1' : 'q2');
+    st.filtro = { tienda: '', persona: '' };
+    st.docSel = {};
+    $('fg-persona').value = '';
+    pintarFiltroGlobal();
     mostrarVista('hoy', true);
     contadores();
+    cargarDirectorio();
     if (st.timer) clearInterval(st.timer);
     st.timer = setInterval(() => { if (st.vista === 'hoy' && document.visibilityState === 'visible') cargarHoy(true); }, 60000);
   }
@@ -388,13 +497,20 @@
   function mostrarVista(v, forzar) {
     st.vista = v;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activa', t.dataset.vista === v));
-    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'documentos'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    $('filtro-global').hidden = v === 'documentos';
+    if (v === 'documentos') {
+      pintarDocTiendas();
+      pintarDestinatarios();
+      if (forzar || !st.datos.documentos) cargarHistorialDocs(); else pintarHistorialDocs();
+    }
     if (v === 'extras' && (forzar || !st.datos.extras)) cargarExtras();
     if (v === 'hoy') cargarHoy(!forzar && !!st.datos.hoy);
     if (v === 'incidencias' && (forzar || !st.datos.incidencias)) cargarIncidencias();
     if (v === 'solicitudes' && (forzar || !st.datos.solicitudes)) cargarSolicitudes();
     if (v === 'metricas' && (forzar || !st.datos.metricas)) cargarMetricas();
     if (v === 'planilla' && st.datos.planilla && forzar) $('pla-contenido').innerHTML = '';
+    if (v === 'planilla' && st.datos.planilla && !forzar) pintarPlanilla();
   }
 
   async function contadores() {
@@ -434,7 +550,12 @@
 
   function pintarHoy() {
     const r = st.datos.hoy;
-    const tiendas = r.tiendas.filter(t => !st.pais || t.pais.toUpperCase() === st.pais);
+    const tf = tiendaFiltro();
+    const conPersona = !!norm(st.filtro.persona);
+    const tiendas = r.tiendas
+      .filter(t => (!st.pais || t.pais.toUpperCase() === st.pais) && coincideTienda(tf, t.nombre, t.id))
+      .map(t => conPersona ? Object.assign({}, t, { personas: t.personas.filter(p => coincideTexto(st.filtro.persona, p.nombre, p.id)) }) : t)
+      .filter(t => !conPersona || t.personas.length);
     const personas = [].concat(...tiendas.map(t => t.personas));
     const abiertas = tiendas.filter(t => t.abierta).length;
     const conApertura = tiendas.filter(t => t.apertura).length;
@@ -449,7 +570,7 @@
     $('hoy-kpis').innerHTML = k.map(x => '<div class="kpi"><div class="kpi-v ' + x[2] + '">' + esc(x[0]) + '</div><div class="kpi-l">' + esc(x[1]) + '</div></div>').join('');
     $('hoy-sub').textContent = 'Actualizado ' + new Date(r.generado).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' }) + ' · se refresca cada minuto';
 
-    if (!tiendas.length) return ($('hoy-tiendas').innerHTML = '<div class="vacio">No hay horarios cargados para hoy.</div>');
+    if (!tiendas.length) return ($('hoy-tiendas').innerHTML = '<div class="vacio">' + sinResultados('No hay horarios cargados para hoy.') + '</div>');
     const orden = t => t.alerta ? 0 : !t.abierta && t.apertura ? 1 : 2;
     $('hoy-tiendas').innerHTML = tiendas.slice().sort((a, b) => orden(a) - orden(b) || a.nombre.localeCompare(b.nombre)).map(t => {
       let estado;
@@ -483,7 +604,7 @@
   function pintarIncidencias() {
     const r = st.datos.incidencias;
     if (!r) return;
-    const lista = r.incidencias.filter(i => (!$('inc-estado').value || i.estado === $('inc-estado').value) && (!$('inc-tipo').value || i.tipo === $('inc-tipo').value));
+    const lista = r.incidencias.filter(i => (!$('inc-estado').value || i.estado === $('inc-estado').value) && (!$('inc-tipo').value || i.tipo === $('inc-tipo').value) && pasa(i.tienda, i.idTienda, i.nombre, i.id));
     if (!lista.length) return ($('inc-contenido').innerHTML = '<div class="vacio">No hay incidencias con esos filtros.</div>');
     const filas = lista.map((i, n) => {
       const just = i.justificacion === 'Sí'
@@ -533,8 +654,8 @@
   function pintarSolicitudes() {
     const r = st.datos.solicitudes;
     if (!r) return;
-    const lista = r.solicitudes.filter(s => st.solFiltro === 'todas' || s.puede_resolver || s.puede_revisar || s.estado === 'Pendiente' || s.estado === 'Recibido' || s.estado === 'En revisión');
-    if (!lista.length) return ($('sol-contenido').innerHTML = '<div class="vacio">' + (st.solFiltro === 'todas' ? 'No hay solicitudes.' : 'Nada pendiente por atender ✓') + '</div>');
+    const lista = r.solicitudes.filter(s => (st.solFiltro === 'todas' || s.puede_resolver || s.puede_revisar || s.estado === 'Pendiente' || s.estado === 'Recibido' || s.estado === 'En revisión') && pasa(s.tienda, s.idTienda, s.nombre, s.idColab));
+    if (!lista.length) return ($('sol-contenido').innerHTML = '<div class="vacio">' + sinResultados(st.solFiltro === 'todas' ? 'No hay solicitudes.' : 'Nada pendiente por atender ✓') + '</div>');
     const filas = lista.map(s => {
       const fechas = s.desde ? fechaCorta(s.desde) + (s.hasta && s.hasta !== s.desde ? ' al ' + fechaCorta(s.hasta) : '') + (s.dias ? ' <span class="muted">(' + s.dias + ' d)</span>' : '') : '—';
       let acciones = s.respuesta ? '<div class="wrap muted">' + esc(s.respuesta) + '</div>' : '';
@@ -590,8 +711,8 @@
   function pintarExtras() {
     const r = st.datos.extras;
     if (!r) return;
-    const lista = r.extras.filter(x => (st.extFiltro || 'pendientes') === 'todas' || x.estado === 'Pendiente');
-    if (!lista.length) return ($('ext-contenido').innerHTML = '<div class="vacio">' + ((st.extFiltro || 'pendientes') === 'todas' ? 'No hay horas extra en el período.' : 'No hay horas extra por aprobar ✓') + '</div>');
+    const lista = r.extras.filter(x => ((st.extFiltro || 'pendientes') === 'todas' || x.estado === 'Pendiente') && pasa(x.tienda, x.idTienda, x.nombre, x.id || x.idColab));
+    if (!lista.length) return ($('ext-contenido').innerHTML = '<div class="vacio">' + sinResultados((st.extFiltro || 'pendientes') === 'todas' ? 'No hay horas extra en el período.' : 'No hay horas extra por aprobar ✓') + '</div>');
     const colorTipo = { DESPUES: 'blue', ANTES: 'amber', DIA_LIBRE: 'gold' };
     const filas = lista.map(x => {
       let accion;
@@ -665,8 +786,13 @@
   }
 
   function pintarMetricas() {
-    const r = st.datos.metricas;
-    if (!r.personas.length) return ($('met-contenido').innerHTML = '<div class="vacio">Todavía no hay datos de marcas para este período. Las métricas cuentan desde que cada persona registra su celular.</div>');
+    const base = st.datos.metricas;
+    const tf = tiendaFiltro();
+    const r = Object.assign({}, base, {
+      personas: base.personas.filter(p => pasa(p.tienda, p.idTienda, p.nombre, p.id)),
+      tiendas: base.tiendas.filter(t => coincideTienda(tf, t.tienda, t.idTienda || t.id))
+    });
+    if (!r.personas.length) return ($('met-contenido').innerHTML = '<div class="vacio">' + sinResultados('Todavía no hay datos de marcas para este período. Las métricas cuentan desde que cada persona registra su celular.') + '</div>');
     const tot = r.personas.reduce((a, p) => { ['evaluados', 'a_tiempo', 'tardanzas', 'minutos_tarde', 'ausencias', 'almuerzos_excedidos'].forEach(k => { a[k] = (a[k] || 0) + p.resumen[k]; }); return a; }, {});
     const pct = tot.evaluados ? Math.round(tot.a_tiempo / tot.evaluados * 100) : null;
     let html = '<div class="kpis">' +
@@ -740,15 +866,20 @@
   const COLS_DETALLE = [['Fecha', f => f.fecha], ['País', f => f.pais], ['Tienda', f => f.tienda], ['Colaboradora', f => f.nombre], ['Tipo de Incidencia', f => f.tipo], ['Días', f => f.dias], ['Minutos', f => f.minutos], ['Observaciones', f => f.observaciones]];
 
   function pintarPlanilla() {
-    const r = st.datos.planilla;
-    if (!r.filas.length) return ($('pla-contenido').innerHTML = '<div class="vacio">Sin datos para este período. La planilla cuenta desde que cada persona registra su celular.</div>');
+    const base = st.datos.planilla;
+    const r = Object.assign({}, base, {
+      filas: base.filas.filter(f => pasa(f.tienda, f.idTienda, f.nombre, f.id)),
+      detalle: base.detalle.filter(f => pasa(f.tienda, f.idTienda, f.nombre, f.id))
+    });
+    if (!r.filas.length) return ($('pla-contenido').innerHTML = '<div class="vacio">' + sinResultados('Sin datos para este período. La planilla cuenta desde que cada persona registra su celular.') + '</div>');
     const resumen = '<div class="tabla-wrap"><table><thead><tr>' + COLS_PLANILLA.map((c, i) => '<th' + (i > 3 ? ' class="num"' : '') + '>' + esc(c[0]) + '</th>').join('') + '</tr></thead><tbody>' +
       r.filas.map(f => '<tr>' + COLS_PLANILLA.map((c, i) => '<td' + (i > 3 ? ' class="num"' : '') + '>' + esc(c[1](f)) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
     $('pla-contenido').innerHTML =
       '<div class="aviso">Período ' + esc(fechaCorta(r.desde)) + ' al ' + esc(fechaCorta(r.hasta)) + ' · ' + r.filas.length + ' personas · ' + r.detalle.length + ' movimientos. Solo se incluyen horas extra <strong>aprobadas</strong>; las pendientes aparecen aparte. Los rebajos de tardías y almuerzo se aplican según las políticas contractuales de Samsara. Factores por país en la hoja Reglas_Nomina (España: por validar según convenio).</div>' +
       '<div class="filtros"><button class="btn" id="btn-csv-resumen">Descargar resumen (CSV)</button><button class="btn ghost" id="btn-csv-detalle">Descargar detalle · formato Control de Incidencias (CSV)</button></div>' + resumen;
-    $('btn-csv-resumen').addEventListener('click', () => descargarCSV('planilla_' + r.desde + '_' + r.hasta + '.csv', COLS_PLANILLA, r.filas));
-    $('btn-csv-detalle').addEventListener('click', () => descargarCSV('incidencias_' + r.desde + '_' + r.hasta + '.csv', COLS_DETALLE, r.detalle));
+    const sufijo = filtroActivo() ? '_filtrado' : '';
+    $('btn-csv-resumen').addEventListener('click', () => descargarCSV('planilla_' + r.desde + '_' + r.hasta + sufijo + '.csv', COLS_PLANILLA, r.filas));
+    $('btn-csv-detalle').addEventListener('click', () => descargarCSV('incidencias_' + r.desde + '_' + r.hasta + sufijo + '.csv', COLS_DETALLE, r.detalle));
   }
 
   function descargarCSV(nombre, columnas, filas) {
@@ -762,6 +893,194 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  function pintarFiltroGlobal() {
+    const tiendas = st.dir ? st.dir.tiendas.filter(t => !st.pais || t.pais === st.pais) : [];
+    if (st.filtro.tienda && st.dir && !tiendas.some(t => t.id === st.filtro.tienda)) st.filtro.tienda = '';
+    $('fg-tienda').innerHTML = '<option value="">Todas las tiendas</option>' + tiendas.map(t => '<option value="' + esc(t.id) + '"' + (t.id === st.filtro.tienda ? ' selected' : '') + '>' + (st.pais ? '' : BANDERA[t.pais] + ' ') + esc(t.nombre) + '</option>').join('');
+    const personas = st.dir ? st.dir.personas.filter(p => (!st.pais || p.pais === st.pais) && (!st.filtro.tienda || p.idTienda === st.filtro.tienda)) : [];
+    $('fg-personas').innerHTML = personas.map(p => '<option value="' + esc(p.nombre) + '">' + esc(p.id + (p.tienda ? ' · ' + p.tienda : '')) + '</option>').join('');
+    estadoFiltro();
+  }
+
+  function estadoFiltro() {
+    const activo = filtroActivo();
+    $('fg-limpiar').hidden = !activo;
+    $('fg-activo').hidden = !activo;
+    $('fg-activo').textContent = activo ? 'Filtro aplicado en todas las pestañas' : '';
+  }
+
+  function repintarVista() {
+    estadoFiltro();
+    const v = st.vista;
+    if (v === 'hoy' && st.datos.hoy) pintarHoy();
+    if (v === 'incidencias' && st.datos.incidencias) pintarIncidencias();
+    if (v === 'solicitudes' && st.datos.solicitudes) pintarSolicitudes();
+    if (v === 'extras' && st.datos.extras) pintarExtras();
+    if (v === 'metricas' && st.datos.metricas) pintarMetricas();
+    if (v === 'planilla' && st.datos.planilla) pintarPlanilla();
+  }
+
+  $('fg-tienda').addEventListener('change', () => { st.filtro.tienda = $('fg-tienda').value; pintarFiltroGlobal(); repintarVista(); });
+  let fgEspera;
+  $('fg-persona').addEventListener('input', () => {
+    clearTimeout(fgEspera);
+    fgEspera = setTimeout(() => { st.filtro.persona = $('fg-persona').value; repintarVista(); }, 160);
+  });
+  $('fg-limpiar').addEventListener('click', () => {
+    st.filtro = { tienda: '', persona: '' };
+    $('fg-persona').value = '';
+    pintarFiltroGlobal();
+    repintarVista();
+  });
+
+  async function cargarDirectorio() {
+    try {
+      const r = await llamar({ accion: 'doc_directorio' });
+      if (!r.ok) return;
+      st.dir = r;
+      pintarFiltroGlobal();
+      pintarDocTiendas();
+      pintarDestinatarios();
+      repintarVista();
+    } catch (e) {}
+  }
+
+  const docEstado = { archivo: null };
+  const TEXTO_ADJUNTO = 'Adjuntar PDF o imagen (máx. 10 MB)';
+
+  function personasDoc() {
+    if (!st.dir) return [];
+    const t = $('doc-tienda').value;
+    const q = $('doc-buscar').value;
+    return st.dir.personas.filter(p => (!st.pais || p.pais === st.pais) && (!t || p.idTienda === t) && coincideTexto(q, p.nombre, p.id));
+  }
+
+  function pintarDocTiendas() {
+    if (!st.dir) return;
+    const actual = $('doc-tienda').value;
+    const tiendas = st.dir.tiendas.filter(t => !st.pais || t.pais === st.pais);
+    $('doc-tienda').innerHTML = '<option value="">Todas las tiendas</option>' + tiendas.map(t => '<option value="' + esc(t.id) + '"' + (t.id === actual ? ' selected' : '') + '>' + (st.pais ? '' : BANDERA[t.pais] + ' ') + esc(t.nombre) + '</option>').join('');
+  }
+
+  function pintarDestinatarios() {
+    if (!st.dir) return;
+    const lista = personasDoc();
+    $('doc-lista').innerHTML = lista.length
+      ? lista.map(p => '<label class="doc-persona"><input type="checkbox" data-id="' + esc(p.id) + '"' + (st.docSel[p.id] ? ' checked' : '') + '><span><span class="dp-nombre">' + esc(nombreCorto(p.nombre)) + '</span><div class="dp-meta">' + BANDERA[p.pais] + ' ' + esc(p.tienda || 'Sin tienda asignada') + ' · ' + esc(p.id) + '</div></span>' + (p.app ? '' : pill('Sin app', 'amber')) + '</label>').join('')
+      : '<div class="vacio" style="border:none">No hay colaboradores con ese filtro.</div>';
+    $('doc-lista').querySelectorAll('input[type=checkbox]').forEach(c => c.addEventListener('change', () => {
+      if (c.checked) st.docSel[c.dataset.id] = true; else delete st.docSel[c.dataset.id];
+      contarSeleccion();
+    }));
+    contarSeleccion();
+  }
+
+  function contarSeleccion() {
+    const ids = Object.keys(st.docSel);
+    const porId = {};
+    (st.dir ? st.dir.personas : []).forEach(p => { porId[p.id] = p; });
+    const sinApp = ids.filter(id => porId[id] && !porId[id].app).length;
+    $('doc-contador').textContent = ids.length === 1 ? '1 seleccionado' : ids.length + ' seleccionados';
+    $('doc-sinapp').textContent = sinApp ? sinApp + ' sin la app: lo verán al registrarla' : '';
+  }
+
+  $('doc-tienda').addEventListener('change', pintarDestinatarios);
+  $('doc-buscar').addEventListener('input', pintarDestinatarios);
+  $('doc-todos').addEventListener('click', () => { personasDoc().forEach(p => { st.docSel[p.id] = true; }); pintarDestinatarios(); });
+  $('doc-ninguno').addEventListener('click', () => { st.docSel = {}; pintarDestinatarios(); });
+
+  $('doc-archivo').addEventListener('change', async () => {
+    const f = $('doc-archivo').files[0];
+    docEstado.archivo = null;
+    $('doc-archivo-texto').textContent = TEXTO_ADJUNTO;
+    if (!f) return;
+    if (!/^(application\/pdf|image\/(jpeg|png|webp))$/.test(f.type)) { $('doc-archivo').value = ''; return toast('Solo PDF, JPG, PNG o WEBP'); }
+    if (f.size > 10 * 1024 * 1024) { $('doc-archivo').value = ''; return toast('El archivo supera los 10 MB'); }
+    const datos = await new Promise((ok, mal) => { const lector = new FileReader(); lector.onload = () => ok(String(lector.result).split(',')[1]); lector.onerror = mal; lector.readAsDataURL(f); });
+    docEstado.archivo = { nombre: f.name, tipo: f.type, datos: datos };
+    $('doc-archivo-texto').textContent = f.name + ' · ' + (f.size / 1048576).toFixed(2) + ' MB';
+  });
+
+  $('doc-enviar').addEventListener('click', async () => {
+    const ids = Object.keys(st.docSel);
+    const titulo = $('doc-titulo').value.trim();
+    if (!ids.length) return toast('Elegí al menos un colaborador');
+    if (titulo.length < 3) return toast('Escribí el título del documento');
+    if (!docEstado.archivo) return toast('Adjuntá el documento');
+    const b = $('doc-enviar');
+    b.disabled = true;
+    b.textContent = 'Enviando…';
+    try {
+      const r = await llamar({ accion: 'doc_enviar', destinatarios: ids, titulo: titulo, mensaje: $('doc-mensaje').value.trim(), confirmar: $('doc-confirmar').checked, archivo: docEstado.archivo });
+      if (r.ok) {
+        toast('Enviado a ' + r.destinatarios + (r.destinatarios === 1 ? ' persona' : ' personas') + ' · ' + r.correos + (r.correos === 1 ? ' correo' : ' correos'));
+        st.docSel = {};
+        docEstado.archivo = null;
+        $('doc-archivo').value = '';
+        $('doc-titulo').value = '';
+        $('doc-mensaje').value = '';
+        $('doc-confirmar').checked = false;
+        $('doc-archivo-texto').textContent = TEXTO_ADJUNTO;
+        pintarDestinatarios();
+        cargarHistorialDocs();
+      } else toast(r.mensaje || 'No se pudo enviar');
+    } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); }
+    b.disabled = false;
+    b.textContent = 'Enviar documento';
+  });
+
+  async function cargarHistorialDocs() {
+    if (!st.datos.documentos) cargando('doc-historial');
+    try {
+      const r = await llamar({ accion: 'doc_historial' });
+      if (!r.ok) return ($('doc-historial').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.documentos = r;
+      pintarHistorialDocs();
+    } catch (e) { if (!st.datos.documentos) $('doc-historial').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function fechaHora(iso) { return iso ? new Date(iso).toLocaleString('es-CR', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : ''; }
+
+  function pintarHistorialDocs() {
+    const r = st.datos.documentos;
+    if (!r) return;
+    const lotes = r.lotes.map(l => Object.assign({}, l, { destinatarios: l.destinatarios.filter(d => !st.pais || d.pais === st.pais) })).filter(l => l.destinatarios.length);
+    if (!lotes.length) return ($('doc-historial').innerHTML = '<div class="vacio">Todavía no se enviaron documentos.</div>');
+    $('doc-historial').innerHTML = lotes.map(l => {
+      const n = l.destinatarios.length;
+      const leidos = l.destinatarios.filter(d => d.leido).length;
+      const conf = l.destinatarios.filter(d => d.confirmado).length;
+      const estado = pill('Abierto ' + leidos + '/' + n, leidos === n ? 'green' : leidos ? 'amber' : '') + (l.confirmar ? pill('Confirmado ' + conf + '/' + n, conf === n ? 'green' : conf ? 'amber' : 'red') : '');
+      const quien = n === 1 ? nombreCorto(l.destinatarios[0].nombre) : n + ' personas';
+      const filas = l.destinatarios.map(d => '<tr><td><strong>' + esc(nombreCorto(d.nombre)) + '</strong><div class="muted">' + BANDERA[d.pais] + ' ' + esc(d.tienda) + '</div></td>' +
+        '<td>' + (d.leido ? esc(fechaHora(d.leido)) : '<span class="muted">Sin abrir</span>') + '</td>' +
+        (l.confirmar ? '<td>' + (d.confirmado ? esc(fechaHora(d.confirmado)) : '<span class="muted">Pendiente</span>') + '</td>' : '') +
+        '<td>' + pill(d.correo || '—', d.correo === 'Enviado' ? 'green' : d.correo === 'Sin correo' || d.correo === 'Pendiente' ? '' : 'red') + '</td></tr>').join('');
+      return '<div class="lote"><div class="lote-cab"><div><div class="lote-titulo">' + esc(l.titulo) + '</div><div class="lote-meta">' + esc(fechaHora(l.fecha)) + ' · ' + esc(quien) + ' · por ' + esc(l.enviadoPor) + '</div></div><div class="lote-estado">' + estado + '</div></div>' +
+        '<div class="lote-detalle" hidden>' + (l.mensaje ? '<div class="wrap muted" style="max-width:none">' + esc(l.mensaje) + '</div>' : '') +
+        '<div class="doc-controles" style="margin:10px 0 0"><button class="btn ghost mini" data-ver="' + esc(l.lote) + '">Ver archivo</button><span class="muted" style="align-self:center">' + esc(l.archivo) + '</span></div>' +
+        '<div class="tabla-wrap"><table><thead><tr><th>Colaborador</th><th>Abierto</th>' + (l.confirmar ? '<th>Confirmó</th>' : '') + '<th>Correo</th></tr></thead><tbody>' + filas + '</tbody></table></div></div></div>';
+    }).join('');
+    $('doc-historial').querySelectorAll('.lote-cab').forEach(c => c.addEventListener('click', () => { const d = c.nextElementSibling; d.hidden = !d.hidden; }));
+    $('doc-historial').querySelectorAll('[data-ver]').forEach(b => b.addEventListener('click', () => verArchivoLote(b)));
+  }
+
+  async function verArchivoLote(b) {
+    const ventana = window.open('', '_blank');
+    b.disabled = true;
+    try {
+      const r = await llamar({ accion: 'doc_archivo', lote: b.dataset.ver });
+      if (!r.ok) { if (ventana) ventana.close(); toast(r.mensaje); }
+      else {
+        const bytes = Uint8Array.from(atob(r.datos), c => c.charCodeAt(0));
+        const url = URL.createObjectURL(new Blob([bytes], { type: r.tipo }));
+        if (ventana) ventana.location.href = url; else window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 120000);
+      }
+    } catch (e) { if (ventana) ventana.close(); toast('Sin conexión'); }
+    b.disabled = false;
   }
 
   (function () {

@@ -779,6 +779,27 @@
     .chip.gold { background: var(--gold-dim); color: var(--gold-light); }
     .dia-nota { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
     .nav-punto { position: absolute; top: 8px; left: calc(50% + 8px); width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+    .doc-banner { background: var(--gold-dim); border-color: var(--border); }
+    .doc-banner .pb-icono { background: rgba(200,169,110,0.22); color: var(--gold-light); }
+    .doc-banner .pb-icono svg { fill: currentColor; }
+    .doc-banner .pb-flecha { color: var(--gold); }
+    .sol-card.doc-nuevo { border-color: var(--border); background: var(--gold-dim); }
+    .visor { position: fixed; inset: 0; z-index: 100; background: var(--night-deep); display: flex; flex-direction: column; }
+    .visor-cab { display: flex; align-items: center; gap: 12px; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--border-soft); }
+    .visor-titulo { flex: 1; min-width: 0; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .visor-de { font-size: 11.5px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+    .visor-cerrar { background: var(--cream-dim); border: none; color: var(--cream); width: 36px; height: 36px; border-radius: 50%; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+    .visor-cuerpo { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; align-items: center; -webkit-overflow-scrolling: touch; }
+    .visor-cuerpo canvas, .visor-cuerpo img { width: 100%; max-width: 900px; height: auto; background: #fff; border-radius: 6px; }
+    .visor-cuerpo .vacio { margin: auto; }
+    .visor-pie { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--border-soft); display: flex; flex-direction: column; gap: 10px; }
+    .visor-mensaje { font-size: 13px; color: var(--text-secondary); line-height: 1.45; white-space: pre-wrap; max-height: 96px; overflow: auto; }
+    .visor-botones { display: flex; gap: 10px; }
+    .visor-botones a, .visor-botones button { flex: 1; text-align: center; text-decoration: none; padding: 13px; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 14px; cursor: pointer; }
+    .visor-descargar { background: var(--cream-dim); color: var(--cream); border: 1px solid var(--border-soft); }
+    .visor-confirmar { background: var(--gold); color: var(--night); border: none; }
+    .visor-confirmar:disabled { opacity: 0.6; }
+    .visor-ok { font-size: 13px; color: var(--green); text-align: center; }
     .volver { align-self: flex-start; background: none; border: none; color: var(--text-secondary); font-family: inherit; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 12px; }
 
     @media (prefers-reduced-motion: reduce) {
@@ -858,6 +879,12 @@
       <button class="pendiente-banner" id="inicio-pendientes" hidden>
         <span class="pb-icono">!</span>
         <span><span class="pb-titulo" id="pb-titulo"></span><span class="pb-texto" id="pb-texto" style="display:block"></span></span>
+        <span class="pb-flecha">›</span>
+      </button>
+
+      <button class="pendiente-banner doc-banner" id="inicio-documentos" hidden>
+        <span class="pb-icono"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></span>
+        <span><span class="pb-titulo" id="db-titulo"></span><span class="pb-texto" id="db-texto" style="display:block"></span></span>
         <span class="pb-flecha">›</span>
       </button>
 
@@ -1006,6 +1033,11 @@
       <div class="screen-subtitle">Vacaciones, permisos, incapacidades y justificaciones.</div>
       <button class="btn-primary" id="btn-nueva-solicitud" style="margin: 0 0 20px;">+ Nueva solicitud</button>
 
+      <div id="doc-bloque" hidden>
+        <div class="section-label">Documentos para vos</div>
+        <div class="sol-lista" id="doc-lista"></div>
+      </div>
+
       <div id="sol-justificar-bloque" hidden>
         <div class="section-label">Por justificar</div>
         <div class="sol-lista" id="sol-justificar"></div>
@@ -1116,6 +1148,22 @@
 
   </main>
 
+  <div class="visor" id="visor" hidden role="dialog" aria-modal="true" aria-labelledby="visor-titulo">
+    <div class="visor-cab">
+      <div class="visor-titulo"><div id="visor-titulo"></div><div class="visor-de" id="visor-de"></div></div>
+      <button class="visor-cerrar" id="visor-cerrar" aria-label="Cerrar">×</button>
+    </div>
+    <div class="visor-cuerpo" id="visor-cuerpo"></div>
+    <div class="visor-pie">
+      <div class="visor-mensaje" id="visor-mensaje" hidden></div>
+      <div class="visor-ok" id="visor-ok" hidden></div>
+      <div class="visor-botones">
+        <a class="visor-descargar" id="visor-descargar" hidden>Descargar</a>
+        <button class="visor-confirmar" id="visor-confirmar" hidden>Confirmar recibido</button>
+      </div>
+    </div>
+  </div>
+
   <nav class="bottom-nav" id="nav" hidden>
     <button class="nav-btn active" data-destino="screen-inicio">
       <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -1144,6 +1192,8 @@
   const CLAVE_PERFIL = 'samsara_perfil';
   const CLAVE_SOLICITUDES = 'samsara_solicitudes';
   const CLAVE_NOMINA = 'samsara_nomina';
+  const CLAVE_DOCUMENTOS = 'samsara_documentos';
+  const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
     VACACIONES: { grupo: 'SOLICITUD', fechas: true },
@@ -1200,7 +1250,12 @@
     cargandoPerfil: null,
     solicitudes: null,
     adjuntos: [],
-    enviando: false
+    enviando: false,
+    documentos: null,
+    docCache: {},
+    docAbierto: null,
+    docUrl: null,
+    cargandoPdf: null
   };
 
   document.getElementById('btn-registro').addEventListener('click', enviarRegistro);
@@ -1209,6 +1264,14 @@
   document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => navegar(b.dataset.destino)));
   document.getElementById('btn-nueva-solicitud').addEventListener('click', () => abrirFormulario(''));
   document.getElementById('inicio-pendientes').addEventListener('click', () => navegar('screen-solicitudes'));
+  document.getElementById('inicio-documentos').addEventListener('click', () => {
+    const pendientes = docsPendientes();
+    if (pendientes.length === 1) abrirDocumento(pendientes[0].id);
+    else navegar('screen-solicitudes');
+  });
+  document.getElementById('visor-cerrar').addEventListener('click', () => { if (history.state && history.state.visor) history.back(); else cerrarVisor(); });
+  document.getElementById('visor-confirmar').addEventListener('click', confirmarDocumento);
+  window.addEventListener('popstate', () => { if (!document.getElementById('visor').hidden) cerrarVisor(); });
   document.getElementById('btn-sol-volver').addEventListener('click', () => navegar('screen-solicitudes'));
   document.getElementById('sol-tipo').addEventListener('change', ajustarFormulario);
   document.getElementById('sol-desde').addEventListener('change', () => {
@@ -1234,6 +1297,7 @@
     try { estado.perfil = JSON.parse(leer(CLAVE_PERFIL) || 'null'); } catch (e) { estado.perfil = null; }
     try { estado.solicitudes = JSON.parse(leer(CLAVE_SOLICITUDES) || 'null'); } catch (e) { estado.solicitudes = null; }
     try { estado.nomina = JSON.parse(leer(CLAVE_NOMINA) || 'null'); } catch (e) { estado.nomina = null; }
+    try { estado.documentos = JSON.parse(leer(CLAVE_DOCUMENTOS) || 'null'); } catch (e) { estado.documentos = null; }
 
     if (ID_TIENDA) flujoTarjeta();
     else flujoInicio();
@@ -1266,6 +1330,7 @@
           guardar(CLAVE_PERFIL, JSON.stringify(data));
           sincronizarAlmuerzo();
           cargarNomina();
+          cargarDocumentos();
         } else if (data.codigo === 'DISPOSITIVO_NO_REGISTRADO' || data.codigo === 'DISPOSITIVO_INACTIVO') {
           estado.perfil = null;
           guardar(CLAVE_PERFIL, null);
@@ -1520,6 +1585,7 @@
     pintarSemana();
     actualizarAlmuerzo();
     pintarPendientes();
+    pintarAvisoDocumentos();
     pintarNomina();
     if (!estado.solicitudes && estado.perfil) cargarSolicitudes();
   }
@@ -1529,7 +1595,8 @@
     const lista = (desdeSolicitudes || (estado.perfil && estado.perfil.pendientes) || []).filter(i => new Date(i.limite) > ahora());
     const banner = document.getElementById('inicio-pendientes');
     banner.hidden = !lista.length;
-    document.getElementById('nav-punto').hidden = !lista.length;
+    estado.justificacionesPendientes = lista.length;
+    actualizarPunto();
     if (!lista.length) return;
     const primera = lista.slice().sort((a, b) => a.limite < b.limite ? -1 : 1)[0];
     const horas = Math.max(0, Math.floor((new Date(primera.limite) - ahora()) / 3600000));
@@ -1965,7 +2032,9 @@
     if (id === 'screen-estados') pintarEstados();
     if (id === 'screen-solicitudes') {
       pintarSolicitudes();
+      pintarDocumentos();
       cargarSolicitudes();
+      cargarDocumentos();
     }
     mostrar(id);
     if (id === 'screen-estados') animarAnillo();
@@ -2108,6 +2177,205 @@
     anillo.setAttribute('stroke-dasharray', circ.toFixed(1));
     requestAnimationFrame(() => anillo.setAttribute('stroke-dashoffset', (circ * (1 - pct / 100)).toFixed(1)));
   }
+  function actualizarPunto() {
+    document.getElementById('nav-punto').hidden = !(estado.justificacionesPendientes || docsPendientes().length);
+  }
+
+  function listaDocumentos() {
+    return estado.documentos && estado.documentos.documentos ? estado.documentos.documentos : [];
+  }
+
+  function docPendiente(d) {
+    return !d.leido || (d.confirmar && !d.confirmado);
+  }
+
+  function docsPendientes() {
+    return listaDocumentos().filter(docPendiente);
+  }
+
+  function guardarDocumentos() {
+    guardar(CLAVE_DOCUMENTOS, estado.documentos ? JSON.stringify(estado.documentos) : null);
+  }
+
+  function cargarDocumentos() {
+    if (estado.cargandoDocs || !estado.dispositivo) return;
+    estado.cargandoDocs = true;
+    llamar({ accion: 'doc_mios', token: estado.dispositivo })
+      .then(data => {
+        if (!data.ok) return;
+        estado.documentos = data;
+        guardarDocumentos();
+        pintarDocumentos();
+        pintarAvisoDocumentos();
+      })
+      .catch(() => {})
+      .finally(() => { estado.cargandoDocs = false; });
+  }
+
+  function pintarAvisoDocumentos() {
+    const pendientes = docsPendientes();
+    const banner = document.getElementById('inicio-documentos');
+    banner.hidden = !pendientes.length;
+    actualizarPunto();
+    if (!pendientes.length) return;
+    const nuevos = pendientes.filter(d => !d.leido);
+    const primero = nuevos[0] || pendientes[0];
+    if (nuevos.length) {
+      document.getElementById('db-titulo').textContent = nuevos.length === 1 ? 'Tenés un documento nuevo' : 'Tenés ' + nuevos.length + ' documentos nuevos';
+      document.getElementById('db-texto').textContent = primero.titulo + ' · de ' + primero.de;
+    } else {
+      document.getElementById('db-titulo').textContent = pendientes.length === 1 ? 'Confirmá que recibiste un documento' : 'Confirmá ' + pendientes.length + ' documentos';
+      document.getElementById('db-texto').textContent = primero.titulo;
+    }
+  }
+
+  function pintarDocumentos() {
+    const docs = listaDocumentos();
+    document.getElementById('doc-bloque').hidden = !docs.length;
+    const cont = document.getElementById('doc-lista');
+    cont.innerHTML = '';
+    docs.slice(0, 40).forEach(d => {
+      const card = document.createElement('div');
+      card.className = 'sol-card' + (docPendiente(d) ? ' doc-nuevo' : '');
+      card.innerHTML = '<div class="sol-cabecera"><div class="sol-tipo"></div><span class="history-badge"></span></div><div class="sol-meta"></div><button class="btn-mini">Ver documento</button>';
+      card.querySelector('.sol-tipo').textContent = d.titulo;
+      const badge = card.querySelector('.history-badge');
+      const b = !d.leido ? ['Nuevo', 'gold'] : d.confirmar && !d.confirmado ? ['Por confirmar', 'amber'] : d.confirmado ? ['Recibido ✓', 'green'] : ['Visto', 'neutral'];
+      badge.textContent = b[0];
+      badge.classList.add('badge-' + b[1]);
+      card.querySelector('.sol-meta').textContent = 'De ' + d.de + ' · ' + new Date(d.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'short' });
+      card.querySelector('button').addEventListener('click', () => abrirDocumento(d.id));
+      cont.appendChild(card);
+    });
+  }
+
+  function cargarPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (estado.cargandoPdf) return estado.cargandoPdf;
+    estado.cargandoPdf = new Promise((ok, mal) => {
+      const s = document.createElement('script');
+      s.src = PDFJS + 'pdf.min.js';
+      s.onload = () => {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js';
+        ok(window.pdfjsLib);
+      };
+      s.onerror = () => { estado.cargandoPdf = null; mal(new Error('visor')); };
+      document.head.appendChild(s);
+    });
+    return estado.cargandoPdf;
+  }
+
+  function pintarBotonesVisor(d) {
+    const confirmar = document.getElementById('visor-confirmar');
+    const ok = document.getElementById('visor-ok');
+    confirmar.hidden = !(d.confirmar && !d.confirmado);
+    confirmar.disabled = false;
+    confirmar.textContent = 'Confirmar recibido';
+    ok.hidden = !(d.confirmar && d.confirmado);
+    ok.textContent = d.confirmado ? 'Confirmaste que lo recibiste ✓' : '';
+  }
+
+  async function abrirDocumento(id) {
+    const d = listaDocumentos().find(x => x.id === id);
+    if (!d) return;
+    estado.docAbierto = id;
+    const visor = document.getElementById('visor');
+    const cuerpo = document.getElementById('visor-cuerpo');
+    const descargar = document.getElementById('visor-descargar');
+    document.getElementById('visor-titulo').textContent = d.titulo;
+    document.getElementById('visor-de').textContent = 'De ' + d.de + ' · ' + new Date(d.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long' });
+    const mensaje = document.getElementById('visor-mensaje');
+    mensaje.textContent = d.mensaje || '';
+    mensaje.hidden = !d.mensaje;
+    descargar.hidden = true;
+    pintarBotonesVisor(d);
+    cuerpo.innerHTML = '<div class="vacio"><div class="spinner" style="margin:0 auto 12px"></div>Abriendo documento…</div>';
+    if (visor.hidden) {
+      visor.hidden = false;
+      history.pushState({ visor: true }, '');
+    }
+    try {
+      let c = estado.docCache[id];
+      if (!c) {
+        const r = await llamar({ accion: 'doc_ver', token: estado.dispositivo, id: id });
+        if (!r.ok) throw new Error(r.mensaje || 'No se pudo abrir el documento.');
+        c = r;
+        estado.docCache[id] = r;
+      }
+      if (estado.docAbierto !== id) return;
+      if (!d.leido) {
+        d.leido = new Date().toISOString();
+        guardarDocumentos();
+        pintarDocumentos();
+        pintarAvisoDocumentos();
+      }
+      const bytes = Uint8Array.from(atob(c.datos), ch => ch.charCodeAt(0));
+      if (estado.docUrl) URL.revokeObjectURL(estado.docUrl);
+      estado.docUrl = URL.createObjectURL(new Blob([bytes], { type: c.tipo }));
+      descargar.href = estado.docUrl;
+      descargar.download = c.nombre;
+      descargar.hidden = false;
+      if (c.tipo === 'application/pdf') {
+        let lib;
+        try { lib = await cargarPdfJs(); } catch (e) {
+          cuerpo.innerHTML = '<div class="vacio">No se pudo mostrar la vista previa. Tocá Descargar para abrirlo.</div>';
+          return;
+        }
+        const pdf = await lib.getDocument({ data: bytes }).promise;
+        if (estado.docAbierto !== id) return;
+        cuerpo.innerHTML = '';
+        const ancho = Math.min(cuerpo.clientWidth - 24, 900);
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        for (let i = 1; i <= pdf.numPages; i++) {
+          if (estado.docAbierto !== id) return;
+          const pagina = await pdf.getPage(i);
+          const vp = pagina.getViewport({ scale: ancho * dpr / pagina.getViewport({ scale: 1 }).width });
+          const canvas = document.createElement('canvas');
+          canvas.width = vp.width;
+          canvas.height = vp.height;
+          cuerpo.appendChild(canvas);
+          await pagina.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+        }
+      } else {
+        const img = document.createElement('img');
+        img.alt = d.titulo;
+        img.src = estado.docUrl;
+        cuerpo.innerHTML = '';
+        cuerpo.appendChild(img);
+      }
+    } catch (e) {
+      if (estado.docAbierto === id) cuerpo.innerHTML = '<div class="vacio">' + (e && e.message && e.message !== 'Failed to fetch' ? e.message : 'Sin conexión. Intentá de nuevo.') + '</div>';
+    }
+  }
+
+  function cerrarVisor() {
+    document.getElementById('visor').hidden = true;
+    document.getElementById('visor-cuerpo').innerHTML = '';
+    estado.docAbierto = null;
+    if (estado.docUrl) { URL.revokeObjectURL(estado.docUrl); estado.docUrl = null; }
+  }
+
+  async function confirmarDocumento() {
+    const d = listaDocumentos().find(x => x.id === estado.docAbierto);
+    if (!d) return;
+    const boton = document.getElementById('visor-confirmar');
+    boton.disabled = true;
+    boton.textContent = 'Confirmando…';
+    try {
+      const r = await llamar({ accion: 'doc_confirmar', token: estado.dispositivo, id: d.id });
+      if (!r.ok) throw new Error(r.mensaje);
+      d.confirmado = r.confirmado;
+      d.leido = d.leido || r.confirmado;
+      guardarDocumentos();
+      pintarDocumentos();
+      pintarAvisoDocumentos();
+      pintarBotonesVisor(d);
+    } catch (e) {
+      boton.disabled = false;
+      boton.textContent = 'No se pudo confirmar. Reintentar';
+    }
+  }
+
   function cargarSolicitudes() {
     document.getElementById('sol-actualizado').textContent = 'Actualizando…';
     return llamar({ accion: 'solicitud_resumen', token: estado.dispositivo })
