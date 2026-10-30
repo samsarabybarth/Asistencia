@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0f0f1a">
+  <meta name="theme-color" content="#1A1A2E">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,595 +15,1305 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0f0f1a;
-      --surface: #1A1A2E;
-      --surface2: #252544;
+      --night: #1A1A2E;
+      --night-deep: #14142A;
+      --night-mid: #252544;
+      --night-soft: #2D2D4A;
       --gold: #C8A96E;
-      --gold-light: #e2c98e;
+      --gold-light: #E0C98A;
+      --gold-dim: rgba(200,169,110,0.15);
       --cream: #F5F0E8;
-      --cream-dim: rgba(245,240,232,0.6);
+      --cream-dim: rgba(245,240,232,0.07);
+      --text-primary: #F5F0E8;
+      --text-secondary: rgba(245,240,232,0.62);
+      --text-muted: rgba(245,240,232,0.38);
       --green: #4CAF7D;
+      --green-bg: rgba(76,175,125,0.12);
       --red: #E85D5D;
+      --red-bg: rgba(232,93,93,0.12);
       --amber: #F5A623;
-      --border: rgba(200,169,110,0.2);
-      --radius: 16px;
+      --amber-bg: rgba(245,166,35,0.12);
+      --border: rgba(200,169,110,0.18);
+      --border-soft: rgba(245,240,232,0.08);
       color-scheme: dark;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       height: 100%;
-      background: var(--bg);
-      color: var(--cream);
+      background: var(--night);
+      color: var(--text-primary);
       font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
       font-size: 15px;
+      line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    body { overflow-x: hidden; }
+    body { overflow: hidden; }
 
-    .screen {
-      display: none;
+    .app {
+      height: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100%;
-      padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+      padding-top: env(safe-area-inset-top, 0px);
     }
-    .screen.active { display: flex; }
 
-    .logo {
+    .app-header {
+      padding: 22px 24px 18px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 2px;
-      margin-bottom: 32px;
+      flex-shrink: 0;
     }
 
-    .logo-marca {
+    .brand-name {
       font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.32em;
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: 0.22em;
+      padding-left: 0.22em;
       text-transform: uppercase;
       color: var(--gold);
-      padding-left: 0.32em;
+      line-height: 1;
     }
 
-    .logo-firma {
+    .brand-firma {
       font-family: 'Cormorant Garamond', Georgia, serif;
       font-style: italic;
+      font-size: 15px;
       font-weight: 500;
-      font-size: 13px;
-      letter-spacing: 0.04em;
       color: var(--gold-light);
-      opacity: 0.75;
+      opacity: 0.8;
+      letter-spacing: 0.03em;
     }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px 26px;
-      width: 100%;
-      max-width: 380px;
+    .screens {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
     }
 
-    .card-title {
+    .screen {
+      position: absolute;
+      inset: 0;
+      padding: 4px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(24px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .screen.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    .screen.centrada { justify-content: center; }
+
+    .bottom-nav {
+      display: flex;
+      border-top: 1px solid var(--border-soft);
+      background: var(--night);
+      flex-shrink: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .bottom-nav[hidden] { display: none; }
+
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 11px 8px 13px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      transition: color 0.2s;
+    }
+
+    .nav-btn svg { fill: currentColor; }
+    .nav-btn.active { color: var(--gold); }
+
+    .screen-title {
       font-family: 'Cormorant Garamond', Georgia, serif;
       font-size: 24px;
-      font-weight: 600;
-      color: var(--gold);
-      margin-bottom: 6px;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 4px;
       text-wrap: balance;
     }
 
-    .card-sub {
+    .screen-subtitle {
       font-size: 13px;
-      color: var(--cream-dim);
-      margin-bottom: 28px;
+      color: var(--text-secondary);
+      margin-bottom: 22px;
       line-height: 1.5;
     }
 
-    .field { margin-bottom: 18px; }
-
-    .field label {
-      display: block;
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 8px;
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 14px;
     }
 
-    .field input, .field select {
-      width: 100%;
-      background: var(--surface2);
+    .form-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .form-input {
+      background: var(--cream-dim);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 13px 16px;
-      color: var(--cream);
+      padding: 13px 14px;
+      color: var(--text-primary);
       font-family: inherit;
       font-size: 16px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, background 0.2s;
+      width: 100%;
       appearance: none;
       -webkit-appearance: none;
     }
 
-    .field input:focus, .field select:focus { border-color: var(--gold); }
-    .field input::placeholder { color: rgba(245,240,232,0.3); }
+    .form-input:focus { border-color: var(--gold); background: rgba(200,169,110,0.08); }
+    .form-input option { background: var(--night-mid); color: var(--text-primary); }
+    .form-input::placeholder { color: var(--text-muted); }
 
-    .btn {
+    .btn-primary {
       width: 100%;
       padding: 15px;
-      border-radius: 12px;
+      background: var(--gold);
+      color: var(--night);
       border: none;
+      border-radius: 14px;
       font-family: inherit;
-      font-size: 15px;
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-primary:active { transform: scale(0.98); background: var(--gold-light); }
+    .btn-primary:disabled { opacity: 0.55; }
+
+    .btn-ghost {
+      width: 100%;
+      padding: 13px;
+      background: var(--cream-dim);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 13.5px;
       font-weight: 500;
       cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
       margin-top: 8px;
-    }
-
-    .btn:active { transform: scale(0.98); opacity: 0.85; }
-    .btn:disabled { opacity: 0.5; }
-    .btn-primary { background: var(--gold); color: #0f0f1a; }
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--cream-dim);
-      margin-top: 12px;
-    }
-
-    .marca-tipo {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 8px 18px;
-      font-size: 13px;
-      letter-spacing: 0.05em;
-      color: var(--gold);
-      margin-bottom: 24px;
-    }
-
-    .marca-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--gold);
-      flex-shrink: 0;
-    }
-
-    .nombre-grande {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 30px;
-      font-weight: 600;
-      color: var(--cream);
-      margin-bottom: 4px;
-    }
-
-    .tienda-label {
-      font-size: 12px;
-      color: var(--cream-dim);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 28px;
-    }
-
-    .hora-display {
-      font-size: 42px;
-      font-weight: 300;
-      color: var(--gold-light);
-      letter-spacing: -0.02em;
-      margin-bottom: 4px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .fecha-display {
-      font-size: 12px;
-      color: var(--cream-dim);
-      margin-bottom: 32px;
-    }
-
-    .icono-ok {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-      font-size: 28px;
-    }
-
-    .icono-ok.verde { background: rgba(76,175,125,0.15); color: var(--green); }
-    .icono-ok.rojo { background: rgba(232,93,93,0.15); color: var(--red); }
-    .icono-ok.amarillo { background: rgba(245,166,35,0.15); }
-    .icono-ok.dorado { background: rgba(200,169,110,0.12); color: var(--gold); }
-
-    .mensaje-confirmacion {
-      font-size: 16px;
-      color: var(--cream);
-      text-align: center;
-      line-height: 1.6;
-      margin-bottom: 8px;
-    }
-
-    .aviso-incidencia {
-      font-size: 13px;
-      color: var(--amber);
-      text-align: center;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-
-    .spinner {
-      width: 36px;
-      height: 36px;
-      border: 3px solid var(--border);
-      border-top-color: var(--gold);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 20px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .cargando-texto {
-      font-size: 14px;
-      color: var(--cream-dim);
-      text-align: center;
     }
 
     .error-inline {
       font-size: 13px;
       color: var(--red);
-      margin-top: 12px;
+      margin-top: 10px;
       text-align: center;
       min-height: 20px;
     }
 
-    .timeline {
+    .nfc-note {
       display: flex;
-      justify-content: space-between;
-      margin-bottom: 28px;
-      position: relative;
-    }
-
-    .timeline::before {
-      content: '';
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      height: 1px;
-      background: var(--border);
-      z-index: 0;
-    }
-
-    .tl-item {
-      display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 6px;
-      z-index: 1;
+      gap: 10px;
+      background: var(--gold-dim);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12.5px;
+      color: var(--gold-light);
+      line-height: 1.45;
     }
 
-    .tl-dot {
-      width: 28px;
-      height: 28px;
+    .nfc-note svg { fill: var(--gold); flex-shrink: 0; }
+
+    .colaboradora-card {
+      background: var(--night-soft);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 15px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .avatar {
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
-      border: 2px solid var(--border);
-      background: var(--surface);
+      background: var(--gold-dim);
+      border: 1.5px solid var(--gold);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 21px;
+      font-weight: 500;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .collab-info { flex: 1; min-width: 0; }
+
+    .collab-saludo {
       font-size: 11px;
-    }
-
-    .tl-dot.done { border-color: var(--green); background: rgba(76,175,125,0.15); }
-    .tl-dot.next { border-color: var(--gold); background: rgba(200,169,110,0.1); }
-
-    .tl-label {
-      font-size: 9px;
+      color: var(--text-muted);
       letter-spacing: 0.06em;
+    }
+
+    .collab-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .collab-store {
+      font-size: 12px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 1px;
+      text-transform: capitalize;
+    }
+
+    .collab-store svg { fill: var(--gold); flex-shrink: 0; }
+
+    .time-display { text-align: center; margin-bottom: 4px; }
+
+    .time-big {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 58px;
+      font-weight: 300;
+      color: var(--cream);
+      letter-spacing: -0.01em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .time-date {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--cream-dim);
+      margin-top: 6px;
+    }
+
+    .marca-type-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--night-soft);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 8px 20px;
+      margin: 16px auto;
+      width: fit-content;
+      max-width: 100%;
+    }
+
+    .marca-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse-dot 2s ease infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    .marca-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .schedule-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: var(--cream-dim);
+      border-radius: 12px;
+      padding: 11px 12px;
+      margin-bottom: 18px;
+    }
+
+    .sched-item { text-align: center; min-width: 0; }
+    .sched-label { font-size: 9.5px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .sched-value { font-size: 14px; font-weight: 600; color: var(--cream); font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+    .mark-btn {
+      width: 100%;
+      padding: 19px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--night);
+      border: none;
+      border-radius: 18px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 8px 24px rgba(200,169,110,0.25);
+    }
+
+    .mark-btn:active { transform: scale(0.97); box-shadow: 0 4px 12px rgba(200,169,110,0.15); }
+    .mark-btn:disabled { opacity: 0.6; }
+    .mark-btn svg { fill: var(--night); }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 22px 0 8px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .history-item:last-child { border-bottom: none; }
+    .history-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--text-muted); }
+    .dot-green { background: var(--green); }
+    .dot-amber { background: var(--amber); }
+    .dot-red { background: var(--red); }
+    .history-text { flex: 1; font-size: 13.5px; color: var(--text-secondary); }
+    .history-time { font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--text-muted); min-width: 40px; text-align: right; }
+
+    .history-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 100px;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .badge-green { background: var(--green-bg); color: var(--green); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); }
+    .badge-red { background: var(--red-bg); color: var(--red); }
+    .badge-neutral { background: var(--cream-dim); color: var(--text-muted); }
+
+    .vacio {
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 10px 0;
+    }
+
+    .almuerzo-card {
+      background: var(--night-soft);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .almuerzo-card[hidden] { display: none; }
+    .almuerzo-card.alerta { border-color: rgba(245,166,35,0.45); }
+    .almuerzo-card.excedido { border-color: rgba(232,93,93,0.5); background: rgba(232,93,93,0.06); }
+
+    .anillo { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
+    .anillo svg { transform: rotate(-90deg); }
+    .anillo-fondo { fill: none; stroke: var(--border-soft); stroke-width: 7; }
+    .anillo-progreso { fill: none; stroke: var(--gold); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 0.9s linear, stroke 0.3s; }
+    .alerta .anillo-progreso { stroke: var(--amber); }
+    .excedido .anillo-progreso { stroke: var(--red); }
+
+    .anillo-centro {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cuenta {
+      font-size: 21px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--cream);
+      line-height: 1.1;
+    }
+
+    .alerta .cuenta { color: var(--amber); }
+    .excedido .cuenta { color: var(--red); }
+    .cuenta-unidad { font-size: 9.5px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .almuerzo-info { flex: 1; min-width: 0; }
+
+    .almuerzo-titulo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 21px;
+      color: var(--cream);
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+
+    .almuerzo-detalle { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+    .almuerzo-detalle strong { color: var(--cream); font-weight: 600; }
+
+    .dia-card {
+      background: var(--cream-dim);
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 13px 15px;
+      margin-bottom: 10px;
+    }
+
+    .dia-card.hoy { border-color: var(--border); background: var(--night-soft); }
+
+    .dia-cabecera {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .dia-nombre { font-size: 14px; font-weight: 600; color: var(--cream); text-transform: capitalize; }
+    .dia-hoy { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--gold); margin-left: 6px; }
+    .dia-horario { font-size: 12.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; text-align: right; }
+    .dia-marcas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    .dia-marcas:empty { display: none; }
+
+    .chip {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 100px;
+      background: var(--cream-dim);
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chip.green { background: var(--green-bg); color: var(--green); }
+    .chip.amber { background: var(--amber-bg); color: var(--amber); }
+    .chip.red { background: var(--red-bg); color: var(--red); }
+
+    .confirm-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
-      max-width: 52px;
-      line-height: 1.3;
+      padding-top: 8px;
     }
 
-    .tl-label.next { color: var(--gold); }
-
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 20px 0;
+    .status-icon-wrap {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      position: relative;
+      font-size: 38px;
+      line-height: 1;
     }
+
+    .status-icon-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      opacity: 0.25;
+    }
+
+    .status-icon-wrap.success { background: var(--green-bg); color: var(--green); }
+    .status-icon-wrap.warning { background: var(--red-bg); color: var(--red); }
+    .status-icon-wrap.alert { background: var(--amber-bg); color: var(--amber); }
+    .status-icon-wrap.gold { background: var(--gold-dim); color: var(--gold); }
+
+    .confirm-status-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .confirm-status-label.green { color: var(--green); }
+    .confirm-status-label.red { color: var(--red); }
+    .confirm-status-label.amber { color: var(--amber); }
+    .confirm-status-label.gold { color: var(--gold); }
+
+    .confirm-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 8px;
+      text-wrap: balance;
+    }
+
+    .confirm-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 300px;
+      margin: 0 auto 22px;
+    }
+
+    .alert-callout {
+      background: var(--red-bg);
+      border: 1px solid rgba(232,93,93,0.25);
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 12.5px;
+      color: var(--red);
+      line-height: 1.5;
+      text-align: left;
+      align-self: stretch;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .alert-callout.amber-alert {
+      background: var(--amber-bg);
+      border-color: rgba(245,166,35,0.25);
+      color: var(--amber);
+    }
+
+    .alert-callout[hidden] { display: none; }
+
+    .confirm-detail-card {
+      background: var(--cream-dim);
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-self: stretch;
+      margin-bottom: 18px;
+    }
+
+    .detail-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .detail-key { font-size: 12px; color: var(--text-muted); letter-spacing: 0.04em; }
+    .detail-val { font-size: 13.5px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; text-align: right; }
+    .detail-val.green { color: var(--green); }
+    .detail-val.red { color: var(--red); }
+    .detail-val.amber { color: var(--amber); }
+
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 18px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .cargando-texto { font-size: 14px; color: var(--text-secondary); text-align: center; }
+
+    .proximo-card {
+      background: var(--cream-dim);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      padding: 26px 20px;
+      text-align: center;
+    }
+
+    .proximo-card .screen-title { margin-bottom: 8px; }
 
     @media (prefers-reduced-motion: reduce) {
-      .spinner { animation-duration: 2s; }
-      .btn { transition: none; }
+      .screen { transition: none; }
+      .marca-dot, .spinner { animation-duration: 3s; }
     }
   </style>
 </head>
 <body>
+<div class="app">
+  <header class="app-header">
+    <div class="brand-name">Samsara</div>
+    <div class="brand-firma">by Barth</div>
+  </header>
 
-<div class="screen active" id="screen-cargando">
-  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
-  <div class="card" style="text-align:center; padding: 48px 26px;">
-    <div class="spinner"></div>
-    <div class="cargando-texto">Verificando dispositivo…</div>
-  </div>
-</div>
+  <main class="screens">
 
-<div class="screen" id="screen-sin-tienda">
-  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
-  <div class="card" style="text-align:center;">
-    <div class="icono-ok dorado">◎</div>
-    <div class="card-title">Acercá tu celular a la tarjeta</div>
-    <div class="card-sub" style="margin-bottom:0;">Para marcar, acercá el celular a la tarjeta NFC de tu tienda.</div>
-  </div>
-</div>
+    <section class="screen centrada active" id="screen-cargando">
+      <div class="spinner"></div>
+      <div class="cargando-texto" id="cargando-texto">Cargando…</div>
+    </section>
 
-<div class="screen" id="screen-registro">
-  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
-  <div class="card">
-    <div class="card-title">Primer registro</div>
-    <div class="card-sub">Este dispositivo no está vinculado a ninguna colaboradora. Completá tus datos para activarlo.</div>
-
-    <div class="field">
-      <label for="reg-pais">País</label>
-      <select id="reg-pais">
-        <option value="">Seleccioná tu país</option>
-        <option value="CR">Costa Rica</option>
-        <option value="CO">Colombia</option>
-        <option value="ES">España</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="reg-nombre">Nombre completo</label>
-      <input type="text" id="reg-nombre" placeholder="Tal como aparece en tu contrato" autocomplete="name">
-    </div>
-
-    <div class="field">
-      <label for="reg-documento">Número de documento</label>
-      <input type="text" id="reg-documento" placeholder="Cédula / DNI / NIF" autocomplete="off">
-    </div>
-
-    <button class="btn btn-primary" id="btn-registro">Activar dispositivo</button>
-    <div class="error-inline" id="reg-error"></div>
-  </div>
-</div>
-
-<div class="screen" id="screen-marca">
-  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
-  <div class="card">
-
-    <div class="timeline">
-      <div class="tl-item">
-        <div class="tl-dot" id="tl-entrada">↗</div>
-        <div class="tl-label">Entrada</div>
+    <section class="screen centrada" id="screen-sin-registro">
+      <div class="confirm-wrap">
+        <div class="status-icon-wrap gold">◎</div>
+        <div class="confirm-title">Activá tu dispositivo</div>
+        <div class="confirm-desc">Para registrarte la primera vez, acercá el celular a la tarjeta NFC de tu tienda.</div>
       </div>
-      <div class="tl-item">
-        <div class="tl-dot" id="tl-als">☀</div>
-        <div class="tl-label">Sal. almuerzo</div>
+    </section>
+
+    <section class="screen" id="screen-registro">
+      <div class="screen-title">Registro inicial</div>
+      <div class="screen-subtitle">Solo la primera vez. Vincula este dispositivo a tu perfil.</div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-pais">País</label>
+        <select class="form-input" id="reg-pais">
+          <option value="">Seleccioná tu país</option>
+          <option value="CR">🇨🇷 Costa Rica</option>
+          <option value="CO">🇨🇴 Colombia</option>
+          <option value="ES">🇪🇸 España</option>
+        </select>
       </div>
-      <div class="tl-item">
-        <div class="tl-dot" id="tl-alr">↩</div>
-        <div class="tl-label">Reg. almuerzo</div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-nombre">Nombre completo</label>
+        <input class="form-input" type="text" id="reg-nombre" placeholder="Tal como aparece en tu contrato" autocomplete="name">
       </div>
-      <div class="tl-item">
-        <div class="tl-dot" id="tl-salida">↙</div>
-        <div class="tl-label">Salida</div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-documento">Cédula / DNI / NIF</label>
+        <input class="form-input" type="text" id="reg-documento" placeholder="Número de documento" autocomplete="off">
       </div>
-    </div>
 
-    <div class="hora-display" id="hora-live">--:--</div>
-    <div class="fecha-display" id="fecha-live">--</div>
+      <button class="btn-primary" id="btn-registro">Vincular dispositivo →</button>
+      <div class="error-inline" id="reg-error"></div>
 
-    <div class="marca-tipo">
-      <div class="marca-dot"></div>
-      <span id="tipo-marca-label">Cargando…</span>
-    </div>
+      <div class="nfc-note" style="margin-top: 6px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 18H4V6h2v12zm4 0H8V6h2l4 6.7V6h2v12h-2l-4-6.7V18zm10 0h-2V6h2v12z"/></svg>
+        Este dispositivo quedará vinculado a tu perfil. Para marcar, solo acercá el celular a la tarjeta de tu tienda.
+      </div>
+    </section>
 
-    <div class="nombre-grande" id="marca-nombre">--</div>
-    <div class="tienda-label" id="marca-tienda">--</div>
+    <section class="screen" id="screen-inicio">
+      <div class="colaboradora-card">
+        <div class="avatar" id="inicio-avatar">·</div>
+        <div class="collab-info">
+          <div class="collab-saludo" id="inicio-saludo">Hola</div>
+          <div class="collab-name" id="inicio-nombre">—</div>
+          <div class="collab-store">
+            <svg width="10" height="10" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <span id="inicio-tienda">—</span>
+          </div>
+        </div>
+      </div>
 
-    <button class="btn btn-primary" id="btn-marcar">Registrar marca</button>
-    <div class="error-inline" id="marca-error"></div>
-  </div>
-</div>
+      <div class="almuerzo-card" id="almuerzo-card" hidden>
+        <div class="anillo">
+          <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
+            <circle class="anillo-fondo" cx="48" cy="48" r="42"></circle>
+            <circle class="anillo-progreso" id="anillo-progreso" cx="48" cy="48" r="42" stroke-dasharray="263.9" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="anillo-centro">
+            <div class="cuenta" id="almuerzo-cuenta">60:00</div>
+            <div class="cuenta-unidad" id="almuerzo-unidad">restantes</div>
+          </div>
+        </div>
+        <div class="almuerzo-info">
+          <div class="almuerzo-titulo" id="almuerzo-titulo">En almuerzo</div>
+          <div class="almuerzo-detalle" id="almuerzo-detalle"></div>
+        </div>
+      </div>
 
-<div class="screen" id="screen-procesando">
-  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
-  <div class="card" style="text-align:center; padding: 48px 26px;">
-    <div class="spinner"></div>
-    <div class="cargando-texto" id="procesando-texto">Registrando tu marca…</div>
-  </div>
-</div>
+      <div class="section-label" style="margin-top: 4px;">Tu horario de hoy</div>
+      <div class="schedule-row">
+        <div class="sched-item">
+          <div class="sched-label">Entrada</div>
+          <div class="sched-value" id="inicio-entrada">—</div>
+        </div>
+        <div class="sched-item">
+          <div class="sched-label">Almuerzo</div>
+          <div class="sched-value" id="inicio-almuerzo">60 min</div>
+        </div>
+        <div class="sched-item">
+          <div class="sched-label">Salida</div>
+          <div class="sched-value" id="inicio-salida">—</div>
+        </div>
+      </div>
 
-<div class="screen" id="screen-resultado">
-  <div class="logo"><span class="logo-marca">Samsara</span><span class="logo-firma">by Barth</span></div>
-  <div class="card" style="text-align:center;">
-    <div class="icono-ok verde" id="resultado-icono">✓</div>
-    <div class="mensaje-confirmacion" id="resultado-mensaje"></div>
-    <div class="aviso-incidencia" id="resultado-aviso"></div>
-    <div class="divider"></div>
-    <button class="btn btn-ghost" id="btn-cerrar">Cerrar</button>
-  </div>
+      <div class="nfc-note">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 18H4V6h2v12zm4 0H8V6h2l4 6.7V6h2v12h-2l-4-6.7V18zm10 0h-2V6h2v12z"/></svg>
+        <span id="inicio-proxima">Para marcar, acercá el celular a la tarjeta NFC de tu tienda.</span>
+      </div>
+
+      <div class="section-label">Marcas de hoy</div>
+      <div id="inicio-historial"></div>
+    </section>
+
+    <section class="screen" id="screen-marcar">
+      <div class="colaboradora-card">
+        <div class="avatar" id="marcar-avatar">·</div>
+        <div class="collab-info">
+          <div class="collab-name" id="marcar-nombre">—</div>
+          <div class="collab-store">
+            <svg width="10" height="10" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <span id="marcar-tienda">—</span>
+          </div>
+        </div>
+        <div class="history-badge badge-green">Activa</div>
+      </div>
+
+      <div class="time-display">
+        <div class="time-big" id="reloj-hora">--:--</div>
+        <div class="time-date" id="reloj-fecha">—</div>
+      </div>
+
+      <div class="marca-type-badge">
+        <span class="marca-dot"></span>
+        <span class="marca-label" id="marcar-proxima">Próxima marca</span>
+      </div>
+
+      <div class="schedule-row">
+        <div class="sched-item">
+          <div class="sched-label">Entrada</div>
+          <div class="sched-value" id="marcar-entrada">—</div>
+        </div>
+        <div class="sched-item">
+          <div class="sched-label">Almuerzo</div>
+          <div class="sched-value" id="marcar-almuerzo">60 min</div>
+        </div>
+        <div class="sched-item">
+          <div class="sched-label">Salida</div>
+          <div class="sched-value" id="marcar-salida">—</div>
+        </div>
+      </div>
+
+      <button class="mark-btn" id="btn-marcar">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        <span id="btn-marcar-texto">Registrar marca</span>
+      </button>
+      <div class="error-inline" id="marca-error"></div>
+
+      <div class="section-label" style="margin-top: 8px;">Marcas de hoy</div>
+      <div id="marcar-historial"></div>
+    </section>
+
+    <section class="screen" id="screen-semana">
+      <div class="screen-title">Mi semana</div>
+      <div class="screen-subtitle" id="semana-rango">—</div>
+      <div id="semana-lista"></div>
+    </section>
+
+    <section class="screen" id="screen-solicitudes">
+      <div class="screen-title">Solicitudes</div>
+      <div class="screen-subtitle">Vacaciones, permisos e incapacidades.</div>
+      <div class="proximo-card">
+        <div class="status-icon-wrap gold" style="margin: 0 auto 16px; width: 64px; height: 64px; font-size: 26px;">✎</div>
+        <div class="screen-title">Muy pronto</div>
+        <div class="screen-subtitle" style="margin-bottom: 0;">Desde aquí vas a poder enviar tus solicitudes y adjuntar comprobantes. Mientras tanto, gestionalas con tu coordinadora.</div>
+      </div>
+    </section>
+
+    <section class="screen centrada" id="screen-procesando">
+      <div class="spinner"></div>
+      <div class="cargando-texto" id="procesando-texto">Registrando tu marca…</div>
+    </section>
+
+    <section class="screen" id="screen-resultado">
+      <div class="confirm-wrap">
+        <div class="status-icon-wrap success" id="res-icono">✓</div>
+        <div class="confirm-status-label green" id="res-etiqueta">Marca registrada</div>
+        <div class="confirm-title" id="res-titulo">¡Entrada registrada!</div>
+        <div class="confirm-desc" id="res-desc"></div>
+        <div class="alert-callout" id="res-callout" hidden>
+          <span id="res-callout-icono">⚠</span>
+          <span id="res-callout-texto"></span>
+        </div>
+        <div class="confirm-detail-card" id="res-detalle"></div>
+        <button class="btn-primary" id="btn-res-principal" style="align-self: stretch;">Volver al inicio</button>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav" id="nav" hidden>
+    <button class="nav-btn active" data-destino="screen-inicio">
+      <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Inicio
+    </button>
+    <button class="nav-btn" data-destino="screen-semana">
+      <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+      Mi semana
+    </button>
+    <button class="nav-btn" data-destino="screen-solicitudes">
+      <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      Solicitudes
+    </button>
+  </nav>
 </div>
 
 <script>
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_DISPOSITIVO = 'samsara_token';
+  const CLAVE_ALMUERZO = 'samsara_almuerzo';
+  const ID_TIENDA = (new URLSearchParams(location.search).get('tienda') || '').trim().toUpperCase();
 
-  const parametros = new URLSearchParams(location.search);
-  const ID_TIENDA = (parametros.get('tienda') || '').trim().toUpperCase();
-
-  const TIPO_LABELS = {
-    ENTRADA: 'Registrar entrada',
+  const NOMBRES_MARCA = {
+    ENTRADA: 'Entrada',
     ALMUERZO_SALIDA: 'Salida a almuerzo',
     ALMUERZO_REGRESO: 'Regreso de almuerzo',
-    SALIDA: 'Registrar salida'
+    SALIDA: 'Salida'
   };
 
-  const TL_IDS = ['tl-entrada', 'tl-als', 'tl-alr', 'tl-salida'];
-  const TL_TIPOS = ['ENTRADA', 'ALMUERZO_SALIDA', 'ALMUERZO_REGRESO', 'SALIDA'];
+  const ESTADOS_DIA = {
+    DESCANSO: 'Libre',
+    VACACIONES: 'Vacaciones',
+    INCAPACIDAD: 'Incapacidad',
+    DIA_FAMILIA: 'Día de la familia',
+    CUMPLEANOS: 'Cumpleaños',
+    PERMISO_CON_GOCE: 'Permiso',
+    PERMISO_SIN_GOCE: 'Permiso sin goce',
+    LICENCIA: 'Licencia',
+    ASUNTOS_PROPIOS: 'Asuntos propios',
+    FESTIVO: 'Festivo',
+    CITA_MEDICA: 'Cita médica',
+    AUSENTE: 'Ausente'
+  };
 
-  let dispositivo = null;
-  let tipoMarcaActual = null;
-  let relojInterval = null;
+  const estado = {
+    dispositivo: null,
+    perfil: null,
+    verificacion: null,
+    desfase: 0,
+    almuerzo: null,
+    intervaloReloj: null,
+    intervaloAlmuerzo: null
+  };
 
   document.getElementById('btn-registro').addEventListener('click', enviarRegistro);
   document.getElementById('btn-marcar').addEventListener('click', confirmarMarca);
-  document.getElementById('btn-cerrar').addEventListener('click', reiniciar);
-
-  window.addEventListener('load', () => {
-    dispositivo = leerDispositivo();
-    if (!dispositivo) {
-      dispositivo = generarDispositivo();
-      guardarDispositivo(dispositivo);
-    }
-    if (!ID_TIENDA) {
-      mostrarPantalla('screen-sin-tienda');
-      return;
-    }
-    verificarDispositivo();
+  document.getElementById('btn-res-principal').addEventListener('click', () => irAInicio(true));
+  document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => navegar(b.dataset.destino)));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && estado.perfil && pantallaActual() === 'screen-inicio') cargarPerfil().then(pintarInicio).catch(() => {});
   });
 
-  function leerDispositivo() {
-    try { return localStorage.getItem(CLAVE_DISPOSITIVO); } catch (e) { return null; }
+  window.addEventListener('load', iniciar);
+
+  function iniciar() {
+    estado.dispositivo = leer(CLAVE_DISPOSITIVO);
+    if (!estado.dispositivo) {
+      estado.dispositivo = 'T' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 7).toUpperCase();
+      guardar(CLAVE_DISPOSITIVO, estado.dispositivo);
+    }
+    try { estado.almuerzo = JSON.parse(leer(CLAVE_ALMUERZO) || 'null'); } catch (e) { estado.almuerzo = null; }
+
+    if (ID_TIENDA) flujoTarjeta();
+    else flujoInicio();
   }
 
-  function guardarDispositivo(valor) {
-    try { localStorage.setItem(CLAVE_DISPOSITIVO, valor); } catch (e) {}
+  function leer(clave) {
+    try { return localStorage.getItem(clave); } catch (e) { return null; }
   }
 
-  function generarDispositivo() {
-    return 'T' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 7).toUpperCase();
+  function guardar(clave, valor) {
+    try {
+      if (valor === null) localStorage.removeItem(clave);
+      else localStorage.setItem(clave, valor);
+    } catch (e) {}
   }
 
   async function llamar(datos) {
-    const res = await fetch(ENDPOINT, {
-      method: 'POST',
-      body: JSON.stringify(datos),
-      redirect: 'follow'
-    });
+    const res = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(datos), redirect: 'follow' });
     return res.json();
   }
 
-  async function verificarDispositivo() {
-    try {
-      const data = await llamar({
-        accion: 'verificar_dispositivo',
-        token: dispositivo,
-        id_tienda: ID_TIENDA,
-        timestamp_dispositivo: new Date().toISOString()
-      });
+  async function cargarPerfil() {
+    const enviado = Date.now();
+    const data = await llamar({ accion: 'inicio', token: estado.dispositivo });
+    if (data.ok) {
+      estado.perfil = data;
+      if (data.ahora) estado.desfase = new Date(data.ahora).getTime() - Math.round((enviado + Date.now()) / 2);
+      sincronizarAlmuerzo();
+    }
+    return data;
+  }
 
-      if (data.codigo === 'DISPOSITIVO_NO_REGISTRADO') {
-        mostrarPantalla('screen-registro');
-      } else if (data.ok) {
-        prepararPantallaMarca(data);
-      } else {
-        mostrarResultado(false, data.mensaje || 'No se pudo verificar el dispositivo.', '');
-      }
+  function ahora() {
+    return new Date(Date.now() + estado.desfase);
+  }
+
+  async function flujoInicio() {
+    mostrar('screen-cargando', 'Cargando…');
+    try {
+      const data = await cargarPerfil();
+      if (data.codigo === 'DISPOSITIVO_NO_REGISTRADO') return mostrar('screen-sin-registro');
+      if (!data.ok) return mostrarError(data.mensaje || 'No se pudo cargar tu información.', false);
+      pintarInicio();
+      navegar('screen-inicio');
     } catch (e) {
-      mostrarResultado(false, 'Sin conexión. Verificá tu red e intentá de nuevo.', '');
+      if (estado.almuerzo) {
+        pintarInicio();
+        navegar('screen-inicio');
+      } else {
+        mostrarError('Sin conexión. Verificá tu red e intentá de nuevo.', false);
+      }
+    }
+  }
+
+  async function flujoTarjeta() {
+    mostrar('screen-cargando', 'Verificando dispositivo…');
+    try {
+      const [verificacion] = await Promise.all([
+        llamar({ accion: 'verificar_dispositivo', token: estado.dispositivo, id_tienda: ID_TIENDA, timestamp_dispositivo: new Date().toISOString() }),
+        cargarPerfil().catch(() => null)
+      ]);
+      if (verificacion.codigo === 'DISPOSITIVO_NO_REGISTRADO') return mostrar('screen-registro');
+      if (!verificacion.ok) return mostrarError(verificacion.mensaje || 'No se pudo verificar el dispositivo.', true);
+      estado.verificacion = verificacion;
+      pintarMarcar();
+      navegar('screen-marcar');
+    } catch (e) {
+      mostrarError('Sin conexión. Verificá tu red e intentá de nuevo.', true);
     }
   }
 
   async function enviarRegistro() {
-    const pais = document.getElementById('reg-pais').value.trim();
+    const pais = document.getElementById('reg-pais').value;
     const nombre = document.getElementById('reg-nombre').value.trim();
-    const doc = document.getElementById('reg-documento').value.trim();
-    const errEl = document.getElementById('reg-error');
+    const documento = document.getElementById('reg-documento').value.trim();
+    const error = document.getElementById('reg-error');
 
-    if (!pais || !nombre || !doc) {
-      errEl.textContent = 'Completá todos los campos.';
+    if (!pais || !nombre || !documento) {
+      error.textContent = 'Completá todos los campos.';
       return;
     }
-
-    errEl.textContent = '';
-    document.getElementById('procesando-texto').textContent = 'Activando dispositivo…';
-    mostrarPantalla('screen-procesando');
+    error.textContent = '';
+    mostrar('screen-procesando', 'Vinculando dispositivo…');
 
     try {
       const data = await llamar({
         accion: 'registrar_dispositivo',
-        token: dispositivo,
+        token: estado.dispositivo,
         pais: pais,
         nombre: nombre,
-        documento: doc,
+        documento: documento,
         id_tienda: ID_TIENDA,
         user_agent: navigator.userAgent,
         timestamp_dispositivo: new Date().toISOString()
       });
-
-      if (data.ok) {
-        await verificarDispositivo();
-      } else {
-        mostrarPantalla('screen-registro');
-        errEl.textContent = data.mensaje || 'No se pudo registrar el dispositivo.';
-      }
+      if (data.ok) return flujoTarjeta();
+      mostrar('screen-registro');
+      error.textContent = data.mensaje || 'No se pudo registrar el dispositivo.';
     } catch (e) {
-      mostrarPantalla('screen-registro');
-      errEl.textContent = 'Sin conexión. Intentá de nuevo.';
+      mostrar('screen-registro');
+      error.textContent = 'Sin conexión. Intentá de nuevo.';
     }
   }
 
-  function prepararPantallaMarca(data) {
-    tipoMarcaActual = data.tipo_marca_siguiente || 'ENTRADA';
-
-    document.getElementById('marca-nombre').textContent = data.nombre_corto || data.nombre || '';
-    document.getElementById('marca-tienda').textContent = data.tienda || '';
-    document.getElementById('tipo-marca-label').textContent = TIPO_LABELS[tipoMarcaActual] || tipoMarcaActual;
-
-    actualizarTimeline(data.marcas_hoy || []);
-    iniciarReloj();
-    mostrarPantalla('screen-marca');
+  function diaDeHoy() {
+    if (!estado.perfil || !estado.perfil.semana) return null;
+    return estado.perfil.semana.find(d => d.fecha === estado.perfil.hoy) || null;
   }
 
-  function actualizarTimeline(marcasHoy) {
-    const hechos = marcasHoy.map(m => m.tipo_marca);
-    TL_TIPOS.forEach((tipo, i) => {
-      const el = document.getElementById(TL_IDS[i]);
-      const etiqueta = el.closest('.tl-item').querySelector('.tl-label');
-      el.className = 'tl-dot';
-      etiqueta.className = 'tl-label';
-      if (hechos.includes(tipo)) {
-        el.className = 'tl-dot done';
-        el.textContent = '✓';
-      } else if (tipo === tipoMarcaActual) {
-        el.className = 'tl-dot next';
-        etiqueta.className = 'tl-label next';
+  function inicial(nombre) {
+    return (nombre || '·').trim().charAt(0).toUpperCase();
+  }
+
+  function titulo(texto) {
+    return String(texto || '').toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+  }
+
+  function minutos(hhmm) {
+    if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return null;
+    const [h, m] = hhmm.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function hora12(hhmm) {
+    const total = minutos(hhmm);
+    if (total === null) return '—';
+    let h = Math.floor(total / 60);
+    const m = String(total % 60).padStart(2, '0');
+    const sufijo = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return h + ':' + m + ' ' + sufijo;
+  }
+
+  function horaDe(fecha) {
+    return String(fecha.getHours()).padStart(2, '0') + ':' + String(fecha.getMinutes()).padStart(2, '0');
+  }
+
+  function pintarHorario(prefijo, dia) {
+    const duracion = (estado.perfil && estado.perfil.duracion_almuerzo_min) || 60;
+    document.getElementById(prefijo + '-almuerzo').textContent = duracion + ' min';
+    if (dia && dia.entrada) {
+      document.getElementById(prefijo + '-entrada').textContent = hora12(dia.entrada);
+      document.getElementById(prefijo + '-salida').textContent = hora12(dia.salida);
+    } else {
+      const texto = dia && ESTADOS_DIA[dia.estado] ? ESTADOS_DIA[dia.estado] : '—';
+      document.getElementById(prefijo + '-entrada').textContent = texto;
+      document.getElementById(prefijo + '-salida').textContent = '—';
+    }
+  }
+
+  function evaluarMarcas(dia) {
+    const marcas = dia ? dia.marcas.slice() : [];
+    const duracion = (estado.perfil && estado.perfil.duracion_almuerzo_min) || 60;
+    const salidaAlm = marcas.find(m => m.tipo === 'ALMUERZO_SALIDA');
+    const regresoAlm = marcas.find(m => m.tipo === 'ALMUERZO_REGRESO');
+
+    return marcas.map(m => {
+      const item = { nombre: NOMBRES_MARCA[m.tipo] || m.tipo, hora: m.hora, color: 'green', badge: '' };
+      if (m.tipo === 'ENTRADA') {
+        const esperada = minutos(dia.entrada);
+        const real = minutos(m.hora);
+        if (esperada !== null && real !== null) {
+          const tarde = real - esperada;
+          if (tarde > (dia.tolerancia || 0)) {
+            item.color = 'red';
+            item.badge = 'Tardía +' + tarde + ' min';
+          } else {
+            item.badge = 'A tiempo';
+          }
+        }
+      } else if (m.tipo === 'ALMUERZO_SALIDA' && !regresoAlm) {
+        item.color = 'amber';
+        item.badge = 'En curso';
+      } else if ((m.tipo === 'ALMUERZO_SALIDA' || m.tipo === 'ALMUERZO_REGRESO') && salidaAlm && regresoAlm) {
+        const dur = Math.round((new Date(regresoAlm.momento) - new Date(salidaAlm.momento)) / 60000);
+        if (m.tipo === 'ALMUERZO_REGRESO') {
+          if (dur > duracion) {
+            item.color = 'red';
+            item.badge = '+' + (dur - duracion) + ' min';
+          } else {
+            item.badge = dur + ' min';
+          }
+        }
       }
+      return item;
     });
   }
 
-  function iniciarReloj() {
-    if (relojInterval) clearInterval(relojInterval);
-    const actualizar = () => {
-      const ahora = new Date();
-      document.getElementById('hora-live').textContent =
-        ahora.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit', hour12: false });
-      const fecha = ahora.toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' });
-      document.getElementById('fecha-live').textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+  function pintarHistorial(idContenedor, dia) {
+    const cont = document.getElementById(idContenedor);
+    cont.innerHTML = '';
+    const items = evaluarMarcas(dia);
+    if (!items.length) {
+      cont.innerHTML = '<div class="vacio">Todavía no hay marcas hoy.</div>';
+      return;
+    }
+    items.forEach(it => {
+      const fila = document.createElement('div');
+      fila.className = 'history-item';
+      fila.innerHTML =
+        '<span class="history-dot dot-' + it.color + '"></span>' +
+        '<span class="history-text"></span>' +
+        (it.badge ? '<span class="history-badge badge-' + it.color + '"></span>' : '') +
+        '<span class="history-time"></span>';
+      fila.querySelector('.history-text').textContent = it.nombre;
+      if (it.badge) fila.querySelector('.history-badge').textContent = it.badge;
+      fila.querySelector('.history-time').textContent = it.hora;
+      cont.appendChild(fila);
+    });
+  }
+
+  function siguienteMarca(dia) {
+    const hechas = dia ? dia.marcas.map(m => m.tipo) : [];
+    if (!hechas.includes('ENTRADA')) return 'ENTRADA';
+    if (!hechas.includes('ALMUERZO_SALIDA')) return 'ALMUERZO_SALIDA';
+    if (!hechas.includes('ALMUERZO_REGRESO')) return 'ALMUERZO_REGRESO';
+    if (!hechas.includes('SALIDA')) return 'SALIDA';
+    return null;
+  }
+
+  function pintarInicio() {
+    const p = estado.perfil;
+    const dia = diaDeHoy();
+    const nombre = p ? p.nombre_corto : '';
+    const h = ahora().getHours();
+    document.getElementById('inicio-saludo').textContent = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+    document.getElementById('inicio-nombre').textContent = nombre || '—';
+    document.getElementById('inicio-avatar').textContent = inicial(nombre);
+    document.getElementById('inicio-tienda').textContent = dia && dia.tienda ? titulo(dia.tienda) : 'Sin tienda asignada hoy';
+    pintarHorario('inicio', dia);
+    pintarHistorial('inicio-historial', dia);
+
+    const proxima = siguienteMarca(dia);
+    document.getElementById('inicio-proxima').textContent = proxima
+      ? 'Próxima marca: ' + NOMBRES_MARCA[proxima].toLowerCase() + '. Acercá el celular a la tarjeta NFC de tu tienda.'
+      : 'Jornada completa. ¡Gracias por tu trabajo de hoy!';
+
+    pintarSemana();
+    actualizarAlmuerzo();
+  }
+
+  function pintarMarcar() {
+    const v = estado.verificacion;
+    const dia = diaDeHoy();
+    const nombre = v.nombre_corto || (estado.perfil && estado.perfil.nombre_corto) || '';
+    const tipo = v.tipo_marca_siguiente || 'ENTRADA';
+    document.getElementById('marcar-nombre').textContent = nombre;
+    document.getElementById('marcar-avatar').textContent = inicial(nombre);
+    document.getElementById('marcar-tienda').textContent = titulo(v.tienda || ID_TIENDA);
+    document.getElementById('marcar-proxima').textContent = 'Próxima marca: ' + (NOMBRES_MARCA[tipo] || tipo);
+    document.getElementById('btn-marcar-texto').textContent = 'Registrar ' + (NOMBRES_MARCA[tipo] || 'marca').toLowerCase();
+    pintarHorario('marcar', dia);
+    pintarHistorial('marcar-historial', dia);
+    iniciarReloj();
+  }
+
+  function pintarSemana() {
+    const p = estado.perfil;
+    const lista = document.getElementById('semana-lista');
+    lista.innerHTML = '';
+    if (!p || !p.semana) return;
+
+    const formato = f => new Date(f + 'T12:00:00').toLocaleDateString('es-CR', { day: 'numeric', month: 'short' });
+    document.getElementById('semana-rango').textContent = 'Del ' + formato(p.semana[0].fecha) + ' al ' + formato(p.semana[6].fecha);
+
+    p.semana.forEach(dia => {
+      const tarjeta = document.createElement('div');
+      tarjeta.className = 'dia-card' + (dia.fecha === p.hoy ? ' hoy' : '');
+      const nombreDia = new Date(dia.fecha + 'T12:00:00').toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric' });
+      let horario = 'Sin horario';
+      if (dia.entrada) horario = hora12(dia.entrada) + ' – ' + hora12(dia.salida);
+      else if (ESTADOS_DIA[dia.estado]) horario = ESTADOS_DIA[dia.estado];
+      else if (dia.estado === 'TRABAJA_SIN_HORA') horario = 'Turno sin hora fija';
+
+      tarjeta.innerHTML =
+        '<div class="dia-cabecera"><div><span class="dia-nombre"></span>' +
+        (dia.fecha === p.hoy ? '<span class="dia-hoy">HOY</span>' : '') +
+        '</div><div class="dia-horario"></div></div><div class="dia-marcas"></div>';
+      tarjeta.querySelector('.dia-nombre').textContent = nombreDia;
+      tarjeta.querySelector('.dia-horario').textContent = horario + (dia.tienda && dia.entrada ? ' · ' + titulo(dia.tienda) : '');
+
+      const chips = tarjeta.querySelector('.dia-marcas');
+      evaluarMarcas(dia).forEach(it => {
+        const chip = document.createElement('span');
+        chip.className = 'chip' + (it.color !== 'green' || it.badge === 'A tiempo' ? ' ' + it.color : '');
+        chip.textContent = it.nombre.replace('Salida a almuerzo', 'Almuerzo').replace('Regreso de almuerzo', 'Regreso') + ' ' + it.hora + (it.badge && it.badge !== 'A tiempo' && it.badge !== 'En curso' ? ' · ' + it.badge : '');
+        chips.appendChild(chip);
+      });
+      lista.appendChild(tarjeta);
+    });
+  }
+
+  function sincronizarAlmuerzo() {
+    const dia = diaDeHoy();
+    if (!dia) return;
+    const salida = dia.marcas.find(m => m.tipo === 'ALMUERZO_SALIDA');
+    const regreso = dia.marcas.find(m => m.tipo === 'ALMUERZO_REGRESO');
+    if (salida && !regreso) {
+      estado.almuerzo = { inicio: salida.momento, duracion: estado.perfil.duracion_almuerzo_min || 60 };
+      guardar(CLAVE_ALMUERZO, JSON.stringify(estado.almuerzo));
+    } else {
+      estado.almuerzo = null;
+      guardar(CLAVE_ALMUERZO, null);
+    }
+  }
+
+  function actualizarAlmuerzo() {
+    const tarjeta = document.getElementById('almuerzo-card');
+    if (estado.intervaloAlmuerzo) { clearInterval(estado.intervaloAlmuerzo); estado.intervaloAlmuerzo = null; }
+
+    const datos = estado.almuerzo;
+    if (!datos || !datos.inicio) { tarjeta.hidden = true; return; }
+
+    const inicio = new Date(datos.inicio);
+    const limite = new Date(inicio.getTime() + datos.duracion * 60000);
+    if (ahora() - inicio > 12 * 3600000) {
+      estado.almuerzo = null;
+      guardar(CLAVE_ALMUERZO, null);
+      tarjeta.hidden = true;
+      return;
+    }
+    tarjeta.hidden = false;
+
+    const circ = 2 * Math.PI * 42;
+    const anillo = document.getElementById('anillo-progreso');
+    anillo.setAttribute('stroke-dasharray', circ.toFixed(1));
+
+    const tick = () => {
+      const restante = limite - ahora();
+      const abs = Math.abs(restante);
+      const mm = Math.floor(abs / 60000);
+      const ss = Math.floor((abs % 60000) / 1000);
+      const texto = String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+      tarjeta.classList.toggle('excedido', restante < 0);
+      tarjeta.classList.toggle('alerta', restante >= 0 && restante <= 5 * 60000);
+
+      if (restante >= 0) {
+        document.getElementById('almuerzo-cuenta').textContent = texto;
+        document.getElementById('almuerzo-unidad').textContent = 'restantes';
+        document.getElementById('almuerzo-titulo').textContent = restante <= 5 * 60000 ? 'Ya casi es hora de volver' : 'Disfrutá tu almuerzo';
+        anillo.setAttribute('stroke-dashoffset', (circ * (1 - restante / (datos.duracion * 60000))).toFixed(1));
+      } else {
+        document.getElementById('almuerzo-cuenta').textContent = '+' + texto;
+        document.getElementById('almuerzo-unidad').textContent = 'excedido';
+        document.getElementById('almuerzo-titulo').textContent = 'Tiempo de almuerzo excedido';
+        anillo.setAttribute('stroke-dashoffset', '0');
+      }
+      document.getElementById('almuerzo-detalle').innerHTML =
+        'Saliste a las <strong>' + hora12(horaDe(inicio)) + '</strong>.<br>Regresá antes de las <strong>' + hora12(horaDe(limite)) + '</strong>.';
     };
-    actualizar();
-    relojInterval = setInterval(actualizar, 1000);
+    tick();
+    estado.intervaloAlmuerzo = setInterval(tick, 1000);
+  }
+
+  function iniciarReloj() {
+    if (estado.intervaloReloj) clearInterval(estado.intervaloReloj);
+    const tick = () => {
+      const t = ahora();
+      document.getElementById('reloj-hora').textContent = horaDe(t);
+      document.getElementById('reloj-fecha').textContent = t.toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' });
+    };
+    tick();
+    estado.intervaloReloj = setInterval(tick, 1000);
   }
 
   function obtenerUbicacion() {
@@ -612,7 +1322,7 @@
       navigator.geolocation.getCurrentPosition(
         pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         () => resolve({ lat: '', lng: '' }),
-        { timeout: 4000, maximumAge: 60000 }
+        { timeout: 5000, maximumAge: 60000 }
       );
     });
   }
@@ -621,69 +1331,207 @@
     const boton = document.getElementById('btn-marcar');
     boton.disabled = true;
     document.getElementById('marca-error').textContent = '';
-    if (relojInterval) { clearInterval(relojInterval); relojInterval = null; }
-    document.getElementById('procesando-texto').textContent = 'Registrando tu marca…';
-    mostrarPantalla('screen-procesando');
+    mostrar('screen-procesando', 'Registrando tu marca…');
 
     const ubicacion = await obtenerUbicacion();
-
     try {
       const data = await llamar({
         accion: 'registrar_marca',
-        token: dispositivo,
+        token: estado.dispositivo,
         id_tienda: ID_TIENDA,
         timestamp_dispositivo: new Date().toISOString(),
         lat: ubicacion.lat,
         lng: ubicacion.lng,
         user_agent: navigator.userAgent
       });
-
-      if (data.ok) {
-        const mensaje = data.mensaje || 'Marca registrada.';
-        const partes = mensaje.split('⚠️');
-        const aviso = partes.length > 1 ? '⚠️' + partes.slice(1).join('⚠️') : '';
-        mostrarResultado(true, partes[0].trim(), aviso, data.codigo);
-      } else {
-        mostrarResultado(false, data.mensaje || 'No se pudo registrar la marca.', '');
+      if (data.ok && data.tipo_marca === 'ALMUERZO_SALIDA') {
+        estado.almuerzo = { inicio: ahora().toISOString(), duracion: data.duracion_almuerzo_min || 60 };
+        guardar(CLAVE_ALMUERZO, JSON.stringify(estado.almuerzo));
       }
+      if (data.ok && data.tipo_marca === 'ALMUERZO_REGRESO') {
+        estado.almuerzo = null;
+        guardar(CLAVE_ALMUERZO, null);
+      }
+      mostrarResultado(data, ubicacion);
     } catch (e) {
-      mostrarResultado(false, 'Sin conexión. Intentá de nuevo.', '');
+      mostrarError('Sin conexión. Tu marca no se registró; intentá de nuevo.', true);
     } finally {
       boton.disabled = false;
     }
   }
 
-  function mostrarResultado(ok, mensaje, aviso, codigo) {
-    const iconoEl = document.getElementById('resultado-icono');
-    document.getElementById('resultado-mensaje').textContent = mensaje;
-    document.getElementById('resultado-aviso').textContent = aviso || '';
-
-    if (!ok) {
-      iconoEl.className = 'icono-ok rojo';
-      iconoEl.textContent = '✕';
-    } else if (codigo === 'DIA_LIBRE') {
-      iconoEl.className = 'icono-ok amarillo';
-      iconoEl.textContent = '🌿';
-    } else {
-      iconoEl.className = 'icono-ok verde';
-      iconoEl.textContent = '✓';
-    }
-
-    mostrarPantalla('screen-resultado');
+  function filaDetalle(clave, valor, color) {
+    const fila = document.createElement('div');
+    fila.className = 'detail-row';
+    fila.innerHTML = '<span class="detail-key"></span><span class="detail-val' + (color ? ' ' + color : '') + '"></span>';
+    fila.querySelector('.detail-key').textContent = clave;
+    fila.querySelector('.detail-val').textContent = valor;
+    return fila;
   }
 
-  function mostrarPantalla(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+  function configurarResultado(o) {
+    const icono = document.getElementById('res-icono');
+    icono.className = 'status-icon-wrap ' + o.claseIcono;
+    icono.textContent = o.icono;
+    const etiqueta = document.getElementById('res-etiqueta');
+    etiqueta.className = 'confirm-status-label ' + o.color;
+    etiqueta.textContent = o.etiqueta;
+    document.getElementById('res-titulo').textContent = o.titulo;
+    document.getElementById('res-desc').textContent = o.desc || '';
+
+    const callout = document.getElementById('res-callout');
+    callout.hidden = !o.callout;
+    if (o.callout) {
+      callout.className = 'alert-callout' + (o.calloutAmbar ? ' amber-alert' : '');
+      document.getElementById('res-callout-icono').textContent = o.calloutAmbar ? '⏱' : '⚠';
+      document.getElementById('res-callout-texto').textContent = o.callout;
+    }
+
+    const detalle = document.getElementById('res-detalle');
+    detalle.innerHTML = '';
+    detalle.hidden = !(o.filas && o.filas.length);
+    (o.filas || []).forEach(f => detalle.appendChild(filaDetalle(f[0], f[1], f[2])));
+
+    document.getElementById('btn-res-principal').textContent = o.boton || 'Volver al inicio';
+    mostrar('screen-resultado');
   }
 
-  function reiniciar() {
-    if (!ID_TIENDA) {
-      mostrarPantalla('screen-sin-tienda');
-      return;
+  function mostrarResultado(data, ubicacion) {
+    if (!data.ok) return mostrarError(data.mensaje || 'No se pudo registrar la marca.', true);
+
+    const nombre = (estado.verificacion && estado.verificacion.nombre_corto) || '';
+    const tienda = data.tienda || titulo((estado.verificacion && estado.verificacion.tienda) || ID_TIENDA);
+    const horaReg = hora12(data.hora_servidor);
+    const conUbicacion = data.ubicacion !== undefined ? data.ubicacion : ubicacion.lat !== '';
+    const filaUbicacion = ['Ubicación', conUbicacion ? 'Registrada ✓' : 'Sin ubicación', conUbicacion ? 'green' : 'amber'];
+    const mensaje = String(data.mensaje || '').split('⚠️')[0].trim();
+
+    if (data.codigo === 'DIA_LIBRE') {
+      return configurarResultado({
+        claseIcono: 'alert', icono: '🌿', color: 'amber', etiqueta: 'Día libre',
+        titulo: 'Hoy tenés el día libre', desc: mensaje,
+        filas: [['Hora registrada', horaReg], ['Sucursal', tienda]]
+      });
     }
-    mostrarPantalla('screen-cargando');
-    setTimeout(verificarDispositivo, 300);
+
+    const tipo = data.tipo_marca;
+
+    if (tipo === 'ENTRADA' && data.minutos_tardanza > 0) {
+      return configurarResultado({
+        claseIcono: 'warning', icono: '!', color: 'red', etiqueta: 'Llegada tardía',
+        titulo: 'Entrada con retraso',
+        desc: 'Tu entrada fue registrada con tardía. Se notificó a tu coordinación.',
+        callout: 'Llegada con ' + data.minutos_tardanza + ' minutos de retraso. Se generó una incidencia de tardía.',
+        filas: [
+          ['Hora programada', hora12(data.hora_programada)],
+          ['Hora registrada', horaReg, 'red'],
+          ['Retraso', data.minutos_tardanza + ' minutos', 'red'],
+          ['Sucursal', tienda],
+          filaUbicacion
+        ],
+        boton: 'Entendido'
+      });
+    }
+
+    if (tipo === 'ALMUERZO_REGRESO' && data.minutos_extra_almuerzo > 0) {
+      const duracion = data.duracion_almuerzo_min || 60;
+      const salida = data.almuerzo_salida;
+      const esperado = minutos(salida) !== null ? (() => { const t = minutos(salida) + duracion; return String(Math.floor(t / 60) % 24).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); })() : '';
+      return configurarResultado({
+        claseIcono: 'alert', icono: '☕', color: 'amber', etiqueta: 'Regreso de almuerzo',
+        titulo: 'Almuerzo extendido',
+        desc: 'Regresaste ' + data.minutos_extra_almuerzo + ' minutos después del límite de ' + duracion + ' minutos.',
+        callout: 'Almuerzo de ' + (duracion + data.minutos_extra_almuerzo) + ' minutos. Los ' + data.minutos_extra_almuerzo + ' minutos adicionales quedan registrados como novedad.',
+        calloutAmbar: true,
+        filas: [
+          ['Salida a almuerzo', hora12(salida)],
+          ['Regreso esperado', hora12(esperado)],
+          ['Hora de regreso', horaReg, 'amber'],
+          ['Exceso', data.minutos_extra_almuerzo + ' minutos', 'amber']
+        ],
+        boton: 'Continuar jornada'
+      });
+    }
+
+    if (tipo === 'ALMUERZO_SALIDA') {
+      const duracion = data.duracion_almuerzo_min || 60;
+      const limite = new Date(ahora().getTime() + duracion * 60000);
+      return configurarResultado({
+        claseIcono: 'gold', icono: '☕', color: 'gold', etiqueta: 'Marca registrada',
+        titulo: '¡Buen provecho' + (nombre ? ', ' + nombre : '') + '!',
+        desc: 'Tenés ' + duracion + ' minutos de almuerzo. En Inicio vas a ver la cuenta regresiva.',
+        filas: [
+          ['Tipo de marca', 'Salida a almuerzo'],
+          ['Hora registrada', horaReg, 'green'],
+          ['Regresá antes de', hora12(horaDe(limite)), 'amber'],
+          ['Sucursal', tienda],
+          filaUbicacion
+        ],
+        boton: 'Ver cuenta regresiva'
+      });
+    }
+
+    const titulos = {
+      ENTRADA: '¡Entrada registrada!',
+      ALMUERZO_REGRESO: '¡Bienvenida de vuelta!',
+      SALIDA: '¡Salida registrada!'
+    };
+    configurarResultado({
+      claseIcono: 'success', icono: '✓', color: 'green',
+      etiqueta: tipo === 'ENTRADA' && data.hora_programada ? 'A tiempo' : 'Marca registrada',
+      titulo: titulos[tipo] || 'Marca registrada',
+      desc: mensaje,
+      filas: [
+        ['Tipo de marca', NOMBRES_MARCA[tipo] || tipo],
+        ['Hora registrada', horaReg, 'green'],
+        ['Sucursal', tienda],
+        filaUbicacion
+      ]
+    });
+  }
+
+  function mostrarError(mensaje, desdeTarjeta) {
+    configurarResultado({
+      claseIcono: 'warning', icono: '✕', color: 'red', etiqueta: 'No se pudo completar',
+      titulo: 'Algo salió mal', desc: mensaje,
+      boton: desdeTarjeta ? 'Intentar de nuevo' : 'Reintentar'
+    });
+    document.getElementById('btn-res-principal').onclick = () => {
+      document.getElementById('btn-res-principal').onclick = null;
+      if (desdeTarjeta && ID_TIENDA) flujoTarjeta();
+      else flujoInicio();
+    };
+  }
+
+  async function irAInicio(recargar) {
+    if (document.getElementById('btn-res-principal').onclick) return;
+    if (recargar) {
+      mostrar('screen-cargando', 'Actualizando…');
+      try { await cargarPerfil(); } catch (e) {}
+    }
+    pintarInicio();
+    navegar('screen-inicio');
+  }
+
+  function pantallaActual() {
+    const activa = document.querySelector('.screen.active');
+    return activa ? activa.id : '';
+  }
+
+  function mostrar(id, texto) {
+    if (texto) {
+      const el = document.getElementById(id === 'screen-procesando' ? 'procesando-texto' : 'cargando-texto');
+      if (el) el.textContent = texto;
+    }
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+    const conNav = ['screen-inicio', 'screen-semana', 'screen-solicitudes', 'screen-marcar'].includes(id);
+    document.getElementById('nav').hidden = !conNav;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.destino === id));
+  }
+
+  function navegar(id) {
+    if (id === 'screen-inicio' && estado.perfil) pintarInicio();
+    mostrar(id);
   }
 </script>
 </body>
