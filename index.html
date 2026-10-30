@@ -769,6 +769,15 @@
     .pendiente-banner .pb-texto { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
     .pendiente-banner .pb-flecha { margin-left: auto; color: var(--red); font-size: 18px; }
     .nav-btn { position: relative; }
+    .horas-card { background: var(--cream-dim); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
+    .horas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+    .horas-v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .horas-v.green { color: var(--green); } .horas-v.amber { color: var(--amber); } .horas-v.red { color: var(--red); }
+    .horas-l { font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; }
+    .politica { margin-top: 12px; font-size: 12px; line-height: 1.45; color: var(--amber); background: var(--amber-bg); border-radius: 10px; padding: 9px 11px; }
+    .festivo-nota { margin-top: 10px; font-size: 12px; color: var(--gold-light); }
+    .chip.gold { background: var(--gold-dim); color: var(--gold-light); }
+    .dia-nota { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
     .nav-punto { position: absolute; top: 8px; left: calc(50% + 8px); width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
     .volver { align-self: flex-start; background: none; border: none; color: var(--text-secondary); font-family: inherit; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 12px; }
 
@@ -890,6 +899,17 @@
         <span id="inicio-proxima">Para marcar, acercá el celular a la tarjeta NFC de tu tienda.</span>
       </div>
 
+      <div class="section-label">Tu semana en horas</div>
+      <div class="horas-card" id="inicio-horas">
+        <div class="horas-grid">
+          <div><div class="horas-v green" id="hs-extra">—</div><div class="horas-l">Extra aprobada</div></div>
+          <div><div class="horas-v amber" id="hs-pendiente">—</div><div class="horas-l">Por aprobar</div></div>
+          <div><div class="horas-v red" id="hs-rebajo">—</div><div class="horas-l">A rebajar</div></div>
+        </div>
+        <div class="festivo-nota" id="hs-festivo" hidden></div>
+        <div class="politica" id="hs-politica" hidden></div>
+      </div>
+
       <div class="section-label">Marcas de hoy</div>
       <div id="inicio-historial"></div>
     </section>
@@ -971,6 +991,10 @@
       </div>
 
       <div class="metricas" id="estado-metricas"></div>
+
+      <div class="section-label">Horas y rebajos del mes</div>
+      <div class="metricas" id="estado-horas"></div>
+      <div class="politica" id="estado-politica" hidden></div>
 
       <div class="section-label">Últimos días</div>
       <div class="historial-dias" id="estado-historial"></div>
@@ -1119,6 +1143,7 @@
   const CLAVE_ALMUERZO = 'samsara_almuerzo';
   const CLAVE_PERFIL = 'samsara_perfil';
   const CLAVE_SOLICITUDES = 'samsara_solicitudes';
+  const CLAVE_NOMINA = 'samsara_nomina';
 
   const TIPOS_SOLICITUD = {
     VACACIONES: { grupo: 'SOLICITUD', fechas: true },
@@ -1208,6 +1233,7 @@
     try { estado.almuerzo = JSON.parse(leer(CLAVE_ALMUERZO) || 'null'); } catch (e) { estado.almuerzo = null; }
     try { estado.perfil = JSON.parse(leer(CLAVE_PERFIL) || 'null'); } catch (e) { estado.perfil = null; }
     try { estado.solicitudes = JSON.parse(leer(CLAVE_SOLICITUDES) || 'null'); } catch (e) { estado.solicitudes = null; }
+    try { estado.nomina = JSON.parse(leer(CLAVE_NOMINA) || 'null'); } catch (e) { estado.nomina = null; }
 
     if (ID_TIENDA) flujoTarjeta();
     else flujoInicio();
@@ -1239,6 +1265,7 @@
           if (data.ahora) estado.desfase = new Date(data.ahora).getTime() - Math.round((enviado + Date.now()) / 2);
           guardar(CLAVE_PERFIL, JSON.stringify(data));
           sincronizarAlmuerzo();
+          cargarNomina();
         } else if (data.codigo === 'DISPOSITIVO_NO_REGISTRADO' || data.codigo === 'DISPOSITIVO_INACTIVO') {
           estado.perfil = null;
           guardar(CLAVE_PERFIL, null);
@@ -1493,6 +1520,7 @@
     pintarSemana();
     actualizarAlmuerzo();
     pintarPendientes();
+    pintarNomina();
     if (!estado.solicitudes && estado.perfil) cargarSolicitudes();
   }
 
@@ -1522,6 +1550,43 @@
     pintarHorario('marcar', dia);
     pintarHistorial('marcar-historial', dia);
     iniciarReloj();
+  }
+
+  function cargarNomina() {
+    if (estado.cargandoNomina) return;
+    estado.cargandoNomina = true;
+    llamar({ accion: 'nomina_mia', token: estado.dispositivo })
+      .then(data => {
+        if (!data.ok) return;
+        estado.nomina = data;
+        guardar(CLAVE_NOMINA, JSON.stringify(data));
+        pintarNomina();
+        pintarSemana();
+        pintarEstados();
+      })
+      .catch(() => {})
+      .finally(() => { estado.cargandoNomina = false; });
+  }
+
+  function durTxt(m) {
+    m = Math.round(Number(m) || 0);
+    if (!m) return '0 min';
+    const h = Math.floor(m / 60), r = m % 60;
+    return h ? h + ' h' + (r ? ' ' + r + 'm' : '') : r + ' min';
+  }
+
+  function pintarNomina() {
+    const n = estado.nomina;
+    if (!n || !n.semana) return;
+    document.getElementById('hs-extra').textContent = durTxt(n.semana.extraAprobada);
+    document.getElementById('hs-pendiente').textContent = durTxt(n.semana.extraPendiente);
+    document.getElementById('hs-rebajo').textContent = durTxt(n.semana.rebTotal);
+    const fest = document.getElementById('hs-festivo');
+    fest.hidden = !(n.festivosSemana && n.festivosSemana.length);
+    if (!fest.hidden) fest.textContent = '★ Feriado esta semana: ' + n.festivosSemana.map(f => f.nombre + ' (' + fechaCorta(f.fecha) + ')').join(', ');
+    const pol = document.getElementById('hs-politica');
+    pol.hidden = !n.mes.tardias;
+    if (n.mes.tardias) pol.textContent = '⚠ Llevás ' + n.mes.tardias + (n.mes.tardias === 1 ? ' tardía' : ' tardías') + ' este mes (' + n.mes.minutosTardias + ' min). ' + n.politica;
   }
 
   function pintarSemana() {
@@ -1556,6 +1621,31 @@
         chip.textContent = it.nombre.replace('Salida a almuerzo', 'Almuerzo').replace('Regreso de almuerzo', 'Regreso') + ' ' + it.hora + (it.badge && it.badge !== 'A tiempo' && it.badge !== 'En curso' ? ' · ' + it.badge : '');
         chips.appendChild(chip);
       });
+      const nd = estado.nomina && estado.nomina.dias ? estado.nomina.dias[dia.fecha] : null;
+      const agregarChip = (texto, color) => { const c = document.createElement('span'); c.className = 'chip' + (color ? ' ' + color : ''); c.textContent = texto; chips.appendChild(c); };
+      if (nd) {
+        if (nd.festivo) agregarChip('★ ' + nd.festivo, 'gold');
+        else if (nd.dominical) agregarChip('★ Dominical', 'gold');
+        const notas = [];
+        nd.extras.forEach(x => {
+          const etiqueta = x.tipo === 'ANTES' ? 'Ingreso anticipado' : x.tipo === 'DIA_LIBRE' ? 'Día libre trabajado' : 'Extra';
+          if (x.estado === 'Aprobada') agregarChip(etiqueta + ' ' + durTxt(x.minutos) + ' ✓', 'green');
+          else if (x.estado === 'Pendiente') agregarChip(etiqueta + ' ' + durTxt(x.minutos) + ' · por aprobar', 'amber');
+          else agregarChip(etiqueta + ' no aprobada', 'red');
+          if (x.motivo) notas.push(etiqueta + ': ' + x.motivo);
+        });
+        if (nd.rebajo) agregarChip('Rebajo ' + durTxt(nd.rebajo), 'red');
+        else if (nd.rebajoPendiente) agregarChip('En revisión ' + durTxt(nd.rebajoPendiente), 'amber');
+        if (notas.length) {
+          const nota = document.createElement('div');
+          nota.className = 'dia-nota';
+          nota.textContent = notas.join(' · ');
+          tarjeta.appendChild(nota);
+        }
+      } else {
+        const p2 = estado.perfil;
+        if (p2 && dia.estado === 'FESTIVO') agregarChip('★ Feriado', 'gold');
+      }
       lista.appendChild(tarjeta);
     });
   }
@@ -1971,6 +2061,21 @@
     const cExc = comparar(m.almuerzos_excedidos, a.almuerzos ? a.almuerzos_excedidos : null, true);
     cont.appendChild(metrica('Almuerzos excedidos', m.almuerzos_excedidos ? [m.almuerzos_excedidos, 'de ' + m.almuerzos] : '0', m.almuerzos_excedidos ? 'amber' : 'green', cExc[0] || (m.almuerzos ? plural(m.almuerzos, 'almuerzo marcado', 'almuerzos marcados') : 'Sin almuerzos marcados'), cExc[1]));
     cont.appendChild(metrica('Minutos excedidos', m.minutos_excedidos ? [m.minutos_excedidos, 'min'] : '0', m.minutos_excedidos ? 'amber' : 'green', a.almuerzos ? 'Mes pasado: ' + a.minutos_excedidos + ' min' : 'En almuerzos este mes', ''));
+
+    const nm = estado.nomina && estado.nomina.mes;
+    const contHoras = document.getElementById('estado-horas');
+    contHoras.innerHTML = '';
+    if (nm) {
+      contHoras.appendChild(metrica('Extra aprobada', durTxt(nm.extraAprobada), nm.extraAprobada ? 'green' : '', nm.extraPendiente ? durTxt(nm.extraPendiente) + ' por aprobar' : 'Aprobadas por tu coordinadora', ''));
+      contHoras.appendChild(metrica('Extra nocturna / festiva', durTxt(nm.extraNocturna + nm.extraEspecial), '', 'Nocturna ' + durTxt(nm.extraNocturna) + ' · festiva ' + durTxt(nm.extraEspecial), ''));
+      contHoras.appendChild(metrica('Feriados trabajados', String(nm.festivosTrabajados + (nm.dominicalesTrabajados || 0)), '', nm.dominicalesTrabajados ? 'Incluye ' + nm.dominicalesTrabajados + ' domingos' : 'Pago diferenciado según país', ''));
+      contHoras.appendChild(metrica('Tiempo a rebajar', durTxt(nm.rebTotal), nm.rebTotal ? 'red' : 'green', ['Tardías ' + durTxt(nm.rebTardia), 'almuerzo ' + durTxt(nm.rebAlmuerzo), nm.rebAusencia ? 'ausencias ' + durTxt(nm.rebAusencia) : '', nm.rebPermisoSG ? 'permisos sin goce ' + durTxt(nm.rebPermisoSG) : ''].filter(Boolean).join(' · '), ''));
+      if (nm.rebPendiente) contHoras.appendChild(metrica('En revisión', durTxt(nm.rebPendiente), 'amber', 'Puede rebajarse si no se justifica', ''));
+      if (nm.permisoCG) contHoras.appendChild(metrica('Permiso con goce', durTxt(nm.permisoCG), '', 'No se rebaja', ''));
+    }
+    const polEst = document.getElementById('estado-politica');
+    polEst.hidden = !(nm && nm.tardias);
+    if (nm && nm.tardias) polEst.textContent = '⚠ ' + nm.tardias + (nm.tardias === 1 ? ' tardía' : ' tardías') + ' este mes (' + nm.minutosTardias + ' min). ' + estado.nomina.politica;
 
     const hist = document.getElementById('estado-historial');
     hist.innerHTML = '';

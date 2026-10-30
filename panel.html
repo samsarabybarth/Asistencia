@@ -177,6 +177,7 @@
       <button class="tab activa" data-vista="hoy">En vivo</button>
       <button class="tab" data-vista="incidencias">Incidencias<span class="contador" id="cont-incidencias" hidden></span></button>
       <button class="tab" data-vista="solicitudes">Solicitudes<span class="contador" id="cont-solicitudes" hidden></span></button>
+      <button class="tab" data-vista="extras">Horas extra<span class="contador" id="cont-extras" hidden></span></button>
       <button class="tab" data-vista="metricas">Métricas</button>
       <button class="tab" data-vista="planilla">Planilla</button>
     </nav>
@@ -229,6 +230,21 @@
         </div>
       </div>
       <div id="sol-contenido"></div>
+    </section>
+
+    <section id="v-extras" hidden>
+      <div class="titulo">Horas extra</div>
+      <div class="sub">Solo cuentan para planilla las horas extra aprobadas. Llegar antes de la entrada no es extra, salvo que coordinación lo apruebe con motivo (por ejemplo, capacitación).</div>
+      <div class="filtros">
+        <div class="chips" id="ext-filtro">
+          <button class="chip activa" data-f="pendientes">Por aprobar</button>
+          <button class="chip" data-f="todas">Todas</button>
+        </div>
+        <div class="campo"><label for="ext-desde">Desde</label><input class="input" type="date" id="ext-desde"></div>
+        <div class="campo"><label for="ext-hasta">Hasta</label><input class="input" type="date" id="ext-hasta"></div>
+        <button class="btn" id="btn-ext-buscar">Buscar</button>
+      </div>
+      <div id="ext-contenido"></div>
     </section>
 
     <section id="v-metricas" hidden>
@@ -357,6 +373,8 @@
     const hoy = new Date();
     $('inc-hasta').value = hoyISO(hoy);
     $('inc-desde').value = hoyISO(new Date(hoy.getTime() - 14 * 86400000));
+    $('ext-hasta').value = hoyISO(hoy);
+    $('ext-desde').value = hoyISO(new Date(hoy.getTime() - 31 * 86400000));
     $('met-mes').value = hoyISO(hoy).slice(0, 7);
     presetPlanilla(hoy.getDate() <= 15 ? 'q1' : 'q2');
     mostrarVista('hoy', true);
@@ -370,7 +388,8 @@
   function mostrarVista(v, forzar) {
     st.vista = v;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activa', t.dataset.vista === v));
-    ['hoy', 'incidencias', 'solicitudes', 'metricas', 'planilla'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    if (v === 'extras' && (forzar || !st.datos.extras)) cargarExtras();
     if (v === 'hoy') cargarHoy(!forzar && !!st.datos.hoy);
     if (v === 'incidencias' && (forzar || !st.datos.incidencias)) cargarIncidencias();
     if (v === 'solicitudes' && (forzar || !st.datos.solicitudes)) cargarSolicitudes();
@@ -380,10 +399,13 @@
 
   async function contadores() {
     try {
-      const [inc, sol] = await Promise.all([
+      const [inc, sol, ext] = await Promise.all([
         llamar({ accion: 'panel_incidencias', pais: st.pais }),
-        llamar({ accion: 'panel_solicitudes', pais: st.pais })
+        llamar({ accion: 'panel_solicitudes', pais: st.pais }),
+        llamar({ accion: 'panel_extras', pais: st.pais })
       ]);
+      const nExt = ext.ok && ext.puede_aprobar ? ext.extras.filter(x => x.estado === 'Pendiente').length : 0;
+      $('cont-extras').hidden = !nExt; $('cont-extras').textContent = nExt;
       const nInc = inc.ok && inc.puede_decidir ? inc.incidencias.filter(i => i.estado === 'En revisión').length : 0;
       const nSol = sol.ok ? sol.solicitudes.filter(s => s.puede_resolver || s.puede_revisar).length : 0;
       $('cont-incidencias').hidden = !nInc; $('cont-incidencias').textContent = nInc;
@@ -541,6 +563,68 @@
     });
   }
 
+  function duracionTexto(m) {
+    if (m === null || m === undefined || m === '') return '—';
+    m = Math.round(Number(m));
+    const h = Math.floor(m / 60), r = m % 60;
+    return h ? h + ' h' + (r ? ' ' + r + ' min' : '') : r + ' min';
+  }
+
+  $('btn-ext-buscar').addEventListener('click', cargarExtras);
+  document.querySelectorAll('#ext-filtro .chip').forEach(c => c.addEventListener('click', () => {
+    st.extFiltro = c.dataset.f;
+    document.querySelectorAll('#ext-filtro .chip').forEach(x => x.classList.toggle('activa', x === c));
+    pintarExtras();
+  }));
+
+  async function cargarExtras() {
+    cargando('ext-contenido');
+    try {
+      const r = await llamar({ accion: 'panel_extras', pais: st.pais, desde: $('ext-desde').value, hasta: $('ext-hasta').value });
+      if (!r.ok) return ($('ext-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.extras = r;
+      pintarExtras();
+    } catch (e) { $('ext-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function pintarExtras() {
+    const r = st.datos.extras;
+    if (!r) return;
+    const lista = r.extras.filter(x => (st.extFiltro || 'pendientes') === 'todas' || x.estado === 'Pendiente');
+    if (!lista.length) return ($('ext-contenido').innerHTML = '<div class="vacio">' + ((st.extFiltro || 'pendientes') === 'todas' ? 'No hay horas extra en el período.' : 'No hay horas extra por aprobar ✓') + '</div>');
+    const colorTipo = { DESPUES: 'blue', ANTES: 'amber', DIA_LIBRE: 'gold' };
+    const filas = lista.map(x => {
+      let accion;
+      if (x.puede) {
+        const pideMotivo = x.tipo !== 'DESPUES';
+        accion = '<div class="acciones" data-clave="' + esc(x.clave) + '" data-tipo="' + esc(x.tipo) + '">' +
+          '<div class="fila"><input class="input" type="number" min="1" max="' + x.calculados + '" value="' + x.calculados + '" style="width:90px" title="Minutos a aprobar"><span class="muted" style="align-self:center">de ' + x.calculados + ' min</span></div>' +
+          '<input class="input" placeholder="' + (pideMotivo ? 'Motivo (obligatorio): capacitación, inventario…' : 'Motivo (opcional)') + '">' +
+          '<div class="fila"><button class="btn ok mini" data-d="Aprobada">Aprobar</button><button class="btn no mini" data-d="Rechazada">Rechazar</button></div></div>';
+      } else {
+        accion = (x.estado === 'Aprobada' ? '<strong>' + duracionTexto(x.aprobados) + '</strong> aprobadas' : '') + (x.motivo ? '<div class="wrap muted">' + esc(x.motivo) + '</div>' : '') + (x.aprobo ? '<div class="muted">' + esc(x.aprobo) + '</div>' : '');
+      }
+      return '<tr><td>' + esc(fechaCorta(x.fecha)) + '</td><td><strong>' + esc(nombreCorto(x.nombre)) + '</strong><div class="muted">' + BANDERA[x.pais] + ' ' + esc(x.tienda) + '</div></td>' +
+        '<td>' + pill(x.tipoNombre, colorTipo[x.tipo] || '') + '</td><td>' + esc(hora12(x.desde)) + ' – ' + esc(hora12(x.hasta)) + '<div class="muted">Turno ' + esc(x.horario) + '</div></td>' +
+        '<td class="num"><strong>' + duracionTexto(x.calculados) + '</strong></td><td>' + pill(x.estado, COLOR_ESTADO[x.estado] || '') + '</td><td>' + accion + '</td></tr>';
+    }).join('');
+    $('ext-contenido').innerHTML = '<div class="tabla-wrap"><table><thead><tr><th>Fecha</th><th>Colaboradora</th><th>Tipo</th><th>Tramo</th><th class="num">Tiempo</th><th>Estado</th><th>Decisión</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
+    $('ext-contenido').querySelectorAll('.acciones').forEach(caja => {
+      caja.querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+        const d = b.dataset.d;
+        const motivo = caja.querySelectorAll('input')[1].value.trim();
+        if ((d === 'Rechazada' || caja.dataset.tipo !== 'DESPUES') && motivo.length < 3) return toast(d === 'Rechazada' ? 'Escribí el motivo del rechazo' : 'Escribí el motivo de la aprobación');
+        caja.querySelectorAll('button').forEach(x => { x.disabled = true; });
+        try {
+          const res = await llamar({ accion: 'panel_extra_resolver', clave: caja.dataset.clave, decision: d, minutos: caja.querySelector('input').value, motivo: motivo });
+          toast(res.ok ? (d === 'Aprobada' ? 'Aprobadas ' + duracionTexto(res.minutos) : 'Hora extra rechazada') : res.mensaje);
+          if (res.ok) { await cargarExtras(); contadores(); return; }
+        } catch (e) { toast('Sin conexión'); }
+        caja.querySelectorAll('button').forEach(x => { x.disabled = false; });
+      }));
+    });
+  }
+
   $('btn-met-buscar').addEventListener('click', cargarMetricas);
 
   async function cargarMetricas() {
@@ -642,12 +726,16 @@
   const COLS_PLANILLA = [
     ['País', f => f.pais], ['Tienda', f => f.tienda], ['ID', f => f.id], ['Colaboradora', f => f.nombre],
     ['Días programados', f => f.programados], ['Días trabajados', f => f.trabajados],
-    ['Horas programadas', f => f.horas_programadas], ['Horas trabajadas', f => f.horas_trabajadas], ['Horas extra', f => f.horas_extra],
-    ['Tardías', f => f.tardanzas], ['Minutos tarde', f => f.minutos_tarde], ['Tardías justificadas', f => f.tardanzas_justificadas],
-    ['Ausencias injustificadas', f => f.ausencias], ['Ausencias justificadas', f => f.ausencias_justificadas],
-    ['Almuerzos excedidos', f => f.almuerzos_excedidos], ['Minutos almuerzo excedido', f => f.minutos_almuerzo],
-    ['Vacaciones (días)', f => f.vacaciones], ['Incapacidad (días)', f => f.incapacidad],
-    ['Permiso con goce (días)', f => f.permiso_con_goce], ['Permiso sin goce (días)', f => f.permiso_sin_goce], ['Días sin marca de salida', f => f.sin_salida]
+    ['H. ordinarias diurnas', f => f.ho_diurnas], ['H. ordinarias nocturnas', f => f.ho_nocturnas],
+    ['H. ordinarias dominical/festivo diurnas', f => f.ho_especiales_d], ['H. ordinarias dominical/festivo nocturnas', f => f.ho_especiales_n],
+    ['H. extra diurnas', f => f.he_diurnas], ['H. extra nocturnas', f => f.he_nocturnas],
+    ['H. extra dominical/festivo diurnas', f => f.he_especiales_d], ['H. extra dominical/festivo nocturnas', f => f.he_especiales_n],
+    ['H. extra por aprobar', f => f.he_por_aprobar], ['Festivos trabajados', f => f.festivos_trabajados], ['Domingos trabajados (CO)', f => f.dominicales_trabajados],
+    ['Tardías', f => f.tardias], ['Minutos de tardía', f => f.minutos_tarde], ['Rebajo tardías (min)', f => f.rebajo_tardias_min], ['Tardías en revisión (min)', f => f.tardias_en_revision_min],
+    ['Rebajo almuerzo (min)', f => f.rebajo_almuerzo_min], ['Almuerzo en revisión (min)', f => f.almuerzo_en_revision_min],
+    ['Ausencias injustificadas', f => f.ausencias], ['Rebajo ausencias (h)', f => f.rebajo_ausencias_h], ['Ausencias justificadas', f => f.ausencias_justificadas],
+    ['Permiso sin goce (h)', f => f.permiso_sin_goce_h], ['Permiso con goce (h)', f => f.permiso_con_goce_h],
+    ['Vacaciones (días)', f => f.vacaciones], ['Incapacidad (días)', f => f.incapacidad], ['Días sin marca de salida', f => f.sin_salida]
   ];
   const COLS_DETALLE = [['Fecha', f => f.fecha], ['País', f => f.pais], ['Tienda', f => f.tienda], ['Colaboradora', f => f.nombre], ['Tipo de Incidencia', f => f.tipo], ['Días', f => f.dias], ['Minutos', f => f.minutos], ['Observaciones', f => f.observaciones]];
 
@@ -657,7 +745,7 @@
     const resumen = '<div class="tabla-wrap"><table><thead><tr>' + COLS_PLANILLA.map((c, i) => '<th' + (i > 3 ? ' class="num"' : '') + '>' + esc(c[0]) + '</th>').join('') + '</tr></thead><tbody>' +
       r.filas.map(f => '<tr>' + COLS_PLANILLA.map((c, i) => '<td' + (i > 3 ? ' class="num"' : '') + '>' + esc(c[1](f)) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
     $('pla-contenido').innerHTML =
-      '<div class="aviso">Período ' + esc(fechaCorta(r.desde)) + ' al ' + esc(fechaCorta(r.hasta)) + ' · ' + r.filas.length + ' personas · ' + r.detalle.length + ' movimientos de detalle. Las horas extra cuentan lo trabajado por encima del turno programado (descontando ' + 'el almuerzo); en el detalle solo aparecen desde 15 minutos.</div>' +
+      '<div class="aviso">Período ' + esc(fechaCorta(r.desde)) + ' al ' + esc(fechaCorta(r.hasta)) + ' · ' + r.filas.length + ' personas · ' + r.detalle.length + ' movimientos. Solo se incluyen horas extra <strong>aprobadas</strong>; las pendientes aparecen aparte. Los rebajos de tardías y almuerzo se aplican según las políticas contractuales de Samsara. Factores por país en la hoja Reglas_Nomina (España: por validar según convenio).</div>' +
       '<div class="filtros"><button class="btn" id="btn-csv-resumen">Descargar resumen (CSV)</button><button class="btn ghost" id="btn-csv-detalle">Descargar detalle · formato Control de Incidencias (CSV)</button></div>' + resumen;
     $('btn-csv-resumen').addEventListener('click', () => descargarCSV('planilla_' + r.desde + '_' + r.hasta + '.csv', COLS_PLANILLA, r.filas));
     $('btn-csv-detalle').addEventListener('click', () => descargarCSV('incidencias_' + r.desde + '_' + r.hasta + '.csv', COLS_DETALLE, r.detalle));
