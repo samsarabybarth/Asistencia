@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A1A2E">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Samsara · Marca con QR</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <style>
+    :root {
+      --night: #1A1A2E;
+      --night-deep: #14142A;
+      --gold: #C8A96E;
+      --gold-light: #E0C98A;
+      --gold-dim: rgba(200,169,110,0.15);
+      --cream: #F5F0E8;
+      --cream-dim: rgba(245,240,232,0.06);
+      --text-2: rgba(245,240,232,0.66);
+      --text-3: rgba(245,240,232,0.42);
+      --red: #E85D5D;
+      --green: #4CAF7D;
+      --border: rgba(200,169,110,0.22);
+      --border-soft: rgba(245,240,232,0.08);
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; background: radial-gradient(ellipse at top, #23233D 0%, var(--night-deep) 60%); color: var(--cream); font-family: 'DM Sans', system-ui, -apple-system, sans-serif; }
+    [hidden] { display: none !important; }
+    .pantalla { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 20px; text-align: center; gap: 18px; }
+    .marca { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 30px; letter-spacing: 0.34em; padding-left: 0.34em; color: var(--gold); line-height: 1; }
+    .firma { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; color: var(--gold-light); margin-top: -10px; }
+    .caja { width: 100%; max-width: 380px; background: var(--night); border: 1px solid var(--border); border-radius: 20px; padding: 28px 24px; display: flex; flex-direction: column; gap: 14px; }
+    h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; font-size: 26px; margin: 0; }
+    p { margin: 0; color: var(--text-2); line-height: 1.5; font-size: 14.5px; }
+    .input { background: var(--cream-dim); border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: var(--cream); font: inherit; font-size: 26px; letter-spacing: 0.4em; text-align: center; outline: none; width: 100%; }
+    .input:focus { border-color: var(--gold); }
+    .btn { border: none; border-radius: 12px; padding: 14px 18px; font: inherit; font-weight: 700; cursor: pointer; background: var(--gold); color: var(--night); }
+    .btn:disabled { opacity: 0.5; }
+    .btn.ghost { background: var(--cream-dim); color: var(--text-2); border: 1px solid var(--border-soft); font-weight: 600; font-size: 13px; padding: 9px 14px; }
+    .error { color: var(--red); font-size: 13.5px; min-height: 18px; }
+    .punto { font-size: 15px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-light); font-weight: 700; }
+    .persona { font-size: 14px; color: var(--text-2); margin-top: -10px; }
+    .qr-marco { position: relative; background: #fff; border-radius: 26px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+    .qr-marco svg, .qr-marco img { display: block; width: min(56vh, 78vw); height: min(56vh, 78vw); }
+    .qr-marco.vencido svg { filter: blur(6px); opacity: 0.4; }
+    .barra { width: min(56vh, 78vw); height: 6px; border-radius: 3px; background: var(--border-soft); overflow: hidden; }
+    .barra span { display: block; height: 100%; width: 100%; background: var(--gold); transform-origin: left; }
+    .hora { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 44px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+    .fecha { color: var(--text-3); font-size: 13px; text-transform: capitalize; }
+    .pasos { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; color: var(--text-2); font-size: 14px; }
+    .pasos b { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; background: var(--gold-dim); color: var(--gold-light); align-items: center; justify-content: center; margin-right: 8px; font-size: 13px; }
+    .pie { display: flex; gap: 10px; align-items: center; color: var(--text-3); font-size: 12px; }
+    .aviso { color: var(--red); font-size: 14px; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<section class="pantalla" id="p-activar" hidden>
+  <div class="marca">SAMSARA</div>
+  <div class="firma">by Barth</div>
+  <div class="caja">
+    <h1>Activar este equipo</h1>
+    <p>Esta pantalla solo funciona en computadoras autorizadas. Pedí el código de activación en el panel, pestaña Puntos de marca.</p>
+    <input class="input" id="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="······" aria-label="Código de activación">
+    <button class="btn" id="btn-activar">Activar</button>
+    <div class="error" id="error-activar"></div>
+  </div>
+</section>
+
+<section class="pantalla" id="p-qr" hidden>
+  <div class="marca">SAMSARA</div>
+  <div class="punto" id="punto"></div>
+  <div class="persona" id="persona" hidden></div>
+  <div class="qr-marco" id="qr-marco"><div id="qr"></div></div>
+  <div class="barra" aria-hidden="true"><span id="barra"></span></div>
+  <div>
+    <div class="hora" id="hora">--:--</div>
+    <div class="fecha" id="fecha"></div>
+  </div>
+  <div class="aviso" id="aviso" hidden>Sin conexión con el servidor. El código sigue funcionando.</div>
+  <div class="pasos">
+    <span><b>1</b>Abrí la cámara de tu celular registrado</span>
+    <span><b>2</b>Escaneá el código</span>
+    <span><b>3</b>Confirmá tu marca</span>
+  </div>
+  <div class="pie">
+    <span>El código cambia cada 15 segundos</span>
+    <button class="btn ghost" id="btn-pantalla">Pantalla completa</button>
+  </div>
+</section>
+
+<section class="pantalla" id="p-bloqueado" hidden>
+  <div class="marca">SAMSARA</div>
+  <div class="caja">
+    <h1>Equipo no autorizado</h1>
+    <p>Este equipo fue desactivado desde el panel. Si necesitás volver a usarlo, pedí un código nuevo a tu coordinadora.</p>
+    <button class="btn" id="btn-reactivar">Ingresar un código nuevo</button>
+  </div>
+</section>
+
+<script>
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
+  const CLAVE = 'samsara_kiosco';
+  const VENTANA_MS = 15000;
+  const estado = { kiosco: null, desfase: 0, ventana: null, clave: null, timer: null, ping: null };
+
+  function $(id) { return document.getElementById(id); }
+  function leer() { try { return JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { return null; } }
+  function guardar(v) { try { v ? localStorage.setItem(CLAVE, JSON.stringify(v)) : localStorage.removeItem(CLAVE); } catch (e) {} }
+  function ahora() { return Date.now() + estado.desfase; }
+  function mostrar(id) { ['p-activar', 'p-qr', 'p-bloqueado'].forEach(p => { $(p).hidden = p !== id; }); }
+
+  async function llamar(datos) {
+    const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(datos), redirect: 'follow' });
+    return r.json();
+  }
+
+  function ajustarReloj(iso, enviado) {
+    const servidor = new Date(iso).getTime();
+    if (!isNaN(servidor)) estado.desfase = servidor - Math.round((enviado + Date.now()) / 2);
+  }
+
+  async function firmar(texto) {
+    if (!estado.clave) estado.clave = await crypto.subtle.importKey('raw', new TextEncoder().encode(estado.kiosco.secreto), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const firma = await crypto.subtle.sign('HMAC', estado.clave, new TextEncoder().encode(texto));
+    return Array.from(new Uint8Array(firma)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
+  }
+
+  async function pintarQR() {
+    const ventana = Math.floor(ahora() / VENTANA_MS);
+    if (ventana !== estado.ventana) {
+      estado.ventana = ventana;
+      const k = estado.kiosco;
+      const codigo = await firmar(k.id + '.' + ventana);
+      const url = k.url + '?tienda=' + encodeURIComponent(k.idTienda) + '&k=' + k.id + '.' + ventana + '.' + codigo;
+      const qr = qrcode(0, 'M');
+      qr.addData(url);
+      qr.make();
+      $('qr').innerHTML = qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
+    }
+    const restante = VENTANA_MS - (ahora() % VENTANA_MS);
+    $('barra').style.transform = 'scaleX(' + (restante / VENTANA_MS).toFixed(3) + ')';
+    const d = new Date(ahora());
+    $('hora').textContent = d.toLocaleTimeString('es-CR', { hour: 'numeric', minute: '2-digit' });
+    $('fecha').textContent = d.toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  async function revisarEstado() {
+    try {
+      const ventana = Math.floor(ahora() / VENTANA_MS);
+      const enviado = Date.now();
+      const r = await llamar({ accion: 'ctl_kiosco_estado', id: estado.kiosco.id, ventana: ventana, firma: await firmar('estado.' + ventana) });
+      $('aviso').hidden = true;
+      if (r.ahora) ajustarReloj(r.ahora, enviado);
+      if (r.ok && r.activo === false) {
+        guardar(null);
+        detener();
+        mostrar('p-bloqueado');
+      }
+    } catch (e) {
+      $('aviso').hidden = false;
+    }
+  }
+
+  function detener() {
+    clearInterval(estado.timer);
+    clearInterval(estado.ping);
+    estado.kiosco = null;
+    estado.clave = null;
+    estado.ventana = null;
+  }
+
+  function iniciarQR(k) {
+    estado.kiosco = k;
+    estado.clave = null;
+    estado.ventana = null;
+    $('punto').textContent = k.tipo === 'TELETRABAJO' ? 'Teletrabajo' : k.tienda;
+    $('persona').textContent = k.tipo === 'TELETRABAJO' ? k.nombre : '';
+    $('persona').hidden = k.tipo !== 'TELETRABAJO';
+    mostrar('p-qr');
+    pintarQR();
+    estado.timer = setInterval(pintarQR, 250);
+    estado.ping = setInterval(revisarEstado, 300000);
+    revisarEstado();
+    try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
+  }
+
+  $('btn-activar').addEventListener('click', async () => {
+    const codigo = $('codigo').value.replace(/\D/g, '');
+    $('error-activar').textContent = '';
+    if (codigo.length !== 6) return ($('error-activar').textContent = 'Escribí los 6 dígitos.');
+    $('btn-activar').disabled = true;
+    try {
+      const enviado = Date.now();
+      const r = await llamar({ accion: 'ctl_kiosco_activar', codigo: codigo, equipo: navigator.userAgent });
+      if (!r.ok) $('error-activar').textContent = r.mensaje || 'No se pudo activar.';
+      else {
+        ajustarReloj(r.ahora, enviado);
+        guardar(r.kiosco);
+        $('codigo').value = '';
+        iniciarQR(r.kiosco);
+      }
+    } catch (e) { $('error-activar').textContent = 'Sin conexión. Intentá de nuevo.'; }
+    $('btn-activar').disabled = false;
+  });
+  $('codigo').addEventListener('keydown', e => { if (e.key === 'Enter') $('btn-activar').click(); });
+  $('btn-reactivar').addEventListener('click', () => mostrar('p-activar'));
+  $('btn-pantalla').addEventListener('click', () => {
+    const el = document.documentElement;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && estado.kiosco) {
+      revisarEstado();
+      try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
+    }
+  });
+
+  (function () {
+    const k = leer();
+    if (k && k.id && k.secreto) iniciarQR(k);
+    else mostrar('p-activar');
+  })();
+</script>
+</body>
+</html>

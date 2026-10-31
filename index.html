@@ -800,6 +800,16 @@
     .visor-confirmar { background: var(--gold); color: var(--night); border: none; }
     .visor-confirmar:disabled { opacity: 0.6; }
     .visor-ok { font-size: 13px; color: var(--green); text-align: center; }
+    .vincular-card { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--cream-dim); border: 1px dashed var(--border); border-radius: 14px; padding: 12px 14px; margin: 4px 0 16px; color: var(--text-secondary); font-family: inherit; font-size: 12.5px; line-height: 1.4; cursor: pointer; }
+    .vincular-card strong { color: var(--cream); font-size: 13.5px; display: block; margin-bottom: 2px; }
+    .vincular-card svg { fill: var(--gold); flex-shrink: 0; }
+    .vincular-box { background: var(--gold-dim); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin: -6px 0 16px; text-align: center; }
+    .vincular-codigo { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 600; letter-spacing: 0.25em; padding-left: 0.25em; color: var(--gold-light); line-height: 1.1; }
+    .vincular-texto { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; margin-top: 6px; }
+    .vincular-form { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-soft); }
+    .vincular-form .form-input { text-align: center; font-size: 22px; letter-spacing: 0.35em; }
+    .vincular-error { color: var(--red); font-size: 12.5px; min-height: 16px; }
+    .cerrar-pestana { font-size: 12.5px; color: var(--text-muted); text-align: center; margin-top: 12px; }
     .volver { align-self: flex-start; background: none; border: none; color: var(--text-secondary); font-family: inherit; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 12px; }
 
     @media (prefers-reduced-motion: reduce) {
@@ -826,7 +836,13 @@
       <div class="confirm-wrap">
         <div class="status-icon-wrap gold">◎</div>
         <div class="confirm-title">Activá tu dispositivo</div>
-        <div class="confirm-desc">Para registrarte la primera vez, acercá el celular a la tarjeta NFC de tu tienda.</div>
+        <div class="confirm-desc" id="sin-registro-texto">Para registrarte la primera vez, acercá el celular a la tarjeta NFC de tu tienda.</div>
+        <div class="vincular-form" id="vincular-form" hidden>
+          <div class="confirm-desc">¿Ya te registraste en Safari? Abrí Safari, tocá <strong>Vincular el ícono</strong> y escribí aquí el código.</div>
+          <input class="form-input" id="vincular-codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="······" aria-label="Código de vinculación">
+          <button class="btn-primary" id="btn-vincular-usar">Vincular</button>
+          <div class="vincular-error" id="vincular-error"></div>
+        </div>
       </div>
     </section>
 
@@ -924,6 +940,15 @@
       <div class="nfc-note">
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 18H4V6h2v12zm4 0H8V6h2l4 6.7V6h2v12h-2l-4-6.7V18zm10 0h-2V6h2v12z"/></svg>
         <span id="inicio-proxima">Para marcar, acercá el celular a la tarjeta NFC de tu tienda.</span>
+      </div>
+
+      <button class="vincular-card" id="btn-vincular" hidden>
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/></svg>
+        <span><strong>Vincular el ícono de Samsara</strong>Si agregaste Samsara a la pantalla de inicio de tu iPhone, tocá aquí para que el ícono también te reconozca.</span>
+      </button>
+      <div class="vincular-box" id="vincular-box" hidden>
+        <div class="vincular-codigo" id="vincular-mostrar">······</div>
+        <div class="vincular-texto" id="vincular-instruccion">Abrí el ícono de Samsara en tu inicio y escribí este código. Vence en 10 minutos.</div>
       </div>
 
       <div class="section-label">Tu semana en horas</div>
@@ -1143,6 +1168,7 @@
         </div>
         <div class="confirm-detail-card" id="res-detalle"></div>
         <button class="btn-primary" id="btn-res-principal" style="align-self: stretch;">Volver al inicio</button>
+        <div class="cerrar-pestana" id="res-cerrar" hidden>Listo. Ya podés cerrar esta pestaña de Safari.</div>
       </div>
     </section>
 
@@ -1215,6 +1241,9 @@
     'Rechazada': 'red', 'No justificada': 'red', 'Recibido': 'gold'
   };
   const ID_TIENDA = (new URLSearchParams(location.search).get('tienda') || '').trim().toUpperCase();
+  const KIOSCO = (new URLSearchParams(location.search).get('k') || '').trim();
+  const ES_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const ES_ICONO = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 
   const NOMBRES_MARCA = {
     ENTRADA: 'Entrada',
@@ -1271,6 +1300,9 @@
   });
   document.getElementById('visor-cerrar').addEventListener('click', () => { if (history.state && history.state.visor) history.back(); else cerrarVisor(); });
   document.getElementById('visor-confirmar').addEventListener('click', confirmarDocumento);
+  document.getElementById('btn-vincular').addEventListener('click', generarCodigoVinculo);
+  document.getElementById('btn-vincular-usar').addEventListener('click', usarCodigoVinculo);
+  document.getElementById('vincular-codigo').addEventListener('keydown', e => { if (e.key === 'Enter') usarCodigoVinculo(); });
   window.addEventListener('popstate', () => { if (!document.getElementById('visor').hidden) cerrarVisor(); });
   document.getElementById('btn-sol-volver').addEventListener('click', () => navegar('screen-solicitudes'));
   document.getElementById('sol-tipo').addEventListener('change', ajustarFormulario);
@@ -1403,7 +1435,7 @@
     prepararUbicacion();
     const perfil = cargarPerfil().catch(() => null);
     try {
-      const verificacion = await llamar({ accion: 'verificar_dispositivo', token: estado.dispositivo, id_tienda: ID_TIENDA, timestamp_dispositivo: new Date().toISOString() });
+      const verificacion = await llamar({ accion: 'verificar_dispositivo', token: estado.dispositivo, id_tienda: ID_TIENDA, kiosco: KIOSCO, timestamp_dispositivo: new Date().toISOString() });
       if (verificacion.codigo === 'DISPOSITIVO_NO_REGISTRADO') return mostrar('screen-registro');
       if (!verificacion.ok) return mostrarError(verificacion.mensaje || 'No se pudo verificar el dispositivo.', true);
       estado.verificacion = verificacion;
@@ -1586,6 +1618,7 @@
     actualizarAlmuerzo();
     pintarPendientes();
     pintarAvisoDocumentos();
+    document.getElementById('btn-vincular').hidden = !(ES_IOS && !ES_ICONO && estado.perfil);
     pintarNomina();
     if (!estado.solicitudes && estado.perfil) cargarSolicitudes();
   }
@@ -1819,6 +1852,7 @@
         accion: 'registrar_marca',
         token: estado.dispositivo,
         id_tienda: ID_TIENDA,
+        kiosco: KIOSCO,
         timestamp_dispositivo: new Date().toISOString(),
         lat: ubicacion.lat,
         lng: ubicacion.lng,
@@ -1874,6 +1908,7 @@
     (o.filas || []).forEach(f => detalle.appendChild(filaDetalle(f[0], f[1], f[2])));
 
     document.getElementById('btn-res-principal').textContent = o.boton || 'Volver al inicio';
+    document.getElementById('res-cerrar').hidden = !(ES_IOS && !ES_ICONO && ID_TIENDA);
     mostrar('screen-resultado');
   }
 
@@ -2016,6 +2051,13 @@
   }
 
   function mostrar(id, texto) {
+    if (id === 'screen-sin-registro') {
+      const iconoIos = ES_IOS && ES_ICONO;
+      document.getElementById('vincular-form').hidden = !iconoIos;
+      document.getElementById('sin-registro-texto').textContent = iconoIos
+        ? 'En iPhone, las marcas se hacen en Safari al acercar el celular a la tarjeta NFC. Registrate ahí primero y después vinculá este ícono.'
+        : 'Para registrarte la primera vez, acercá el celular a la tarjeta NFC de tu tienda.';
+    }
     if (texto) {
       const el = document.getElementById(id === 'screen-procesando' ? 'procesando-texto' : 'cargando-texto');
       if (el) el.textContent = texto;
@@ -2177,6 +2219,43 @@
     anillo.setAttribute('stroke-dasharray', circ.toFixed(1));
     requestAnimationFrame(() => anillo.setAttribute('stroke-dashoffset', (circ * (1 - pct / 100)).toFixed(1)));
   }
+  async function generarCodigoVinculo() {
+    const caja = document.getElementById('vincular-box');
+    caja.hidden = false;
+    document.getElementById('vincular-mostrar').textContent = '······';
+    document.getElementById('vincular-instruccion').textContent = 'Generando código…';
+    try {
+      const r = await llamar({ accion: 'ctl_vincular_codigo', token: estado.dispositivo });
+      if (!r.ok) throw new Error(r.mensaje);
+      document.getElementById('vincular-mostrar').textContent = r.codigo;
+      document.getElementById('vincular-instruccion').textContent = 'Abrí el ícono de Samsara en tu inicio y escribí este código. Vence en 10 minutos.';
+    } catch (e) {
+      document.getElementById('vincular-instruccion').textContent = e && e.message && e.message !== 'Failed to fetch' ? e.message : 'Sin conexión. Intentá de nuevo.';
+    }
+  }
+
+  async function usarCodigoVinculo() {
+    const codigo = document.getElementById('vincular-codigo').value.replace(/\D/g, '');
+    const error = document.getElementById('vincular-error');
+    error.textContent = '';
+    if (codigo.length !== 6) return (error.textContent = 'Escribí los 6 dígitos.');
+    const boton = document.getElementById('btn-vincular-usar');
+    boton.disabled = true;
+    try {
+      const r = await llamar({ accion: 'ctl_vincular_usar', codigo: codigo });
+      if (!r.ok) error.textContent = r.mensaje || 'No se pudo vincular.';
+      else {
+        estado.dispositivo = r.token;
+        guardar(CLAVE_DISPOSITIVO, r.token);
+        estado.perfil = null;
+        guardar(CLAVE_PERFIL, null);
+        document.getElementById('vincular-codigo').value = '';
+        flujoInicio();
+      }
+    } catch (e) { error.textContent = 'Sin conexión. Intentá de nuevo.'; }
+    boton.disabled = false;
+  }
+
   function actualizarPunto() {
     document.getElementById('nav-punto').hidden = !(estado.justificacionesPendientes || docsPendientes().length);
   }

@@ -162,6 +162,26 @@
     .lote-estado { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .lote-detalle { border-top: 1px solid var(--border-soft); padding: 12px 16px 14px; }
     .lote-detalle .tabla-wrap { margin-top: 10px; }
+    .rev-card { background: var(--night); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .rev-card.pendiente { border-color: var(--border); }
+    .rev-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .rev-nombre { font-weight: 700; font-size: 14px; }
+    .rev-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .rev-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .rev-linea { font-size: 13px; color: var(--text-2); line-height: 1.45; }
+    .rev-linea strong { color: var(--cream); font-weight: 600; }
+    .rev-just { font-size: 12.5px; line-height: 1.45; border-left: 2px solid var(--border); padding-left: 10px; color: var(--text-2); white-space: pre-wrap; }
+    .rev-acciones { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border-soft); padding-top: 10px; margin-top: 2px; }
+    .rev-horas { display: flex; flex-wrap: wrap; gap: 10px; }
+    .rev-horas label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+    .rev-horas .input { width: 130px; padding: 8px 10px; }
+    .rev-acciones .input { padding: 9px 12px; }
+    .rev-botones { display: flex; gap: 8px; flex-wrap: wrap; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+    .form-grid .campo { margin: 0; }
+    .codigo-grande { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 44px; font-weight: 600; letter-spacing: 0.25em; color: var(--gold-light); text-align: center; line-height: 1.1; }
+    .ev-card { background: var(--night); border: 1px solid var(--border-soft); border-radius: 14px; padding: 13px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .copiable { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--cream-dim); border: 1px solid var(--border-soft); border-radius: 8px; padding: 8px 10px; overflow-x: auto; white-space: nowrap; user-select: all; }
     @media (max-width: 900px) { .doc-grid { grid-template-columns: 1fr; } }
     @media (max-width: 640px) {
       .tiendas { grid-template-columns: 1fr; }
@@ -215,7 +235,9 @@
       <button class="tab" data-vista="extras">Horas extra<span class="contador" id="cont-extras" hidden></span></button>
       <button class="tab" data-vista="metricas">Métricas</button>
       <button class="tab" data-vista="planilla">Planilla</button>
+      <button class="tab" data-vista="revision">Revisión<span class="contador" id="cont-revision" hidden></span></button>
       <button class="tab" data-vista="documentos">Documentos</button>
+      <button class="tab" data-vista="puntos">Puntos de marca</button>
     </nav>
   </header>
 
@@ -260,6 +282,7 @@
             <option value="TARDANZA">Llegada tardía</option>
             <option value="ALMUERZO_EXCEDIDO">Almuerzo extendido</option>
             <option value="AUSENCIA">Ausencia</option>
+            <option value="MARCA_INCOMPLETA">Marcas incompletas</option>
           </select>
         </div>
         <button class="btn" id="btn-inc-buscar">Buscar</button>
@@ -321,6 +344,35 @@
       <div id="pla-contenido"></div>
     </section>
 
+    <section id="v-revision" hidden>
+      <div class="titulo">Revisión diaria</div>
+      <div class="sub">A la medianoche se cierran las jornadas: si faltó alguna marca, queda aquí pendiente y sin horas extra hasta que la resuelvas. También aparecen las marcas en Residencia y teletrabajo. Las correcciones quedan registradas y nunca cambian la marca original.</div>
+      <div class="filtros">
+        <div class="chips" id="rev-filtro">
+          <button class="chip activa" data-f="pendientes">Por revisar</button>
+          <button class="chip" data-f="todas">Todo</button>
+        </div>
+        <div class="campo"><label for="rev-desde">Desde</label><input class="input" type="date" id="rev-desde"></div>
+        <div class="campo"><label for="rev-hasta">Hasta</label><input class="input" type="date" id="rev-hasta"></div>
+        <button class="btn" id="btn-rev-buscar">Buscar</button>
+        <button class="btn ghost" id="btn-asistida">+ Registrar marca asistida</button>
+      </div>
+      <div class="panel-caja" id="asistida-caja" hidden style="margin-bottom:16px">
+        <div class="seccion">Marca asistida</div>
+        <div class="sub" style="margin-bottom:12px">Para cuando la colaboradora no pudo marcar (celular dañado, sin batería o sin datos). Queda a tu nombre y con el motivo.</div>
+        <div class="form-grid">
+          <div class="campo"><label for="as-persona">Colaborador</label><input class="input" id="as-persona" list="fg-personas" placeholder="Nombre o ID" autocomplete="off"></div>
+          <div class="campo"><label for="as-tienda">Tienda</label><select class="input" id="as-tienda"></select></div>
+          <div class="campo"><label for="as-fecha">Fecha</label><input class="input" type="date" id="as-fecha"></div>
+          <div class="campo"><label for="as-tipo">Marca</label><select class="input" id="as-tipo"><option value="ENTRADA">Entrada</option><option value="ALMUERZO_SALIDA">Salida a almuerzo</option><option value="ALMUERZO_REGRESO">Regreso de almuerzo</option><option value="SALIDA">Salida</option></select></div>
+          <div class="campo"><label for="as-hora">Hora</label><input class="input" type="time" id="as-hora"></div>
+        </div>
+        <div class="campo" style="margin-top:10px"><label for="as-motivo">Motivo</label><input class="input" id="as-motivo" maxlength="500" placeholder="Ej.: celular sin batería, marcó en presencia de la coordinadora"></div>
+        <div class="rev-botones"><button class="btn" id="as-guardar">Registrar marca</button><button class="btn ghost" id="as-cancelar">Cancelar</button></div>
+      </div>
+      <div id="rev-contenido"></div>
+    </section>
+
     <section id="v-documentos" hidden>
       <div class="titulo">Documentos</div>
       <div class="sub">Enviá documentos a colaboradores. Les llega un aviso en la app y por correo; el documento solo se abre desde la app.</div>
@@ -353,6 +405,56 @@
           <div class="seccion" style="margin-top:0">Enviados</div>
           <div id="doc-historial"></div>
         </div>
+      </div>
+    </section>
+
+    <section id="v-puntos" hidden>
+      <div class="titulo">Puntos de marca</div>
+      <div class="sub">Computadoras autorizadas para mostrar el código QR que cambia cada 15 segundos, eventos en Residencia y enlaces de las tarjetas NFC.</div>
+      <div class="doc-grid">
+        <div>
+          <div class="panel-caja">
+            <div class="seccion">Autorizar una computadora</div>
+            <div class="form-grid">
+              <div class="campo"><label for="eq-tipo">Para</label><select class="input" id="eq-tipo"><option value="TIENDA">Una tienda</option><option value="TELETRABAJO">Teletrabajo de una persona</option></select></div>
+              <div class="campo" id="eq-tienda-campo"><label for="eq-tienda">Tienda</label><select class="input" id="eq-tienda"></select></div>
+              <div class="campo" id="eq-persona-campo" hidden><label for="eq-persona">Persona</label><input class="input" id="eq-persona" list="fg-personas" placeholder="Nombre o ID" autocomplete="off"></div>
+            </div>
+            <button class="btn full" id="eq-generar" style="margin-top:12px">Generar código de activación</button>
+            <div id="eq-resultado" hidden style="margin-top:14px">
+              <div class="codigo-grande" id="eq-codigo"></div>
+              <div class="sub" style="text-align:center;margin:6px 0 10px">En esa computadora abrí esta dirección y escribí el código. Vence en 30 minutos.</div>
+              <div class="copiable" id="eq-url"></div>
+            </div>
+          </div>
+          <div class="seccion">Computadoras autorizadas</div>
+          <div id="equipos-lista"></div>
+        </div>
+        <div>
+          <div class="panel-caja">
+            <div class="seccion">Solicitar evento en Residencia</div>
+            <div class="sub" style="margin-bottom:10px">Necesita la aprobación de Gerencia y de Operaciones. Las marcas en Residencia sin evento aprobado quedan en revisión.</div>
+            <div class="form-grid">
+              <div class="campo"><label for="ev-fecha">Fecha</label><input class="input" type="date" id="ev-fecha"></div>
+              <div class="campo"><label for="ev-inicio">Desde</label><input class="input" type="time" id="ev-inicio"></div>
+              <div class="campo"><label for="ev-fin">Hasta</label><input class="input" type="time" id="ev-fin"></div>
+            </div>
+            <div class="campo" style="margin-top:10px"><label for="ev-lugar">Lugar</label><input class="input" id="ev-lugar" maxlength="150" placeholder="Ej.: Hotel Real Intercontinental"></div>
+            <div class="campo"><label for="ev-motivo">Motivo</label><input class="input" id="ev-motivo" maxlength="500" placeholder="Ej.: Capacitación de artistas"></div>
+            <div class="campo"><label for="ev-buscar">Participantes (si no elegís, aplica para cualquiera)</label><input class="input" id="ev-buscar" placeholder="Buscar por nombre" autocomplete="off"></div>
+            <div class="doc-lista" id="ev-lista" style="max-height:180px"></div>
+            <div class="doc-resumen"><span id="ev-contador">Cualquier colaboradora</span></div>
+            <button class="btn full" id="ev-crear" style="margin-top:12px">Solicitar aprobación</button>
+          </div>
+          <div class="seccion">Eventos</div>
+          <div id="eventos-lista"></div>
+        </div>
+      </div>
+      <div class="seccion">Enlaces para grabar las tarjetas NFC</div>
+      <div class="panel-caja">
+        <div class="sub" style="margin-bottom:10px">Con la app gratuita NFC Tools: Escribir → Agregar un registro → URL → pegar el enlace → Escribir y acercar la tarjeta.</div>
+        <div class="campo"><label>Bodega Central La Uruca</label><div class="copiable">https://samsarabybarth.github.io/Asistencia/?tienda=CR-BOD</div></div>
+        <div class="campo" style="margin:0"><label>Residencia</label><div class="copiable">https://samsarabybarth.github.io/Asistencia/?tienda=CR-RES</div></div>
       </div>
     </section>
   </main>
@@ -483,9 +585,15 @@
     presetPlanilla(hoy.getDate() <= 15 ? 'q1' : 'q2');
     st.filtro = { tienda: '', persona: '' };
     st.docSel = {};
+    st.evSel = {};
     $('fg-persona').value = '';
+    $('rev-hasta').value = hoyISO(hoy);
+    $('rev-desde').value = hoyISO(new Date(hoy.getTime() - 7 * 86400000));
+    $('as-fecha').value = hoyISO(hoy);
+    $('ev-fecha').value = hoyISO(hoy);
     pintarFiltroGlobal();
-    mostrarVista('hoy', true);
+    const inicial = ['revision', 'puntos', 'documentos'].indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'hoy';
+    mostrarVista(inicial, true);
     contadores();
     cargarDirectorio();
     if (st.timer) clearInterval(st.timer);
@@ -497,8 +605,10 @@
   function mostrarVista(v, forzar) {
     st.vista = v;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activa', t.dataset.vista === v));
-    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'documentos'].forEach(x => { $('v-' + x).hidden = x !== v; });
-    $('filtro-global').hidden = v === 'documentos';
+    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'revision', 'documentos', 'puntos'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    $('filtro-global').hidden = v === 'documentos' || v === 'puntos';
+    if (v === 'revision' && (forzar || !st.datos.revision)) cargarRevision();
+    if (v === 'puntos') { pintarSelectTiendas(); pintarParticipantes(); if (forzar || !st.datos.equipos) cargarPuntos(); }
     if (v === 'documentos') {
       pintarDocTiendas();
       pintarDestinatarios();
@@ -515,11 +625,14 @@
 
   async function contadores() {
     try {
-      const [inc, sol, ext] = await Promise.all([
+      const [inc, sol, ext, rev] = await Promise.all([
         llamar({ accion: 'panel_incidencias', pais: st.pais }),
         llamar({ accion: 'panel_solicitudes', pais: st.pais }),
-        llamar({ accion: 'panel_extras', pais: st.pais })
+        llamar({ accion: 'panel_extras', pais: st.pais }),
+        llamar({ accion: 'ctl_revision', pais: st.pais }).catch(() => ({}))
       ]);
+      const nRev = rev && rev.ok && rev.puede_revisar ? rev.items.filter(x => x.estado === 'Pendiente').length : 0;
+      $('cont-revision').hidden = !nRev; $('cont-revision').textContent = nRev;
       const nExt = ext.ok && ext.puede_aprobar ? ext.extras.filter(x => x.estado === 'Pendiente').length : 0;
       $('cont-extras').hidden = !nExt; $('cont-extras').textContent = nExt;
       const nInc = inc.ok && inc.puede_decidir ? inc.incidencias.filter(i => i.estado === 'En revisión').length : 0;
@@ -553,7 +666,7 @@
     const tf = tiendaFiltro();
     const conPersona = !!norm(st.filtro.persona);
     const tiendas = r.tiendas
-      .filter(t => (!st.pais || t.pais.toUpperCase() === st.pais) && coincideTienda(tf, t.nombre, t.id))
+      .filter(t => (!st.pais || t.pais.toUpperCase() === st.pais) && coincideTienda(tf, t.nombre, t.id) && !(/-(RES|TEL)$/.test(t.id) && !t.personas.length))
       .map(t => conPersona ? Object.assign({}, t, { personas: t.personas.filter(p => coincideTexto(st.filtro.persona, p.nombre, p.id)) }) : t)
       .filter(t => !conPersona || t.personas.length);
     const personas = [].concat(...tiendas.map(t => t.personas));
@@ -856,7 +969,7 @@
     ['H. ordinarias dominical/festivo diurnas', f => f.ho_especiales_d], ['H. ordinarias dominical/festivo nocturnas', f => f.ho_especiales_n],
     ['H. extra diurnas', f => f.he_diurnas], ['H. extra nocturnas', f => f.he_nocturnas],
     ['H. extra dominical/festivo diurnas', f => f.he_especiales_d], ['H. extra dominical/festivo nocturnas', f => f.he_especiales_n],
-    ['H. extra por aprobar', f => f.he_por_aprobar], ['Festivos trabajados', f => f.festivos_trabajados], ['Domingos trabajados (CO)', f => f.dominicales_trabajados],
+    ['H. extra por aprobar', f => f.he_por_aprobar], ['H. jornada incompleta por revisar', f => f.ho_por_revisar], ['H. jornada incompleta no validadas', f => f.ho_no_validadas], ['Festivos trabajados', f => f.festivos_trabajados], ['Domingos trabajados (CO)', f => f.dominicales_trabajados],
     ['Tardías', f => f.tardias], ['Minutos de tardía', f => f.minutos_tarde], ['Rebajo tardías (min)', f => f.rebajo_tardias_min], ['Tardías en revisión (min)', f => f.tardias_en_revision_min],
     ['Rebajo almuerzo (min)', f => f.rebajo_almuerzo_min], ['Almuerzo en revisión (min)', f => f.almuerzo_en_revision_min],
     ['Ausencias injustificadas', f => f.ausencias], ['Rebajo ausencias (h)', f => f.rebajo_ausencias_h], ['Ausencias justificadas', f => f.ausencias_justificadas],
@@ -920,6 +1033,7 @@
     if (v === 'extras' && st.datos.extras) pintarExtras();
     if (v === 'metricas' && st.datos.metricas) pintarMetricas();
     if (v === 'planilla' && st.datos.planilla) pintarPlanilla();
+    if (v === 'revision' && st.datos.revision) pintarRevision();
   }
 
   $('fg-tienda').addEventListener('change', () => { st.filtro.tienda = $('fg-tienda').value; pintarFiltroGlobal(); repintarVista(); });
@@ -943,6 +1057,8 @@
       pintarFiltroGlobal();
       pintarDocTiendas();
       pintarDestinatarios();
+      pintarSelectTiendas();
+      pintarParticipantes();
       repintarVista();
     } catch (e) {}
   }
@@ -1081,6 +1197,240 @@
       }
     } catch (e) { if (ventana) ventana.close(); toast('Sin conexión'); }
     b.disabled = false;
+  }
+
+  const TIPO_REV = { INCOMPLETA: ['Jornada incompleta', 'red'], RESIDENCIA: ['Residencia', 'gold'], TELETRABAJO: ['Teletrabajo', 'blue'], ASISTIDA: ['Marca asistida', 'amber'] };
+  const COLOR_REV = { Pendiente: 'amber', Corregida: 'green', Validada: 'green', Rechazada: 'red', Informativa: '', Registrada: 'blue' };
+  const NOMBRE_MARCA = { ENTRADA: 'Entrada', ALMUERZO_SALIDA: 'Salida a almuerzo', ALMUERZO_REGRESO: 'Regreso de almuerzo', SALIDA: 'Salida' };
+
+  $('btn-rev-buscar').addEventListener('click', cargarRevision);
+  document.querySelectorAll('#rev-filtro .chip').forEach(c => c.addEventListener('click', () => {
+    st.revFiltro = c.dataset.f;
+    document.querySelectorAll('#rev-filtro .chip').forEach(x => x.classList.toggle('activa', x === c));
+    pintarRevision();
+  }));
+
+  async function cargarRevision() {
+    cargando('rev-contenido');
+    try {
+      const r = await llamar({ accion: 'ctl_revision', pais: st.pais, desde: $('rev-desde').value, hasta: $('rev-hasta').value });
+      if (!r.ok) return ($('rev-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.revision = r;
+      pintarRevision();
+    } catch (e) { if (e.message !== 'sesion') $('rev-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function pintarRevision() {
+    const r = st.datos.revision;
+    if (!r) return;
+    const todas = (st.revFiltro || 'pendientes') === 'todas';
+    const lista = r.items.filter(x => (todas || x.estado === 'Pendiente') && (!st.pais || x.pais === st.pais) && pasa(x.tienda, x.idTienda, x.nombre, x.id));
+    if (!lista.length) return ($('rev-contenido').innerHTML = '<div class="vacio">' + sinResultados(todas ? 'No hay registros en este período.' : 'Nada pendiente por revisar ✓') + '</div>');
+    $('rev-contenido').innerHTML = lista.map(x => {
+      const tipo = TIPO_REV[x.tipo] || [x.tipo, ''];
+      let cuerpo = '<div class="rev-linea">' + esc(x.detalle) + '</div>' +
+        '<div class="rev-linea"><strong>Marcas:</strong> ' + (x.marcas ? esc(x.marcas) : '<span class="muted">ninguna</span>') + '</div>';
+      if (x.justificacion) {
+        cuerpo += x.justificacion.justifico
+          ? '<div class="rev-just"><strong>Justificación:</strong> ' + esc(x.justificacion.comentario || 'Sin comentario') + (x.justificacion.archivos.length ? '<br>' + x.justificacion.archivos.map((a, k) => '<a href="' + esc(a) + '" target="_blank" rel="noopener">Archivo ' + (k + 1) + '</a>').join(' · ') : '') + '</div>'
+          : '<div class="rev-linea muted">La colaboradora todavía no justificó' + (x.justificacion.limite && new Date(x.justificacion.limite) > new Date() ? ' · tiene plazo hasta ' + esc(fechaHora(x.justificacion.limite)) : '') + '.</div>';
+      }
+      if (x.estado === 'Pendiente' && r.puede_revisar) {
+        const horas = x.tipo === 'INCOMPLETA' ? '<div class="rev-horas">' + x.faltantes.map(f => '<label>' + esc(NOMBRE_MARCA[f] || f) + '<input class="input" type="time" data-tipo="' + esc(f) + '"></label>').join('') + '</div>' : '';
+        const botones = x.tipo === 'INCOMPLETA'
+          ? '<button class="btn ok mini" data-a="COMPLETAR">Completar marcas</button><button class="btn ghost mini" data-a="VALIDAR">Validar sin cambios</button><button class="btn no mini" data-a="RECHAZAR">No validar</button>'
+          : '<button class="btn ok mini" data-a="VALIDAR">Validar</button><button class="btn no mini" data-a="RECHAZAR">Rechazar</button>';
+        cuerpo += '<div class="rev-acciones" data-clave="' + esc(x.clave) + '">' + horas +
+          '<input class="input" maxlength="500" placeholder="' + (x.tipo === 'INCOMPLETA' ? 'Motivo (obligatorio para completar o no validar)' : 'Motivo (obligatorio para rechazar)') + '">' +
+          '<div class="rev-botones">' + botones + '</div></div>';
+      } else if (x.estado !== 'Pendiente' && x.estado !== 'Informativa') {
+        cuerpo += '<div class="rev-linea muted">' + esc((x.reviso ? x.reviso + ' · ' : '') + (x.fechaRevision ? fechaHora(x.fechaRevision) + ' · ' : '') + x.resolucion) + '</div>';
+      }
+      return '<div class="rev-card' + (x.estado === 'Pendiente' ? ' pendiente' : '') + '"><div class="rev-cab"><div><div class="rev-nombre">' + esc(nombreCorto(x.nombre)) + '</div><div class="rev-meta">' + BANDERA[x.pais] + ' ' + esc(x.tienda) + ' · ' + esc(fechaCorta(x.fecha)) + '</div></div>' +
+        '<div class="rev-pills">' + pill(tipo[0], tipo[1]) + pill(x.estado, COLOR_REV[x.estado] || '') + '</div></div>' + cuerpo + '</div>';
+    }).join('');
+    $('rev-contenido').querySelectorAll('.rev-acciones').forEach(caja => {
+      caja.querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+        const accion = b.dataset.a;
+        const motivo = caja.querySelector('input:not([type=time])').value.trim();
+        const marcas = Array.from(caja.querySelectorAll('input[type=time]')).filter(i => i.value).map(i => ({ tipo: i.dataset.tipo, hora: i.value }));
+        if (accion === 'COMPLETAR' && !marcas.length) return toast('Indicá la hora de al menos una marca faltante');
+        if ((accion === 'COMPLETAR' || accion === 'RECHAZAR') && motivo.length < 3) return toast('Escribí el motivo');
+        caja.querySelectorAll('button').forEach(x => { x.disabled = true; });
+        try {
+          const res = await llamar({ accion: 'ctl_resolver', clave: caja.dataset.clave, accion_revision: accion, motivo: motivo, marcas: marcas });
+          toast(res.ok ? 'Caso ' + res.estado.toLowerCase() : res.mensaje);
+          if (res.ok) { await cargarRevision(); contadores(); return; }
+        } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); }
+        caja.querySelectorAll('button').forEach(x => { x.disabled = false; });
+      }));
+    });
+  }
+
+  function personaPorTexto(texto) {
+    if (!st.dir || !texto) return null;
+    const n = norm(texto);
+    const exacta = st.dir.personas.find(p => norm(p.nombre) === n || norm(p.id) === n);
+    if (exacta) return exacta;
+    const parecidas = st.dir.personas.filter(p => coincideTexto(texto, p.nombre, p.id));
+    return parecidas.length === 1 ? parecidas[0] : null;
+  }
+
+  function pintarSelectTiendas() {
+    if (!st.dir) return;
+    const opciones = (filtro, actual) => st.dir.tiendas.filter(filtro).map(t => '<option value="' + esc(t.id) + '"' + (t.id === actual ? ' selected' : '') + '>' + BANDERA[t.pais] + ' ' + esc(t.nombre) + '</option>').join('');
+    $('as-tienda').innerHTML = opciones(t => (!st.pais || t.pais === st.pais) && !/-TEL$/.test(t.id), $('as-tienda').value);
+    $('eq-tienda').innerHTML = opciones(t => (!st.pais || t.pais === st.pais) && !/-(TEL|RES)$/.test(t.id), $('eq-tienda').value);
+  }
+
+  $('btn-asistida').addEventListener('click', () => { pintarSelectTiendas(); $('asistida-caja').hidden = !$('asistida-caja').hidden; });
+  $('as-cancelar').addEventListener('click', () => { $('asistida-caja').hidden = true; });
+  $('as-persona').addEventListener('change', () => {
+    const p = personaPorTexto($('as-persona').value);
+    if (p && p.idTienda) $('as-tienda').value = p.idTienda;
+  });
+  $('as-guardar').addEventListener('click', async () => {
+    const p = personaPorTexto($('as-persona').value);
+    if (!p) return toast('Elegí a la colaboradora de la lista');
+    if (!$('as-hora').value) return toast('Indicá la hora');
+    if ($('as-motivo').value.trim().length < 5) return toast('Escribí el motivo');
+    const b = $('as-guardar');
+    b.disabled = true;
+    try {
+      const r = await llamar({ accion: 'ctl_asistida', id: p.id, idTienda: $('as-tienda').value, fecha: $('as-fecha').value, tipo: $('as-tipo').value, hora: $('as-hora').value, motivo: $('as-motivo').value.trim() });
+      toast(r.ok ? 'Marca registrada' : r.mensaje);
+      if (r.ok) { $('as-persona').value = ''; $('as-hora').value = ''; $('as-motivo').value = ''; $('asistida-caja').hidden = true; cargarRevision(); }
+    } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); }
+    b.disabled = false;
+  });
+
+  async function cargarPuntos() {
+    $('equipos-lista').innerHTML = '<div class="cargando"><div class="spinner"></div>Cargando…</div>';
+    $('eventos-lista').innerHTML = '';
+    try {
+      const [eq, ev] = await Promise.all([llamar({ accion: 'ctl_equipos' }), llamar({ accion: 'ctl_eventos' })]);
+      st.datos.equipos = eq;
+      st.datos.eventos = ev;
+      pintarEquipos();
+      pintarEventos();
+    } catch (e) { if (e.message !== 'sesion') $('equipos-lista').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  $('eq-tipo').addEventListener('change', () => {
+    const tele = $('eq-tipo').value === 'TELETRABAJO';
+    $('eq-tienda-campo').hidden = tele;
+    $('eq-persona-campo').hidden = !tele;
+  });
+
+  $('eq-generar').addEventListener('click', async () => {
+    const tipo = $('eq-tipo').value;
+    const datos = { accion: 'ctl_equipo_autorizar', tipo: tipo };
+    if (tipo === 'TIENDA') datos.idTienda = $('eq-tienda').value;
+    else {
+      const p = personaPorTexto($('eq-persona').value);
+      if (!p) return toast('Elegí a la persona de la lista');
+      datos.idColab = p.id;
+    }
+    const b = $('eq-generar');
+    b.disabled = true;
+    try {
+      const r = await llamar(datos);
+      if (!r.ok) toast(r.mensaje);
+      else {
+        $('eq-codigo').textContent = r.codigo;
+        $('eq-url').textContent = r.url;
+        $('eq-resultado').hidden = false;
+        cargarPuntos();
+      }
+    } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); }
+    b.disabled = false;
+  });
+
+  function pintarEquipos() {
+    const r = st.datos.equipos;
+    if (!r || !r.ok) return ($('equipos-lista').innerHTML = '<div class="vacio">' + esc((r && r.mensaje) || 'No se pudo cargar.') + '</div>');
+    $('eq-tipo').querySelector('option[value=TELETRABAJO]').disabled = !r.puede_teletrabajo;
+    const lista = r.equipos.filter(e => !st.pais || e.pais === st.pais);
+    if (!lista.length) return ($('equipos-lista').innerHTML = '<div class="vacio">Todavía no hay computadoras autorizadas.</div>');
+    $('equipos-lista').innerHTML = '<div class="tabla-wrap"><table><thead><tr><th>Punto</th><th>Estado</th><th>Última conexión</th><th></th></tr></thead><tbody>' + lista.map(e => {
+      const color = e.estado === 'Activo' ? 'green' : e.estado === 'Pendiente' ? 'amber' : '';
+      const puede = e.estado !== 'Desactivado' && (e.tipo === 'TELETRABAJO' ? r.puede_teletrabajo : r.puede_tienda);
+      return '<tr><td><strong>' + BANDERA[e.pais] + ' ' + esc(e.tienda) + '</strong><div class="muted">Autorizó ' + esc(e.creadoPor) + (e.activado ? ' · activada ' + esc(fechaHora(e.activado)) : '') + '</div></td>' +
+        '<td>' + pill(e.estado === 'Pendiente' ? 'Esperando código' : e.estado, color) + '</td><td>' + (e.ultima ? esc(fechaHora(e.ultima)) : '<span class="muted">—</span>') + '</td>' +
+        '<td>' + (puede ? '<button class="btn no mini" data-des="' + esc(e.id) + '">Desactivar</button>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+    $('equipos-lista').querySelectorAll('[data-des]').forEach(b => b.addEventListener('click', async () => {
+      b.disabled = true;
+      try {
+        const res = await llamar({ accion: 'ctl_equipo_desactivar', id: b.dataset.des });
+        toast(res.ok ? 'Equipo desactivado' : res.mensaje);
+        if (res.ok) cargarPuntos();
+      } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); }
+      b.disabled = false;
+    }));
+  }
+
+  function pintarParticipantes() {
+    if (!st.dir) return;
+    st.evSel = st.evSel || {};
+    const q = $('ev-buscar').value;
+    const lista = st.dir.personas.filter(p => p.pais === 'CR' && coincideTexto(q, p.nombre, p.id));
+    $('ev-lista').innerHTML = lista.map(p => '<label class="doc-persona"><input type="checkbox" data-id="' + esc(p.id) + '"' + (st.evSel[p.id] ? ' checked' : '') + '><span><span class="dp-nombre">' + esc(nombreCorto(p.nombre)) + '</span><div class="dp-meta">' + esc(p.tienda || 'Sin tienda asignada') + ' · ' + esc(p.id) + '</div></span></label>').join('') || '<div class="vacio" style="border:none">Sin resultados.</div>';
+    $('ev-lista').querySelectorAll('input').forEach(c => c.addEventListener('change', () => {
+      if (c.checked) st.evSel[c.dataset.id] = true; else delete st.evSel[c.dataset.id];
+      contarParticipantes();
+    }));
+    contarParticipantes();
+  }
+
+  function contarParticipantes() {
+    const n = Object.keys(st.evSel || {}).length;
+    $('ev-contador').textContent = n ? n + (n === 1 ? ' participante' : ' participantes') : 'Cualquier colaboradora';
+  }
+
+  $('ev-buscar').addEventListener('input', pintarParticipantes);
+
+  $('ev-crear').addEventListener('click', async () => {
+    const datos = { accion: 'ctl_evento_crear', fecha: $('ev-fecha').value, inicio: $('ev-inicio').value, fin: $('ev-fin').value, lugar: $('ev-lugar').value.trim(), motivo: $('ev-motivo').value.trim(), participantes: Object.keys(st.evSel || {}) };
+    if (!datos.fecha || !datos.inicio || !datos.fin) return toast('Indicá fecha y horario');
+    if (datos.lugar.length < 3 || datos.motivo.length < 3) return toast('Indicá el lugar y el motivo');
+    const b = $('ev-crear');
+    b.disabled = true;
+    try {
+      const r = await llamar(datos);
+      toast(r.ok ? 'Evento enviado a aprobación' : r.mensaje);
+      if (r.ok) { $('ev-lugar').value = ''; $('ev-motivo').value = ''; $('ev-inicio').value = ''; $('ev-fin').value = ''; st.evSel = {}; pintarParticipantes(); cargarPuntos(); }
+    } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); }
+    b.disabled = false;
+  });
+
+  function pintarEventos() {
+    const r = st.datos.eventos;
+    if (!r || !r.ok) return ($('eventos-lista').innerHTML = '<div class="vacio">' + esc((r && r.mensaje) || 'No se pudo cargar.') + '</div>');
+    if (!r.eventos.length) return ($('eventos-lista').innerHTML = '<div class="vacio">Todavía no hay eventos en Residencia.</div>');
+    const colorEstado = { Aprobado: 'green', Rechazado: 'red', Pendiente: 'amber' };
+    $('eventos-lista').innerHTML = r.eventos.map(e => {
+      const firma = (texto, quien) => texto ? pill(texto.split(' · ')[0] + ' · ' + quien, texto.indexOf('Aprobado') === 0 ? 'green' : 'red') : pill(quien + ' pendiente', '');
+      const puedeDecidir = e.estado === 'Pendiente' && ((r.aprueba_gerencia && !e.gerencia) || (r.aprueba_operaciones && !e.operaciones));
+      return '<div class="ev-card"><div class="rev-cab"><div><div class="rev-nombre">' + esc(e.lugar) + '</div><div class="rev-meta">' + esc(fechaCorta(e.fecha)) + ' · ' + esc(hora12(e.inicio)) + ' a ' + esc(hora12(e.fin)) + ' · solicitó ' + esc(e.creadoPor) + '</div></div>' + pill(e.estado, colorEstado[e.estado] || '') + '</div>' +
+        '<div class="rev-linea">' + esc(e.motivo) + '</div>' +
+        '<div class="rev-linea muted">' + (e.participantes.length ? esc(e.participantes.map(p => nombreCorto(p.nombre)).join(', ')) : 'Cualquier colaboradora') + '</div>' +
+        '<div class="rev-pills">' + firma(e.gerencia, 'Gerencia') + firma(e.operaciones, 'Operaciones') + '</div>' +
+        (e.comentario ? '<div class="rev-linea muted">' + esc(e.comentario) + '</div>' : '') +
+        (puedeDecidir ? '<div class="rev-acciones" data-ev="' + esc(e.id) + '"><input class="input" maxlength="300" placeholder="Comentario (obligatorio si rechazás)"><div class="rev-botones"><button class="btn ok mini" data-d="APROBAR">Aprobar</button><button class="btn no mini" data-d="RECHAZAR">Rechazar</button></div></div>' : '') +
+        '</div>';
+    }).join('');
+    $('eventos-lista').querySelectorAll('[data-ev]').forEach(caja => caja.querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+      const comentario = caja.querySelector('input').value.trim();
+      if (b.dataset.d === 'RECHAZAR' && comentario.length < 3) return toast('Escribí el motivo del rechazo');
+      caja.querySelectorAll('button').forEach(x => { x.disabled = true; });
+      try {
+        const res = await llamar({ accion: 'ctl_evento_decidir', id: caja.dataset.ev, decision: b.dataset.d, comentario: comentario });
+        toast(res.ok ? 'Decisión registrada' : res.mensaje);
+        if (res.ok) { cargarPuntos(); return; }
+      } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); }
+      caja.querySelectorAll('button').forEach(x => { x.disabled = false; });
+    })));
   }
 
   (function () {
