@@ -57,6 +57,13 @@
     .pasos b { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; background: var(--gold-dim); color: var(--gold-light); align-items: center; justify-content: center; margin-right: 8px; font-size: 13px; }
     .pie { display: flex; gap: 10px; align-items: center; color: var(--text-3); font-size: 12px; }
     .aviso { color: var(--red); font-size: 14px; font-weight: 600; }
+    .feed { position: fixed; right: 24px; bottom: 24px; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; z-index: 10; }
+    .feed-item { display: flex; align-items: center; gap: 12px; background: var(--night); border: 1px solid rgba(76,175,125,0.5); border-radius: 16px; padding: 14px 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); animation: entrar 0.35s ease-out; }
+    .feed-item.salir { opacity: 0; transform: translateY(8px); transition: opacity 0.4s, transform 0.4s; }
+    .feed-check { width: 36px; height: 36px; border-radius: 50%; background: var(--green); color: #0d2a1c; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; }
+    .feed-nombre { font-weight: 700; font-size: 16px; }
+    .feed-detalle { font-size: 13px; color: var(--text-2); }
+    @keyframes entrar { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   </style>
 </head>
 <body>
@@ -95,6 +102,8 @@
   </div>
 </section>
 
+<div class="feed" id="feed" aria-live="polite"></div>
+
 <section class="pantalla" id="p-bloqueado" hidden>
   <div class="marca">SAMSARA</div>
   <div class="caja">
@@ -108,7 +117,8 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE = 'samsara_kiosco';
   const VENTANA_MS = 15000;
-  const estado = { kiosco: null, desfase: 0, ventana: null, clave: null, timer: null, ping: null };
+  const VERSION = '2026.10.31.1';
+  const estado = { kiosco: null, desfase: 0, ventana: null, clave: null, timer: null, ping: null, feed: null, desde: Date.now() };
 
   function $(id) { return document.getElementById(id); }
   function leer() { try { return JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { return null; } }
@@ -168,9 +178,40 @@
     }
   }
 
+  async function revisarRecientes() {
+    if (!estado.kiosco || document.visibilityState !== 'visible') return;
+    try {
+      const ventana = Math.floor(ahora() / VENTANA_MS);
+      const r = await llamar({ accion: 'ctl_kiosco_recientes', id: estado.kiosco.id, ventana: ventana, firma: await firmar('estado.' + ventana), desde: estado.desde });
+      (r.marcas || []).forEach(m => {
+        estado.desde = Math.max(estado.desde, m.ts);
+        mostrarConfirmacion(m);
+      });
+    } catch (e) {}
+  }
+
+  function mostrarConfirmacion(m) {
+    const item = document.createElement('div');
+    item.className = 'feed-item';
+    item.innerHTML = '<div class="feed-check">✓</div><div><div class="feed-nombre"></div><div class="feed-detalle"></div></div>';
+    item.querySelector('.feed-nombre').textContent = m.nombre;
+    item.querySelector('.feed-detalle').textContent = m.tipo + ' · ' + m.hora;
+    $('feed').prepend(item);
+    while ($('feed').children.length > 4) $('feed').lastChild.remove();
+    setTimeout(() => { item.classList.add('salir'); setTimeout(() => item.remove(), 450); }, 7000);
+  }
+
+  function revisarVersion() {
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(r => r.json())
+      .then(v => { if (v && v.version && v.version !== VERSION) location.replace(location.pathname + '?v=' + Date.now()); })
+      .catch(() => {});
+  }
+
   function detener() {
     clearInterval(estado.timer);
     clearInterval(estado.ping);
+    clearInterval(estado.feed);
     estado.kiosco = null;
     estado.clave = null;
     estado.ventana = null;
@@ -187,6 +228,8 @@
     pintarQR();
     estado.timer = setInterval(pintarQR, 250);
     estado.ping = setInterval(revisarEstado, 300000);
+    estado.desde = Date.now();
+    estado.feed = setInterval(revisarRecientes, 6000);
     revisarEstado();
     try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
   }
@@ -222,6 +265,8 @@
       try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
     }
   });
+
+  setInterval(revisarVersion, 600000);
 
   (function () {
     const k = leer();

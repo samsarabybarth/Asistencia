@@ -810,6 +810,26 @@
     .vincular-form .form-input { text-align: center; font-size: 22px; letter-spacing: 0.35em; }
     .vincular-error { color: var(--red); font-size: 12.5px; min-height: 16px; }
     .cerrar-pestana { font-size: 12.5px; color: var(--text-muted); text-align: center; margin-top: 12px; }
+    .aviso-version { position: fixed; left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top, 0px)); z-index: 200; display: flex; align-items: center; gap: 10px; background: var(--gold); color: var(--night); border: none; border-radius: 14px; padding: 12px 14px; font-family: inherit; font-size: 13.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.4); cursor: pointer; text-align: left; }
+    .aviso-version span { flex: 1; }
+    .aviso-version b { background: var(--night); color: var(--gold-light); border-radius: 9px; padding: 7px 11px; font-size: 12.5px; }
+    .cola-aviso { display: flex; align-items: center; gap: 10px; background: var(--amber-bg); border: 1px solid rgba(245,166,35,0.35); color: var(--cream); border-radius: 14px; padding: 11px 14px; margin-bottom: 16px; font-size: 12.5px; line-height: 1.4; }
+    .cola-aviso strong { display: block; font-size: 13.5px; }
+    .offline-nota { font-size: 12.5px; color: var(--amber); background: var(--amber-bg); border-radius: 10px; padding: 9px 12px; margin: 0 0 14px; line-height: 1.4; }
+    .insignia { display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06)); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
+    .insignia-icono { width: 44px; height: 44px; border-radius: 50%; background: var(--gold); color: var(--night); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .insignia-titulo { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-weight: 600; color: var(--gold-light); line-height: 1.15; }
+    .insignia-texto { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+    .bienvenida { position: fixed; inset: 0; z-index: 150; background: var(--night-deep); display: flex; flex-direction: column; padding: calc(28px + env(safe-area-inset-top, 0px)) 26px calc(26px + env(safe-area-inset-bottom, 0px)); }
+    .bv-saltar { align-self: flex-end; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 13px; cursor: pointer; padding: 6px; }
+    .bv-cuerpo { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 18px; }
+    .bv-icono { width: 96px; height: 96px; border-radius: 50%; background: var(--gold-dim); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; }
+    .bv-icono svg { fill: var(--gold); }
+    .bv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; color: var(--cream); line-height: 1.1; }
+    .bv-texto { font-size: 15px; color: var(--text-secondary); line-height: 1.55; max-width: 320px; }
+    .bv-puntos { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+    .bv-puntos span { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: width 0.2s, background 0.2s; }
+    .bv-puntos span.activo { width: 22px; border-radius: 4px; background: var(--gold); }
     .volver { align-self: flex-start; background: none; border: none; color: var(--text-secondary); font-family: inherit; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 12px; }
 
     @media (prefers-reduced-motion: reduce) {
@@ -898,6 +918,16 @@
         <span class="pb-flecha">›</span>
       </button>
 
+      <div class="cola-aviso" id="cola-aviso" hidden>
+        <span style="font-size:18px">⏱</span>
+        <span><strong id="cola-titulo"></strong><span id="cola-texto">Se enviarán solas apenas haya señal. No borres los datos de la app.</span></span>
+      </div>
+
+      <div class="insignia" id="insignia" hidden>
+        <div class="insignia-icono">🏅</div>
+        <div><div class="insignia-titulo" id="insignia-titulo"></div><div class="insignia-texto" id="insignia-texto"></div></div>
+      </div>
+
       <button class="pendiente-banner doc-banner" id="inicio-documentos" hidden>
         <span class="pb-icono"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></span>
         <span><span class="pb-titulo" id="db-titulo"></span><span class="pb-texto" id="db-texto" style="display:block"></span></span>
@@ -967,6 +997,7 @@
     </section>
 
     <section class="screen" id="screen-marcar">
+      <div class="offline-nota" id="marcar-offline" hidden>Sin conexión. Tu marca se guardará en el celular con la hora exacta y se enviará sola cuando vuelva la señal.</div>
       <div class="colaboradora-card">
         <div class="avatar" id="marcar-avatar">·</div>
         <div class="collab-info">
@@ -1190,6 +1221,19 @@
     </div>
   </div>
 
+  <button class="aviso-version" id="aviso-version" hidden><span>Hay una versión nueva de la app</span><b>Actualizar</b></button>
+
+  <div class="bienvenida" id="bienvenida" hidden role="dialog" aria-modal="true" aria-labelledby="bv-titulo">
+    <button class="bv-saltar" id="bv-saltar">Saltar</button>
+    <div class="bv-cuerpo">
+      <div class="bv-icono" id="bv-icono"></div>
+      <div class="bv-titulo" id="bv-titulo"></div>
+      <div class="bv-texto" id="bv-texto"></div>
+    </div>
+    <div class="bv-puntos" id="bv-puntos"></div>
+    <button class="btn-primary" id="bv-siguiente">Siguiente</button>
+  </div>
+
   <nav class="bottom-nav" id="nav" hidden>
     <button class="nav-btn active" data-destino="screen-inicio">
       <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -1219,6 +1263,10 @@
   const CLAVE_SOLICITUDES = 'samsara_solicitudes';
   const CLAVE_NOMINA = 'samsara_nomina';
   const CLAVE_DOCUMENTOS = 'samsara_documentos';
+  const CLAVE_COLA = 'samsara_cola';
+  const CLAVE_BIENVENIDA = 'samsara_bienvenida';
+  const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
+  const VERSION = '2026.10.31.1';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1313,6 +1361,13 @@
   document.getElementById('btn-adjuntar').addEventListener('click', () => document.getElementById('sol-archivo').click());
   document.getElementById('sol-archivo').addEventListener('change', agregarArchivos);
   document.getElementById('btn-sol-enviar').addEventListener('click', enviarSolicitud);
+  window.addEventListener('online', enviarCola);
+  document.getElementById('aviso-version').addEventListener('click', actualizarVersion);
+  document.getElementById('bv-siguiente').addEventListener('click', () => pasoBienvenida(estado.bvPaso + 1));
+  document.getElementById('bv-saltar').addEventListener('click', cerrarBienvenida);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { revisarVersion(); enviarCola(); }
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && estado.perfil && ['screen-inicio', 'screen-semana', 'screen-estados'].includes(pantallaActual())) refrescarEnSegundoPlano();
   });
@@ -1333,6 +1388,12 @@
 
     if (ID_TIENDA) flujoTarjeta();
     else flujoInicio();
+    pintarCola();
+    enviarCola();
+    setTimeout(revisarVersion, 4000);
+    setInterval(() => { if (leerCola().length) enviarCola(); }, 60000);
+    setInterval(revisarVersion, 900000);
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
   function leer(clave) {
@@ -1363,6 +1424,7 @@
           sincronizarAlmuerzo();
           cargarNomina();
           cargarDocumentos();
+          cargarReconocimientos();
         } else if (data.codigo === 'DISPOSITIVO_NO_REGISTRADO' || data.codigo === 'DISPOSITIVO_INACTIVO') {
           estado.perfil = null;
           guardar(CLAVE_PERFIL, null);
@@ -1442,8 +1504,12 @@
       pintarMarcar();
       navegar('screen-marcar');
       perfil.then(data => { if (data && data.ok) repintar(); });
+      enviarCola();
     } catch (e) {
-      mostrarError('Sin conexión. Verificá tu red e intentá de nuevo.', true);
+      if (!estado.perfil) return mostrarError('Sin conexión. Verificá tu red e intentá de nuevo.', true);
+      estado.verificacion = { ok: true, offline: true, nombre_corto: estado.perfil.nombre_corto, tienda: ID_TIENDA, tipo_marca_siguiente: siguienteMarca(diaDeHoy()) || 'SALIDA' };
+      pintarMarcar();
+      navegar('screen-marcar');
     }
   }
 
@@ -1618,6 +1684,9 @@
     actualizarAlmuerzo();
     pintarPendientes();
     pintarAvisoDocumentos();
+    pintarCola();
+    pintarInsignia();
+    if (estado.perfil && !leer(CLAVE_BIENVENIDA) && document.getElementById('bienvenida').hidden) abrirBienvenida();
     document.getElementById('btn-vincular').hidden = !(ES_IOS && !ES_ICONO && estado.perfil);
     pintarNomina();
     if (!estado.solicitudes && estado.perfil) cargarSolicitudes();
@@ -1647,6 +1716,7 @@
     document.getElementById('marcar-tienda').textContent = titulo(v.tienda || ID_TIENDA);
     document.getElementById('marcar-proxima').textContent = 'Próxima marca: ' + (NOMBRES_MARCA[tipo] || tipo);
     document.getElementById('btn-marcar-texto').textContent = 'Registrar ' + (NOMBRES_MARCA[tipo] || 'marca').toLowerCase();
+    document.getElementById('marcar-offline').hidden = !v.offline;
     pintarHorario('marcar', dia);
     pintarHistorial('marcar-historial', dia);
     iniciarReloj();
@@ -1847,13 +1917,15 @@
     mostrar('screen-procesando', 'Registrando tu marca…');
 
     const ubicacion = await obtenerUbicacion();
+    const momento = new Date(ahora().getTime());
     try {
+      if (estado.verificacion && estado.verificacion.offline && !navigator.onLine) throw new Error('sin red');
       const data = await llamar({
         accion: 'registrar_marca',
         token: estado.dispositivo,
         id_tienda: ID_TIENDA,
         kiosco: KIOSCO,
-        timestamp_dispositivo: new Date().toISOString(),
+        timestamp_dispositivo: momento.toISOString(),
         lat: ubicacion.lat,
         lng: ubicacion.lng,
         user_agent: navigator.userAgent
@@ -1869,7 +1941,8 @@
       if (data.ok) agregarMarcaLocal(data);
       mostrarResultado(data, ubicacion);
     } catch (e) {
-      mostrarError('Sin conexión. Tu marca no se registró; intentá de nuevo.', true);
+      if (!estado.perfil) mostrarError('Sin conexión. Tu marca no se registró; intentá de nuevo.', true);
+      else guardarMarcaSinConexion(momento, ubicacion);
     } finally {
       boton.disabled = false;
     }
@@ -2254,6 +2327,153 @@
       }
     } catch (e) { error.textContent = 'Sin conexión. Intentá de nuevo.'; }
     boton.disabled = false;
+  }
+
+  function revisarVersion() {
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(r => r.json())
+      .then(v => { if (v && v.version && v.version !== VERSION) document.getElementById('aviso-version').hidden = false; })
+      .catch(() => {});
+  }
+
+  function actualizarVersion() {
+    const conTarjeta = ID_TIENDA && pantallaActual() === 'screen-marcar';
+    const params = new URLSearchParams(conTarjeta ? location.search : '');
+    params.set('v', String(Date.now()));
+    location.replace(location.pathname + '?' + params.toString());
+  }
+
+  function leerCola() {
+    try { return JSON.parse(leer(CLAVE_COLA) || '[]'); } catch (e) { return []; }
+  }
+
+  function guardarCola(cola) {
+    guardar(CLAVE_COLA, cola.length ? JSON.stringify(cola) : null);
+  }
+
+  function pintarCola() {
+    const n = leerCola().length;
+    const aviso = document.getElementById('cola-aviso');
+    aviso.hidden = !n;
+    if (n) document.getElementById('cola-titulo').textContent = n === 1 ? 'Tenés 1 marca guardada sin conexión' : 'Tenés ' + n + ' marcas guardadas sin conexión';
+  }
+
+  function guardarMarcaSinConexion(momento, ubicacion) {
+    const tipo = (estado.verificacion && estado.verificacion.tipo_marca_siguiente) || siguienteMarca(diaDeHoy()) || 'ENTRADA';
+    const cola = leerCola();
+    cola.push({ token: estado.dispositivo, id_tienda: ID_TIENDA, kiosco: KIOSCO, timestamp_dispositivo: momento.toISOString(), lat: ubicacion.lat, lng: ubicacion.lng, user_agent: navigator.userAgent });
+    guardarCola(cola);
+    const hora = horaDe(momento);
+    agregarMarcaLocal({ tipo_marca: tipo, hora_servidor: hora });
+    if (tipo === 'ALMUERZO_SALIDA') {
+      estado.almuerzo = { inicio: momento.toISOString(), duracion: 60 };
+      guardar(CLAVE_ALMUERZO, JSON.stringify(estado.almuerzo));
+    }
+    if (tipo === 'ALMUERZO_REGRESO') {
+      estado.almuerzo = null;
+      guardar(CLAVE_ALMUERZO, null);
+    }
+    configurarResultado({
+      claseIcono: 'gold', icono: '⏱', color: 'gold', etiqueta: 'Guardada sin conexión',
+      titulo: (NOMBRES_MARCA[tipo] || 'Marca') + ' guardada',
+      desc: 'No hay señal. Tu marca quedó guardada en el celular con la hora exacta y se enviará sola apenas vuelva la conexión. Tu coordinadora la verá como marca sin conexión.',
+      filas: [['Hora', hora12(hora)], ['Estado', 'Pendiente de envío', 'amber']],
+      boton: 'Volver al inicio'
+    });
+  }
+
+  async function enviarCola() {
+    if (estado.enviandoCola) return;
+    const cola = leerCola();
+    if (!cola.length) return;
+    estado.enviandoCola = true;
+    let enviadas = 0;
+    try {
+      while (cola.length) {
+        let r;
+        try {
+          r = await llamar(Object.assign({ accion: 'ctl_marca_diferida' }, cola[0]));
+        } catch (e) {
+          break;
+        }
+        if (!r.ok && !r.definitivo) break;
+        cola.shift();
+        guardarCola(cola);
+        enviadas++;
+      }
+    } finally {
+      estado.enviandoCola = false;
+      pintarCola();
+      if (enviadas && estado.perfil) refrescarEnSegundoPlano();
+    }
+  }
+
+  const PASOS_BIENVENIDA = [
+    { icono: '<svg width="46" height="46" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 18H4V6h2v12zm4 0H8V6h2l4 6.7V6h2v12h-2l-4-6.7V18zm10 0h-2V6h2v12z"/></svg>', titulo: 'Marcá en segundos', texto: 'Acercá tu celular a la tarjeta NFC de tu tienda o escaneá el código QR. Confirmás y listo. Si no hay señal, la marca se guarda y se envía sola después.' },
+    { icono: '<svg width="46" height="46" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>', titulo: 'Todo en un solo lugar', texto: 'En Solicitudes pedís vacaciones y permisos, justificás tardías o marcas faltantes (tenés 48 h) y recibís los documentos de Talento Humano.' },
+    { icono: '<svg width="46" height="46" viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>', titulo: 'Tus horas, claras', texto: 'En Mis estados ves tu puntualidad, tu racha y tus horas del mes. Las artistas con puntualidad perfecta reciben la insignia del mes.' }
+  ];
+
+  function abrirBienvenida() {
+    estado.bvPasos = PASOS_BIENVENIDA.slice();
+    if (ES_IOS) estado.bvPasos.splice(1, 0, { icono: '<svg width="46" height="46" viewBox="0 0 24 24"><path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/></svg>', titulo: 'En tu iPhone', texto: 'Las marcas se abren en Safari al acercar la tarjeta. Si agregaste Samsara a tu inicio, en Inicio tocá "Vincular el ícono" para que también te reconozca.' });
+    document.getElementById('bv-puntos').innerHTML = estado.bvPasos.map(() => '<span></span>').join('');
+    document.getElementById('bienvenida').hidden = false;
+    pasoBienvenida(0);
+  }
+
+  function pasoBienvenida(i) {
+    if (i >= estado.bvPasos.length) return cerrarBienvenida();
+    estado.bvPaso = i;
+    const p = estado.bvPasos[i];
+    document.getElementById('bv-icono').innerHTML = p.icono;
+    document.getElementById('bv-titulo').textContent = p.titulo;
+    document.getElementById('bv-texto').textContent = p.texto;
+    document.querySelectorAll('#bv-puntos span').forEach((s, k) => s.classList.toggle('activo', k === i));
+    document.getElementById('bv-siguiente').textContent = i === estado.bvPasos.length - 1 ? 'Empezar' : 'Siguiente';
+  }
+
+  function cerrarBienvenida() {
+    guardar(CLAVE_BIENVENIDA, '1');
+    document.getElementById('bienvenida').hidden = true;
+  }
+
+  function cargarReconocimientos() {
+    let guardado = null;
+    try { guardado = JSON.parse(leer(CLAVE_RECONOCIMIENTOS) || 'null'); } catch (e) { guardado = null; }
+    if (guardado && guardado.dia === fechaLocal()) { estado.reconocimientos = guardado; pintarInsignia(); return; }
+    llamar({ accion: 'ctl_reconocimientos', token: estado.dispositivo })
+      .then(r => {
+        if (!r.ok) return;
+        r.dia = fechaLocal();
+        estado.reconocimientos = r;
+        guardar(CLAVE_RECONOCIMIENTOS, JSON.stringify(r));
+        pintarInsignia();
+      })
+      .catch(() => {});
+  }
+
+  function pintarInsignia() {
+    const r = estado.reconocimientos;
+    const caja = document.getElementById('insignia');
+    if (!r || !r.ultimo) { caja.hidden = true; return; }
+    const mes = new Date(r.ultimo + '-15T12:00:00').toLocaleDateString('es-CR', { month: 'long' });
+    const normalizar = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const dia = diaDeHoy();
+    const miTienda = normalizar(dia && dia.tienda);
+    const yoGane = r.mios && r.mios[0] === r.ultimo;
+    const companeras = (r.puntuales || []).filter(p => miTienda && normalizar(p.tienda) === miTienda && !(yoGane && estado.perfil && normalizar(p.nombre) === normalizar(estado.perfil.nombre)));
+    if (yoGane) {
+      document.getElementById('insignia-titulo').textContent = 'Artista puntual de ' + mes;
+      document.getElementById('insignia-texto').textContent = 'Puntualidad perfecta todo el mes. ¡Gracias por tu compromiso!' + (r.mios.length > 1 ? ' Ya llevás ' + r.mios.length + ' meses con esta insignia.' : '');
+      caja.hidden = false;
+    } else if (companeras.length) {
+      document.getElementById('insignia-titulo').textContent = 'Puntuales de ' + mes + ' en tu tienda';
+      document.getElementById('insignia-texto').textContent = companeras.map(p => titulo(String(p.nombre).split(/\s+/).slice(-1)[0])).join(', ') + '. ¡Este mes puede ser tuyo!';
+      caja.hidden = false;
+    } else {
+      caja.hidden = true;
+    }
   }
 
   function actualizarPunto() {

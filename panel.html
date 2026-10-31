@@ -182,7 +182,37 @@
     .codigo-grande { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 44px; font-weight: 600; letter-spacing: 0.25em; color: var(--gold-light); text-align: center; line-height: 1.1; }
     .ev-card { background: var(--night); border: 1px solid var(--border-soft); border-radius: 14px; padding: 13px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
     .copiable { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--cream-dim); border: 1px solid var(--border-soft); border-radius: 8px; padding: 8px 10px; overflow-x: auto; white-space: nowrap; user-select: all; }
+    .aviso-version { position: fixed; right: 16px; bottom: 16px; z-index: 60; display: flex; align-items: center; gap: 10px; background: var(--gold); color: var(--night); border: none; border-radius: 12px; padding: 11px 14px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
+    .puntuales { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+    .puntual { display: flex; align-items: center; gap: 8px; background: var(--gold-dim); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px 6px 6px; font-size: 12.5px; }
+    .puntual b { width: 24px; height: 24px; border-radius: 50%; background: var(--gold); color: var(--night); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
     @media (max-width: 900px) { .doc-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) {
+      .barra-in { padding: 10px 12px; gap: 10px; }
+      .barra .marca { font-size: 16px; }
+      #chips-pais { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+      #chips-pais .chip { white-space: nowrap; padding: 6px 12px; }
+      .tabs { padding: 0 8px; }
+      .tab { padding: 9px 10px 11px; font-size: 13px; }
+      main { padding: 14px 12px 70px; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .kpi { padding: 11px 12px; }
+      .kpi-v { font-size: 22px; }
+      .filtro-global { padding: 8px; }
+      .filtro-global select.input { min-width: 0; width: 100%; }
+      .filtros .campo { min-width: 0; flex: 1 1 140px; }
+      .filtros .btn { flex: 1 1 auto; }
+      table { font-size: 12.5px; }
+      th, td { padding: 8px 9px; }
+      .acciones { min-width: 170px; }
+      .wrap { max-width: 220px; }
+      .rev-card, .ev-card, .lote-cab { padding: 12px; }
+      .rev-horas .input { width: 120px; }
+      .panel-caja { padding: 13px; }
+      .codigo-grande { font-size: 36px; }
+      .aviso-version { left: 12px; right: 12px; justify-content: space-between; }
+      .toast { left: 12px; right: 12px; transform: none; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+    }
     @media (max-width: 640px) {
       .tiendas { grid-template-columns: 1fr; }
       .usuario span { display: none; }
@@ -241,6 +271,7 @@
     </nav>
   </header>
 
+  <button class="aviso-version" id="aviso-version" hidden>Hay una versión nueva del panel · Actualizar</button>
   <main>
     <div class="filtro-global" id="filtro-global">
       <select class="input" id="fg-tienda" aria-label="Filtrar por tienda"><option value="">Todas las tiendas</option></select>
@@ -463,6 +494,7 @@
 <script>
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
+  const VERSION = '2026.10.31.1';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -914,6 +946,12 @@
       '<div class="kpi"><div class="kpi-v red">' + tot.ausencias + '</div><div class="kpi-l">Ausencias</div></div>' +
       '<div class="kpi"><div class="kpi-v">' + tot.almuerzos_excedidos + '</div><div class="kpi-l">Almuerzos excedidos</div></div>' +
       '<div class="kpi"><div class="kpi-v">' + r.personas.length + '</div><div class="kpi-l">Personas con datos</div></div></div>';
+    const perfectas = r.personas.filter(p => p.resumen.puntualidad === 100 && !p.resumen.ausencias && !p.resumen.tardanzas && p.resumen.trabajados >= 1)
+      .sort((a, b) => b.resumen.trabajados - a.resumen.trabajados || a.nombre.localeCompare(b.nombre));
+    const mesTexto = new Date(($('met-mes').value || hoyISO().slice(0, 7)) + '-15T12:00:00').toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
+    html += '<div class="seccion">🏅 Puntualidad perfecta · ' + esc(mesTexto) + '</div>' + (perfectas.length
+      ? '<div class="puntuales">' + perfectas.map(p => '<span class="puntual"><b>' + p.resumen.trabajados + '</b>' + esc(nombreCorto(p.nombre)) + ' <span class="muted">· ' + esc(p.tienda) + '</span></span>').join('') + '</div><div class="sub">El número es la cantidad de días trabajados. Al cierre del mes, quienes tengan 12 días o más reciben la insignia de Artista puntual en la app.</div>'
+      : '<div class="sub">Todavía nadie tiene puntualidad perfecta en este período.</div>');
     html += '<div class="seccion">Por tienda</div>' + tablaOrdenable('met-t', [
       { t: 'Tienda', h: t => BANDERA[t.pais] + ' ' + esc(t.tienda), v: t => t.tienda },
       { t: 'Puntualidad', h: t => barraPct(t.puntualidad), v: t => t.puntualidad },
@@ -1199,7 +1237,7 @@
     b.disabled = false;
   }
 
-  const TIPO_REV = { INCOMPLETA: ['Jornada incompleta', 'red'], RESIDENCIA: ['Residencia', 'gold'], TELETRABAJO: ['Teletrabajo', 'blue'], ASISTIDA: ['Marca asistida', 'amber'] };
+  const TIPO_REV = { INCOMPLETA: ['Jornada incompleta', 'red'], RESIDENCIA: ['Residencia', 'gold'], TELETRABAJO: ['Teletrabajo', 'blue'], ASISTIDA: ['Marca asistida', 'amber'], UBICACION: ['Lejos de la tienda', 'red'], SIN_UBICACION: ['Sin ubicación', ''], SIN_CONEXION: ['Sin conexión', 'amber'] };
   const COLOR_REV = { Pendiente: 'amber', Corregida: 'green', Validada: 'green', Rechazada: 'red', Informativa: '', Registrada: 'blue' };
   const NOMBRE_MARCA = { ENTRADA: 'Entrada', ALMUERZO_SALIDA: 'Salida a almuerzo', ALMUERZO_REGRESO: 'Regreso de almuerzo', SALIDA: 'Salida' };
 
@@ -1432,6 +1470,17 @@
       caja.querySelectorAll('button').forEach(x => { x.disabled = false; });
     })));
   }
+
+  function revisarVersion() {
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(r => r.json())
+      .then(v => { if (v && v.version && v.version !== VERSION) $('aviso-version').hidden = false; })
+      .catch(() => {});
+  }
+  $('aviso-version').addEventListener('click', () => location.replace(location.pathname + '?v=' + Date.now() + location.hash));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') revisarVersion(); });
+  setTimeout(revisarVersion, 3000);
+  setInterval(revisarVersion, 900000);
 
   (function () {
     const s = leer();
