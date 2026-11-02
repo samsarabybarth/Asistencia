@@ -125,6 +125,10 @@
     .cargando { text-align: center; color: var(--text-2); padding: 50px 16px; }
     .spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: giro 0.8s linear infinite; margin: 0 auto 12px; }
     @keyframes giro { to { transform: rotate(360deg); } }
+    .recordar { display: flex; align-items: center; gap: 8px; margin: 2px 0 14px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+    .recordar input { width: 16px; height: 16px; accent-color: var(--gold); }
+    .acc-fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .acc-fila select.input { width: auto; padding: 7px 30px 7px 10px; font-size: 13px; }
     .seccion { margin: 22px 0 10px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
     .aviso { background: var(--gold-dim); border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px; color: var(--gold-light); font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--night-soft); border: 1px solid var(--border); padding: 11px 18px; border-radius: 12px; z-index: 50; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
@@ -241,6 +245,7 @@
         <label for="login-codigo">Código</label>
         <input class="input codigo" type="text" inputmode="numeric" maxlength="6" id="login-codigo" autocomplete="one-time-code">
       </div>
+      <label class="recordar"><input type="checkbox" id="login-recordar" checked> Recordar este equipo y no pedir código</label>
       <button class="btn full" id="btn-entrar">Entrar</button>
       <button class="link" id="btn-otro">Usar otro correo</button>
     </div>
@@ -268,6 +273,7 @@
       <button class="tab" data-vista="revision">Revisión<span class="contador" id="cont-revision" hidden></span></button>
       <button class="tab" data-vista="documentos">Documentos</button>
       <button class="tab" data-vista="puntos">Puntos de marca</button>
+      <button class="tab" data-vista="accesos">Accesos</button>
     </nav>
   </header>
 
@@ -488,13 +494,27 @@
         <div class="campo" style="margin:0"><label>Residencia</label><div class="copiable">https://samsarabybarth.github.io/Asistencia/?tienda=CR-RES</div></div>
       </div>
     </section>
+    <section id="v-accesos" hidden>
+      <div class="titulo">Accesos</div>
+      <div class="sub" id="acc-sub">Equipos donde entrás al panel sin pedir código.</div>
+      <div class="seccion">Mis equipos recordados</div>
+      <div id="acc-mios"></div>
+      <div id="acc-gerencia" hidden>
+        <div class="seccion">Cómo entra cada usuario</div>
+        <div class="sub" style="margin-bottom:10px">"Solo equipos nuevos" pide el código una vez por equipo y lo recuerda por los días elegidos. "Siempre" pide el código en cada ingreso y deja sin efecto los equipos recordados de ese usuario.</div>
+        <div id="acc-politicas"></div>
+        <div class="seccion">Equipos recordados de todos los usuarios</div>
+        <div id="acc-todos"></div>
+      </div>
+    </section>
   </main>
 </div>
 
 <script>
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
-  const VERSION = '2026.10.31.1';
+  const CLAVE_EQUIPO = 'samsara_panel_equipo';
+  const VERSION = '2026.11.02.1';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -509,6 +529,31 @@
   function esc(t) { return String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function leer() { try { return JSON.parse(localStorage.getItem(CLAVE_SESION) || 'null'); } catch (e) { return null; } }
   function guardar(v) { try { v ? localStorage.setItem(CLAVE_SESION, JSON.stringify(v)) : localStorage.removeItem(CLAVE_SESION); } catch (e) {} }
+  function leerEquipo() { try { return JSON.parse(localStorage.getItem(CLAVE_EQUIPO) || 'null'); } catch (e) { return null; } }
+  function guardarEquipo(v) { try { v ? localStorage.setItem(CLAVE_EQUIPO, JSON.stringify(v)) : localStorage.removeItem(CLAVE_EQUIPO); } catch (e) {} }
+  function nombreEquipo() {
+    const ua = navigator.userAgent;
+    const nav = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Navegador';
+    const so = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Equipo';
+    return nav + ' · ' + so;
+  }
+  async function entrarConEquipo() {
+    const eq = leerEquipo();
+    if (!eq || !eq.llave || !eq.email) return null;
+    try {
+      const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ accion: 'acc_entrar', email: eq.email, llave: eq.llave }) }).then(x => x.json());
+      if (r.ok) { guardar({ sesion: r.sesion, usuario: r.usuario, vence: r.vence }); return r; }
+      if (r.codigo === 'EQUIPO_NO_RECORDADO') guardarEquipo(null);
+    } catch (e) {}
+    return null;
+  }
+  async function recordarEquipo(sesion, email) {
+    try {
+      const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ accion: 'acc_recordar', sesion: sesion, equipo: nombreEquipo() }) }).then(x => x.json());
+      if (r.ok) guardarEquipo({ email: email, llave: r.llave, id: r.id, vence: r.vence });
+      else if (r.mensaje) toast(r.mensaje);
+    } catch (e) {}
+  }
   function hoyISO(d) { const x = d || new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); }
   function fechaCorta(f) { return f ? new Date(f + 'T12:00:00').toLocaleDateString('es-CR', { weekday: 'short', day: 'numeric', month: 'short' }) : ''; }
   function hora12(h) { if (!/^\d{1,2}:\d{2}$/.test(h || '')) return h || '—'; let [a, b] = h.split(':').map(Number); const s = a >= 12 ? 'p. m.' : 'a. m.'; a = a % 12 || 12; return a + ':' + String(b).padStart(2, '0') + ' ' + s; }
@@ -537,10 +582,17 @@
   function filtroActivo() { return !!(st.filtro.tienda || norm(st.filtro.persona)); }
   function sinResultados(base) { return filtroActivo() ? 'No hay resultados con este filtro.' : base; }
 
-  async function llamar(datos) {
+  async function llamar(datos, reintento) {
     const res = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(Object.assign({ sesion: st.sesion }, datos)), redirect: 'follow' });
     const data = await res.json();
-    if (data.codigo === 'SESION_INVALIDA') { salir(); throw new Error('sesion'); }
+    if (data.codigo === 'SESION_INVALIDA') {
+      if (!reintento) {
+        const r = await entrarConEquipo();
+        if (r) { st.sesion = r.sesion; return llamar(datos, true); }
+      }
+      salir();
+      throw new Error('sesion');
+    }
     return data;
   }
 
@@ -567,7 +619,12 @@
     try {
       const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ accion: 'panel_entrar', email: $('login-email').value.trim().toLowerCase(), codigo: $('login-codigo').value.trim() }) }).then(x => x.json());
       if (!r.ok) { $('login-error').textContent = r.mensaje || 'No se pudo ingresar.'; }
-      else { guardar({ sesion: r.sesion, usuario: r.usuario, vence: r.vence }); iniciarPanel(r.sesion, r.usuario); }
+      else {
+        guardar({ sesion: r.sesion, usuario: r.usuario, vence: r.vence });
+        if ($('login-recordar').checked) await recordarEquipo(r.sesion, r.usuario.email);
+        else guardarEquipo(null);
+        iniciarPanel(r.sesion, r.usuario);
+      }
     } catch (e) { $('login-error').textContent = 'Sin conexión. Intentá de nuevo.'; }
     $('btn-entrar').disabled = false;
   });
@@ -582,6 +639,8 @@
     $('paso-email').hidden = false;
     $('paso-codigo').hidden = true;
     $('login-codigo').value = '';
+    const eq = leerEquipo();
+    if (eq && eq.email) $('login-email').value = eq.email;
   }
 
   function iniciarPanel(sesion, usuario) {
@@ -624,7 +683,7 @@
     $('as-fecha').value = hoyISO(hoy);
     $('ev-fecha').value = hoyISO(hoy);
     pintarFiltroGlobal();
-    const inicial = ['revision', 'puntos', 'documentos'].indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'hoy';
+    const inicial = ['revision', 'puntos', 'documentos', 'accesos'].indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'hoy';
     mostrarVista(inicial, true);
     contadores();
     cargarDirectorio();
@@ -637,8 +696,9 @@
   function mostrarVista(v, forzar) {
     st.vista = v;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activa', t.dataset.vista === v));
-    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'revision', 'documentos', 'puntos'].forEach(x => { $('v-' + x).hidden = x !== v; });
-    $('filtro-global').hidden = v === 'documentos' || v === 'puntos';
+    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'revision', 'documentos', 'puntos', 'accesos'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    $('filtro-global').hidden = v === 'documentos' || v === 'puntos' || v === 'accesos';
+    if (v === 'accesos') cargarAccesos();
     if (v === 'revision' && (forzar || !st.datos.revision)) cargarRevision();
     if (v === 'puntos') { pintarSelectTiendas(); pintarParticipantes(); if (forzar || !st.datos.equipos) cargarPuntos(); }
     if (v === 'documentos') {
@@ -1482,9 +1542,73 @@
   setTimeout(revisarVersion, 3000);
   setInterval(revisarVersion, 900000);
 
-  (function () {
+  function fechaHora(iso) { return iso ? new Date(iso).toLocaleString('es-CR', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '—'; }
+  const ESTADO_EQUIPO = { ACTIVO: ['Activo', 'green'], VENCIDO: ['Vencido', 'amber'], DESACTIVADO: ['Desactivado', 'red'] };
+
+  async function cargarAccesos() {
+    cargando('acc-mios');
+    try {
+      const eq = leerEquipo();
+      const r = await llamar({ accion: 'acc_equipos', equipo_id: eq ? eq.id : '' });
+      if (!r.ok) return ($('acc-mios').innerHTML = '<div class="vacio">' + esc(r.mensaje || 'No se pudo cargar.') + '</div>');
+      st.datos.accesos = r;
+      pintarAccesos();
+    } catch (e) { if (e.message !== 'sesion') $('acc-mios').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function tablaEquipos(lista, conUsuario) {
+    if (!lista.length) return '<div class="vacio">' + (conUsuario ? 'No hay equipos recordados.' : 'Todavía no recordaste ningún equipo. Marcá "Recordar este equipo" la próxima vez que entres con el código.') + '</div>';
+    return '<div class="tabla-wrap"><table><thead><tr>' + (conUsuario ? '<th>Usuario</th>' : '') + '<th>Equipo</th><th>Estado</th><th>Último ingreso</th><th>Vence</th><th></th></tr></thead><tbody>' + lista.map(e => {
+      const est = ESTADO_EQUIPO[e.estado] || [e.estado, ''];
+      return '<tr>' + (conUsuario ? '<td>' + esc(e.email) + '</td>' : '') + '<td>' + esc(e.equipo) + (e.actual ? ' ' + pill('Este equipo', 'gold') : '') + '</td><td>' + pill(est[0], est[1]) + '</td><td>' + fechaHora(e.ultimo) + '</td><td>' + fechaHora(e.vence) + '</td><td>' + (e.estado === 'ACTIVO' ? '<button class="btn ghost mini" data-acc-des="' + esc(e.id) + '">Desactivar</button>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  }
+
+  function pintarAccesos() {
+    const r = st.datos.accesos;
+    if (!r) return;
+    const yo = st.usuario.email;
+    $('acc-sub').textContent = r.politica.modo === 'SIEMPRE' ? 'Tu usuario pide el código en cada ingreso.' : 'Después de ingresar con el código, tu equipo queda recordado ' + r.politica.dias + ' días.';
+    $('acc-mios').innerHTML = tablaEquipos(r.equipos.filter(e => e.email === yo), false);
+    $('acc-gerencia').hidden = !r.gerencia;
+    if (r.gerencia) {
+      $('acc-politicas').innerHTML = '<div class="tabla-wrap"><table><thead><tr><th>Usuario</th><th>Roles</th><th>Pedir código</th><th>Recordar equipo</th></tr></thead><tbody>' + r.usuarios.map(u =>
+        '<tr><td>' + esc(u.nombre) + '<div class="sub">' + esc(u.email) + '</div></td><td>' + esc(u.roles) + '</td><td><select class="input" data-acc-modo="' + esc(u.email) + '"><option value="EQUIPOS_NUEVOS"' + (u.modo === 'EQUIPOS_NUEVOS' ? ' selected' : '') + '>Solo equipos nuevos</option><option value="SIEMPRE"' + (u.modo === 'SIEMPRE' ? ' selected' : '') + '>Siempre</option></select></td><td><select class="input" data-acc-dias="' + esc(u.email) + '"' + (u.modo === 'SIEMPRE' ? ' disabled' : '') + '>' + [30, 90, 180].map(d => '<option value="' + d + '"' + (u.dias === d ? ' selected' : '') + '>' + d + ' días</option>').join('') + '</select></td></tr>'
+      ).join('') + '</tbody></table></div>';
+      $('acc-todos').innerHTML = tablaEquipos(r.equipos.filter(e => e.email !== yo), true);
+      $('acc-politicas').querySelectorAll('select').forEach(sel => sel.addEventListener('change', async () => {
+        const email = sel.dataset.accModo || sel.dataset.accDias;
+        const modo = $('acc-politicas').querySelector('[data-acc-modo="' + email + '"]').value;
+        const dias = Number($('acc-politicas').querySelector('[data-acc-dias="' + email + '"]').value);
+        sel.disabled = true;
+        try {
+          const x = await llamar({ accion: 'acc_politica', email: email, modo: modo, dias: dias });
+          toast(x.ok ? 'Acceso actualizado' : (x.mensaje || 'No se pudo guardar'));
+          if (x.ok) { const u = r.usuarios.find(z => z.email === email); u.modo = modo; u.dias = dias; if (email === yo) r.politica = { modo: modo, dias: dias }; }
+        } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); }
+        pintarAccesos();
+      }));
+    }
+    $('v-accesos').querySelectorAll('[data-acc-des]').forEach(b => b.addEventListener('click', async () => {
+      b.disabled = true;
+      try {
+        const x = await llamar({ accion: 'acc_desactivar', id: b.dataset.accDes });
+        if (!x.ok) { toast(x.mensaje || 'No se pudo desactivar'); b.disabled = false; return; }
+        const eq = leerEquipo();
+        if (eq && eq.id === b.dataset.accDes) guardarEquipo(null);
+        toast('Equipo desactivado');
+        cargarAccesos();
+      } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); b.disabled = false; }
+    }));
+  }
+
+  (async function () {
     const s = leer();
-    if (s && s.sesion && (!s.vence || new Date(s.vence) > new Date())) iniciarPanel(s.sesion, s.usuario);
+    if (s && s.sesion && (!s.vence || new Date(s.vence) > new Date())) return iniciarPanel(s.sesion, s.usuario);
+    const eq = leerEquipo();
+    if (eq && eq.email) $('login-email').value = eq.email;
+    const r = await entrarConEquipo();
+    if (r) iniciarPanel(r.sesion, r.usuario);
   })();
 </script>
 </body>
