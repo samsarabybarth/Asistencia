@@ -86,6 +86,11 @@
     .kpi { background: var(--night); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px 16px; }
     .kpi-v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
     .kpi-l { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin-top: 2px; }
+    button.kpi { font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100%; transition: border-color .15s, background .15s; }
+    button.kpi:hover { border-color: var(--border); }
+    button.kpi.activa { border-color: var(--gold); background: var(--cream-dim); }
+    .foco { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -6px 0 14px; font-size: 13px; color: var(--text-2); }
+    .foco strong { color: var(--gold-light); font-weight: 600; }
     .kpi-v.red { color: var(--red); } .kpi-v.green { color: var(--green); } .kpi-v.amber { color: var(--amber); }
 
     .tiendas { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; align-items: start; }
@@ -294,6 +299,7 @@
       <div class="titulo">En vivo</div>
       <div class="sub" id="hoy-sub">—</div>
       <div class="kpis" id="hoy-kpis"></div>
+      <div class="foco" id="hoy-foco" hidden></div>
       <div class="tiendas" id="hoy-tiendas"></div>
     </section>
 
@@ -514,7 +520,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.02.1';
+  const VERSION = '2026.11.02.2';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -523,7 +529,7 @@
     'Pendiente': 'amber', 'Aprobada': 'green', 'Rechazada': 'red', 'Recibido': 'gold', 'Revisado': 'green'
   };
 
-  const st = { sesion: null, usuario: null, pais: '', vista: 'hoy', datos: {}, solFiltro: 'pendientes', orden: {}, timer: null, filtro: { tienda: '', persona: '' }, dir: null, docSel: {} };
+  const st = { foco: null, sesion: null, usuario: null, pais: '', vista: 'hoy', datos: {}, solFiltro: 'pendientes', orden: {}, timer: null, filtro: { tienda: '', persona: '' }, dir: null, docSel: {} };
 
   function $(id) { return document.getElementById(id); }
   function esc(t) { return String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -765,19 +771,45 @@
     const abiertas = tiendas.filter(t => t.abierta).length;
     const conApertura = tiendas.filter(t => t.apertura).length;
     const k = [
-      [abiertas + ' / ' + conApertura, 'Tiendas abiertas', abiertas < conApertura && tiendas.some(t => t.alerta) ? 'red' : 'green'],
-      [personas.filter(p => ['EN_TIENDA', 'ALMUERZO'].includes(p.estado)).length, 'En tienda ahora', ''],
-      [personas.filter(p => p.estado === 'SIN_MARCA' && p.registrada).length, 'Sin marca', 'red'],
-      [personas.filter(p => p.tarde > 0).length, 'Tardías hoy', 'amber'],
-      [personas.filter(p => p.estado === 'ALMUERZO').length, 'En almuerzo', ''],
-      [personas.filter(p => p.estado === 'CUBIERTO').length, 'Vacaciones / permisos', '']
+      ['tiendas', abiertas + ' / ' + conApertura, 'Tiendas abiertas', abiertas < conApertura && tiendas.some(t => t.alerta) ? 'red' : 'green'],
+      ['en_tienda', personas.filter(FOCO_HOY.en_tienda.f).length, 'En tienda ahora', ''],
+      ['sin_marca', personas.filter(FOCO_HOY.sin_marca.f).length, 'Sin marca', 'red'],
+      ['tardias', personas.filter(FOCO_HOY.tardias.f).length, 'Tardías hoy', 'amber'],
+      ['almuerzo', personas.filter(FOCO_HOY.almuerzo.f).length, 'En almuerzo', ''],
+      ['cubierto', personas.filter(FOCO_HOY.cubierto.f).length, 'Vacaciones / permisos', ''],
+      ['marcas', personas.filter(FOCO_HOY.marcas.f).length, 'Marcas del día', '']
     ];
-    $('hoy-kpis').innerHTML = k.map(x => '<div class="kpi"><div class="kpi-v ' + x[2] + '">' + esc(x[0]) + '</div><div class="kpi-l">' + esc(x[1]) + '</div></div>').join('');
+    $('hoy-kpis').innerHTML = k.map(x => '<button class="kpi' + (st.foco === x[0] ? ' activa' : '') + '" data-foco="' + x[0] + '"><div class="kpi-v ' + x[3] + '">' + esc(x[1]) + '</div><div class="kpi-l">' + esc(x[2]) + '</div></button>').join('');
+    $('hoy-kpis').querySelectorAll('[data-foco]').forEach(b => b.addEventListener('click', () => { st.foco = st.foco === b.dataset.foco ? null : b.dataset.foco; pintarHoy(); }));
     $('hoy-sub').textContent = 'Actualizado ' + new Date(r.generado).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' }) + ' · se refresca cada minuto';
 
+    const foco = st.foco ? FOCO_HOY[st.foco] : null;
+    $('hoy-foco').hidden = !foco;
+    if (foco) {
+      $('hoy-foco').innerHTML = 'Mostrando: <strong>' + esc(foco.t) + '</strong>' + (st.foco === 'tardias' ? '<button class="btn ghost mini" id="foco-inc">Ver en Incidencias</button>' : '') + (st.foco === 'marcas' ? '<button class="btn ghost mini" id="foco-csv">Exportar</button>' : '') + '<button class="btn ghost mini" id="foco-todo">Ver todo</button>';
+      $('foco-todo').addEventListener('click', () => { st.foco = null; pintarHoy(); });
+      if ($('foco-inc')) $('foco-inc').addEventListener('click', () => {
+        $('inc-desde').value = hoyISO();
+        $('inc-hasta').value = hoyISO();
+        $('inc-tipo').value = 'TARDANZA';
+        mostrarVista('incidencias', true);
+      });
+    }
+
+    $('hoy-tiendas').classList.toggle('tiendas', st.foco !== 'marcas');
     if (!tiendas.length) return ($('hoy-tiendas').innerHTML = '<div class="vacio">' + sinResultados('No hay horarios cargados para hoy.') + '</div>');
-    const orden = t => t.alerta ? 0 : !t.abierta && t.apertura ? 1 : 2;
-    $('hoy-tiendas').innerHTML = tiendas.slice().sort((a, b) => orden(a) - orden(b) || a.nombre.localeCompare(b.nombre)).map(t => {
+    if (st.foco === 'marcas') return pintarMarcasDia(tiendas);
+    const orden = st.foco === 'tiendas'
+      ? t => t.alerta ? 0 : t.abierta && t.apertura && t.aperturaReal > t.apertura ? 1 : !t.abierta && t.apertura ? 2 : 3
+      : t => t.alerta ? 0 : !t.abierta && t.apertura ? 1 : 2;
+    const vista = tiendas.map(t => {
+      if (!foco || st.foco === 'tiendas') return t;
+      const lista = t.personas.filter(foco.f);
+      if (foco.o) lista.sort(foco.o);
+      return Object.assign({}, t, { personas: lista });
+    }).filter(t => !foco || st.foco === 'tiendas' || t.personas.length);
+    if (!vista.length) return ($('hoy-tiendas').innerHTML = '<div class="vacio">Nadie en este estado ahora.</div>');
+    $('hoy-tiendas').innerHTML = vista.slice().sort((a, b) => orden(a) - orden(b) || a.nombre.localeCompare(b.nombre)).map(t => {
       let estado;
       if (t.alerta) estado = pill('🚨 Sin apertura', 'red');
       else if (t.abierta) estado = pill('Abierta ' + hora12(t.aperturaReal), t.apertura && t.aperturaReal > t.apertura ? 'amber' : 'green');
@@ -788,8 +820,44 @@
         return '<div class="persona"><div class="persona-nombre">' + esc(nombreCorto(p.nombre)) + '</div><div>' + estadoPersona(p, r.duracion) + '</div>' +
           '<div class="persona-meta">' + (p.sinHorario ? 'Sin horario hoy' : 'Turno ' + esc(hora12(p.entrada)) + (p.salida ? ' – ' + esc(hora12(p.salida)) : '')) + (marcas ? ' · ' + esc(marcas) : '') + '</div></div>';
       }).join('');
-      return '<div class="tienda' + (t.alerta ? ' alerta' : '') + '"><div class="tienda-cab"><div><div class="tienda-nombre">' + BANDERA[t.pais] + ' ' + esc(t.nombre) + '</div><div class="tienda-meta">Hora local ' + esc(hora12(t.hora)) + ' · ' + t.personas.length + ' en turno</div></div>' + estado + '</div>' + (filas || '<div class="persona muted">Nadie programado hoy.</div>') + '</div>';
+      const cuerpo = st.foco === 'tiendas' ? '' : (filas || '<div class="persona muted">Nadie programado hoy.</div>');
+      return '<div class="tienda' + (t.alerta ? ' alerta' : '') + '"><div class="tienda-cab"><div><div class="tienda-nombre">' + BANDERA[t.pais] + ' ' + esc(t.nombre) + '</div><div class="tienda-meta">Hora local ' + esc(hora12(t.hora)) + ' · ' + t.personas.length + ' en turno</div></div>' + estado + '</div>' + cuerpo + '</div>';
     }).join('');
+  }
+
+  const FOCO_HOY = {
+    tiendas: { t: 'Tiendas · primero las que no abrieron', f: () => true },
+    en_tienda: { t: 'En tienda ahora', f: p => p.estado === 'EN_TIENDA' || p.estado === 'ALMUERZO' },
+    sin_marca: { t: 'Sin marca', f: p => p.estado === 'SIN_MARCA' && p.registrada },
+    tardias: { t: 'Tardías hoy', f: p => p.tarde > 0, o: (a, b) => b.tarde - a.tarde },
+    almuerzo: { t: 'En almuerzo', f: p => p.estado === 'ALMUERZO', o: (a, b) => b.minutosAlmuerzo - a.minutosAlmuerzo },
+    cubierto: { t: 'Vacaciones / permisos', f: p => p.estado === 'CUBIERTO' },
+    marcas: { t: 'Marcas del día', f: p => p.marcas && p.marcas.length > 0 }
+  };
+  const TIPOS_MARCA_DIA = [['ENTRADA', 'Entrada'], ['ALMUERZO_SALIDA', 'Salida almuerzo'], ['ALMUERZO_REGRESO', 'Regreso almuerzo'], ['SALIDA', 'Final de jornada']];
+
+  function filasMarcasDia(tiendas) {
+    const filas = [];
+    tiendas.forEach(t => t.personas.filter(FOCO_HOY.marcas.f).forEach(p => {
+      const f = { nombre: nombreCorto(p.nombre), tienda: t.nombre, pais: t.pais };
+      TIPOS_MARCA_DIA.forEach(([tipo]) => { const m = p.marcas.find(x => x.tipo === tipo); f[tipo] = m ? m.hora : null; });
+      filas.push(f);
+    }));
+    return filas;
+  }
+
+  function pintarMarcasDia(tiendas) {
+    const filas = filasMarcasDia(tiendas);
+    if (!filas.length) return ($('hoy-tiendas').innerHTML = '<div class="vacio">Todavía no hay marcas hoy.</div>');
+    if (!st.orden.marcasDia) st.orden.marcasDia = { col: 2, dir: 1 };
+    const columnas = [
+      { t: 'Colaboradora', v: f => f.nombre, h: f => '<strong>' + esc(f.nombre) + '</strong>' },
+      { t: 'Tienda', v: f => f.tienda, h: f => BANDERA[f.pais] + ' ' + esc(f.tienda) }
+    ].concat(TIPOS_MARCA_DIA.map(([tipo, nombre]) => ({ t: nombre, num: true, v: f => f[tipo], h: f => f[tipo] ? esc(hora12(f[tipo])) : '<span class="muted">—</span>' })));
+    $('hoy-tiendas').innerHTML = tablaOrdenable('marcasDia', columnas, filas);
+    activarOrden($('hoy-tiendas'), pintarHoy);
+    $('foco-csv').addEventListener('click', () => descargarCSV('marcas_' + hoyISO() + '.csv',
+      [['Colaboradora', f => f.nombre], ['Tienda', f => f.tienda], ['País', f => f.pais]].concat(TIPOS_MARCA_DIA.map(([tipo, nombre]) => [nombre, f => f[tipo] || ''])), filas));
   }
 
   $('btn-inc-buscar').addEventListener('click', cargarIncidencias);
