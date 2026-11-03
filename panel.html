@@ -102,6 +102,10 @@
     .persona { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px 16px; border-bottom: 1px solid var(--border-soft); }
     .persona:last-child { border-bottom: none; }
     .persona-nombre { font-weight: 600; font-size: 13.5px; }
+    .persona-acciones { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .link-mini { background: none; border: none; color: var(--gold-light); cursor: pointer; padding: 2px 0; font: inherit; font-size: 12px; text-decoration: underline; }
+    .tras-form { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .tras-form select.input, .tras-form .input { flex: 1 1 150px; width: auto; padding: 8px 10px; font-size: 13px; }
     .persona-meta { font-size: 12px; color: var(--text-3); grid-column: 1 / -1; font-variant-numeric: tabular-nums; }
     .pill { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap; background: var(--cream-dim); color: var(--text-2); }
     .pill.green { background: var(--green-bg); color: var(--green); }
@@ -413,6 +417,7 @@
         <div class="campo" style="margin-top:10px"><label for="as-motivo">Motivo</label><input class="input" id="as-motivo" maxlength="500" placeholder="Ej.: celular sin batería, marcó en presencia de la coordinadora"></div>
         <div class="rev-botones"><button class="btn" id="as-guardar">Registrar marca</button><button class="btn ghost" id="as-cancelar">Cancelar</button></div>
       </div>
+      <div id="imp-contenido"></div>
       <div id="rev-contenido"></div>
     </section>
 
@@ -520,7 +525,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.03.1';
+  const VERSION = '2026.11.03.2';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -699,7 +704,7 @@
     contadores();
     cargarDirectorio();
     if (st.timer) clearInterval(st.timer);
-    st.timer = setInterval(() => { if (st.vista === 'hoy' && document.visibilityState === 'visible') cargarHoy(true); }, 60000);
+    st.timer = setInterval(() => { if (st.vista === 'hoy' && !st.trasAbierto && document.visibilityState === 'visible') cargarHoy(true); }, 60000);
   }
 
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => mostrarVista(t.dataset.vista)));
@@ -732,9 +737,11 @@
         llamar({ accion: 'panel_incidencias', pais: st.pais }),
         llamar({ accion: 'panel_solicitudes', pais: st.pais }),
         llamar({ accion: 'panel_extras', pais: st.pais }),
-        llamar({ accion: 'ctl_revision', pais: st.pais }).catch(() => ({}))
-      ]);
-      const nRev = rev && rev.ok && rev.puede_revisar ? rev.items.filter(x => x.estado === 'Pendiente').length : 0;
+        llamar({ accion: 'ctl_revision', pais: st.pais }).catch(() => ({})),
+        llamar({ accion: 'imp_lista' }).catch(() => ({}))
+      ]).then(x => { st.datos.imprevistosConteo = x[4]; return x; });
+      const imp = st.datos.imprevistosConteo;
+      const nRev = (rev && rev.ok && rev.puede_revisar ? rev.items.filter(x => x.estado === 'Pendiente').length : 0) + (imp && imp.ok ? imp.items.filter(x => x.puede && (!st.pais || x.pais === st.pais)).length : 0);
       $('cont-revision').hidden = !nRev; $('cont-revision').textContent = nRev;
       const nExt = ext.ok && ext.puede_aprobar ? ext.extras.filter(x => x.estado === 'Pendiente').length : 0;
       $('cont-extras').hidden = !nExt; $('cont-extras').textContent = nExt;
@@ -822,13 +829,53 @@
       else estado = pill('Sin horario', '');
       const filas = t.personas.map(p => {
         const marcas = p.marcas.map(m => ({ ENTRADA: 'Entrada', ALMUERZO_SALIDA: 'Almuerzo', ALMUERZO_REGRESO: 'Regreso', SALIDA: 'Salida' }[m.tipo] || m.tipo) + ' ' + m.hora).join(' · ');
-        return '<div class="persona"><div class="persona-nombre">' + esc(nombreCorto(p.nombre)) + '</div><div>' + estadoPersona(p, r.duracion) + '</div>' +
-          '<div class="persona-meta">' + (p.sinHorario ? 'Sin horario hoy' : 'Turno ' + esc(hora12(p.entrada)) + (p.salida ? ' – ' + esc(hora12(p.salida)) : '')) + (marcas ? ' · ' + esc(marcas) : '') + '</div></div>';
+        const visitas = (p.visitas || []).length ? '<div class="persona-meta">Visitas: ' + p.visitas.map(v => esc(v.tienda) + ' ' + esc(hora12(v.hora))).join(' · ') + '</div>' : '';
+        const trasladar = puedeTrasladar(p) ? '<div class="persona-acciones"><button class="link-mini" data-tras="' + esc(p.id) + '" data-origen="' + esc(t.id) + '" data-pais="' + esc(t.pais) + '">Trasladar a otra tienda</button></div>' : '';
+        return '<div class="persona"><div class="persona-nombre">' + esc(nombreCorto(p.nombre)) + '</div><div>' + estadoPersona(p, r.duracion) + (p.imprevistos || []).map(pillImprevisto).join('') + '</div>' +
+          '<div class="persona-meta">' + (p.sinHorario ? 'Sin horario hoy' : 'Turno ' + esc(hora12(p.entrada)) + (p.salida ? ' – ' + esc(hora12(p.salida)) : '')) + (marcas ? ' · ' + esc(marcas) : '') + '</div>' + visitas + trasladar + '</div>';
       }).join('');
       const cuerpo = st.foco === 'tiendas' ? '' : (filas || '<div class="persona muted">Nadie programado hoy.</div>');
       return '<div class="tienda' + (t.alerta ? ' alerta' : '') + '"><div class="tienda-cab"><div><div class="tienda-nombre">' + BANDERA[t.pais] + ' ' + esc(t.nombre) + '</div><div class="tienda-meta">Hora local ' + esc(hora12(t.hora)) + ' · ' + t.personas.length + ' en turno</div></div>' + estado + '</div>' + cuerpo + '</div>';
     }).join('');
   }
+
+  function pillImprevisto(x) {
+    if (x.tipo === 'TRASLADO') return ' ' + pill(x.llegada ? 'Trasladada a ' + x.destino : 'En traslado → ' + x.destino, 'blue');
+    if (x.tipo === 'CITA') return ' ' + pill(x.regreso ? 'Cita ' + hora12(x.hora) + '–' + hora12(x.regreso) : x.sinRegreso ? 'Se retiró a cita ' + hora12(x.hora) : 'En cita desde ' + hora12(x.hora), 'amber');
+    return ' ' + pill(x.nombre + ' ' + hora12(x.hora), 'red');
+  }
+
+  function puedeTrasladar(p) {
+    const u = st.usuario;
+    if (!u || ['EN_TIENDA', 'ALMUERZO'].indexOf(p.estado) < 0) return false;
+    if ((p.imprevistos || []).some(x => x.tipo === 'TRASLADO' && !x.llegada)) return false;
+    return u.roles.indexOf('GERENCIA') >= 0 || u.roles.indexOf('COORDINACION') >= 0 || !!(u.area && u.area.aprobar);
+  }
+
+  $('hoy-tiendas').addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-tras]');
+    if (b) {
+      const persona = b.closest('.persona');
+      if (persona.querySelector('.tras-form')) return;
+      const destinos = ((st.dir && st.dir.tiendas) || []).filter(x => x.pais === b.dataset.pais && x.id !== b.dataset.origen && !/-(RES|TEL)$/.test(x.id));
+      const f = document.createElement('div');
+      f.className = 'tras-form';
+      f.innerHTML = '<select class="input"><option value="">Tienda de destino</option>' + destinos.map(x => '<option value="' + esc(x.id) + '">' + esc(x.nombre) + '</option>').join('') + '</select><input class="input" maxlength="300" placeholder="Motivo (ej.: cubrir ausencia)"><button class="btn mini">Trasladar</button><button class="btn ghost mini">Cancelar</button>';
+      persona.appendChild(f);
+      st.trasAbierto = true;
+      const [sel, mot, ok, no] = [f.querySelector('select'), f.querySelector('input'), f.querySelectorAll('button')[0], f.querySelectorAll('button')[1]];
+      no.addEventListener('click', () => { f.remove(); st.trasAbierto = false; });
+      ok.addEventListener('click', async () => {
+        if (!sel.value) return toast('Elegí la tienda de destino');
+        ok.disabled = true;
+        try {
+          const res = await llamar({ accion: 'imp_trasladar', idColab: b.dataset.tras, origen: b.dataset.origen, destino: sel.value, motivo: mot.value.trim() });
+          toast(res.ok ? 'Traslado registrado a ' + res.destino : (res.mensaje || 'No se pudo registrar'));
+          if (res.ok) { st.trasAbierto = false; cargarHoy(true); } else ok.disabled = false;
+        } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); ok.disabled = false; }
+      });
+    }
+  });
 
   const FOCO_HOY = {
     tiendas: { t: 'Tiendas · primero las que no abrieron', f: () => true },
@@ -844,7 +891,7 @@
   function filasMarcasDia(tiendas) {
     const filas = [];
     tiendas.forEach(t => t.personas.filter(FOCO_HOY.marcas.f).forEach(p => {
-      const f = { nombre: nombreCorto(p.nombre), tienda: t.nombre, pais: t.pais };
+      const f = { nombre: nombreCorto(p.nombre), tienda: t.nombre, pais: t.pais, extra: (p.visitas || []).map(v => 'Visita ' + v.tienda + ' ' + hora12(v.hora)).concat((p.imprevistos || []).map(x => x.tipo === 'TRASLADO' ? 'Traslado a ' + x.destino + ' ' + hora12(x.hora) : x.nombre + ' ' + hora12(x.hora))).join(' · ') };
       TIPOS_MARCA_DIA.forEach(([tipo]) => { const m = p.marcas.find(x => x.tipo === tipo); f[tipo] = m ? m.hora : null; });
       filas.push(f);
     }));
@@ -859,10 +906,11 @@
       { t: 'Colaboradora', v: f => f.nombre, h: f => '<strong>' + esc(f.nombre) + '</strong>' },
       { t: 'Tienda', v: f => f.tienda, h: f => BANDERA[f.pais] + ' ' + esc(f.tienda) }
     ].concat(TIPOS_MARCA_DIA.map(([tipo, nombre]) => ({ t: nombre, num: true, v: f => f[tipo], h: f => f[tipo] ? esc(hora12(f[tipo])) : '<span class="muted">—</span>' })));
+    if (filas.some(f => f.extra)) columnas.push({ t: 'Visitas e imprevistos', v: f => f.extra, h: f => f.extra ? '<span class="wrap">' + esc(f.extra) + '</span>' : '<span class="muted">—</span>' });
     $('hoy-tiendas').innerHTML = tablaOrdenable('marcasDia', columnas, filas);
     activarOrden($('hoy-tiendas'), pintarHoy);
     $('foco-csv').addEventListener('click', () => descargarCSV('marcas_' + hoyISO() + '.csv',
-      [['Colaboradora', f => f.nombre], ['Tienda', f => f.tienda], ['País', f => f.pais]].concat(TIPOS_MARCA_DIA.map(([tipo, nombre]) => [nombre, f => f[tipo] || ''])), filas));
+      [['Colaboradora', f => f.nombre], ['Tienda', f => f.tienda], ['País', f => f.pais]].concat(TIPOS_MARCA_DIA.map(([tipo, nombre]) => [nombre, f => f[tipo] || '']), [['Visitas e imprevistos', f => f.extra || '']]), filas));
   }
 
   $('btn-inc-buscar').addEventListener('click', cargarIncidencias);
@@ -1381,8 +1429,64 @@
     pintarRevision();
   }));
 
+  async function cargarImprevistos() {
+    try {
+      const r = await llamar({ accion: 'imp_lista', desde: $('rev-desde').value, hasta: $('rev-hasta').value });
+      st.datos.imprevistos = r;
+      pintarImprevistos();
+    } catch (e) {}
+  }
+
+  const DECISION_IMP = { CON_GOCE: ['Con goce', 'green'], SIN_GOCE: ['Sin goce', 'red'], APROBADO: ['Aprobado', 'green'], RECHAZADO: ['Rechazado', 'red'] };
+  const COLOR_IMP = { RETIRO: 'red', INCAPACIDAD: 'red', OTRO: 'red', CITA: 'amber', TRASLADO: 'blue' };
+
+  function pintarImprevistos() {
+    const r = st.datos.imprevistos;
+    const cont = $('imp-contenido');
+    if (!r || !r.ok) { cont.innerHTML = ''; return; }
+    const todas = (st.revFiltro || 'pendientes') === 'todas';
+    const lista = r.items.filter(x => (todas || x.estado === 'Pendiente') && (!st.pais || x.pais === st.pais) && pasa(x.tienda, x.idTienda, x.nombre, x.idColab));
+    if (!lista.length) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<div class="seccion">Imprevistos del día</div>' + lista.map(x => {
+      const lineas = [];
+      if (x.tipo === 'TRASLADO') {
+        lineas.push('<strong>Traslado:</strong> ' + esc(x.tienda || '—') + ' → ' + esc(x.destino) + ' · salida ' + esc(hora12(x.hora)) + (x.llegada ? ' · llegó ' + esc(hora12(x.llegada)) : ' · todavía no llega'));
+        lineas.push('<span class="muted">Lo registró: ' + esc(x.solicitadoPor === 'Colaboradora' ? 'la colaboradora' : x.solicitadoPor) + '</span>');
+      } else if (x.tipo === 'CITA') {
+        lineas.push('<strong>Salida a cita:</strong> ' + esc(hora12(x.hora)) + (x.regreso ? ' · regresó ' + esc(hora12(x.regreso)) : x.sinRegreso ? ' · no regresa' : ' · regreso estimado ' + esc(hora12(x.regresoEstimado))));
+      } else {
+        lineas.push('<strong>Salida:</strong> ' + esc(hora12(x.hora)));
+      }
+      if (x.motivo) lineas.push('<strong>Motivo:</strong> ' + esc(x.motivo));
+      if (x.minutos) lineas.push('<strong>Tiempo del turno afectado:</strong> ' + x.minutos + ' min');
+      let cuerpo = lineas.map(l => '<div class="rev-linea">' + l + '</div>').join('');
+      if (x.puede) {
+        const botones = x.tipo === 'TRASLADO'
+          ? '<button class="btn ok mini" data-d="APROBADO">Aprobar</button><button class="btn no mini" data-d="RECHAZADO">Rechazar</button>'
+          : '<button class="btn ok mini" data-d="CON_GOCE">Con goce</button><button class="btn no mini" data-d="SIN_GOCE">Sin goce</button>';
+        cuerpo += '<div class="rev-acciones" data-imp="' + esc(x.id) + '"><input class="input" maxlength="300" placeholder="Comentario (obligatorio si es sin goce o rechazo)"><div class="rev-botones">' + botones + '</div></div>';
+      } else if (x.decision) {
+        const d = DECISION_IMP[x.decision] || [x.decision, ''];
+        cuerpo += '<div class="rev-linea muted">' + pill(d[0], d[1]) + ' ' + esc(x.decidio + (x.comentario ? ' · ' + x.comentario : '')) + '</div>';
+      }
+      return '<div class="rev-card' + (x.estado === 'Pendiente' ? ' pendiente' : '') + '"><div class="rev-cab"><div><div class="rev-nombre">' + esc(nombreCorto(x.nombre)) + '</div><div class="rev-meta">' + (BANDERA[x.pais] || '') + ' ' + esc(x.tienda) + ' · ' + esc(fechaCorta(x.fecha)) + '</div></div><div class="rev-pills">' + pill(x.tipoNombre, COLOR_IMP[x.tipo] || '') + pill(x.estado, x.estado === 'Pendiente' ? 'amber' : x.estado === 'Rechazado' ? 'red' : 'green') + '</div></div>' + cuerpo + '</div>';
+    }).join('');
+    cont.querySelectorAll('[data-imp]').forEach(caja => caja.querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+      const comentario = caja.querySelector('input').value.trim();
+      if ((b.dataset.d === 'SIN_GOCE' || b.dataset.d === 'RECHAZADO') && comentario.length < 3) return toast('Escribí el motivo');
+      caja.querySelectorAll('button').forEach(x => { x.disabled = true; });
+      try {
+        const res = await llamar({ accion: 'imp_decidir', id: caja.dataset.imp, decision: b.dataset.d, comentario: comentario });
+        toast(res.ok ? 'Imprevisto resuelto' : (res.mensaje || 'No se pudo guardar'));
+        if (res.ok) { await cargarImprevistos(); contadores(); }
+        else caja.querySelectorAll('button').forEach(x => { x.disabled = false; });
+      } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); caja.querySelectorAll('button').forEach(x => { x.disabled = false; }); }
+    })));
+  }
+
   async function cargarRevision() {
     cargando('rev-contenido');
+    cargarImprevistos();
     try {
       const r = await llamar({ accion: 'ctl_revision', pais: st.pais, desde: $('rev-desde').value, hasta: $('rev-hasta').value });
       if (!r.ok) return ($('rev-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
@@ -1392,6 +1496,7 @@
   }
 
   function pintarRevision() {
+    pintarImprevistos();
     const r = st.datos.revision;
     if (!r) return;
     const todas = (st.revFiltro || 'pendientes') === 'todas';
