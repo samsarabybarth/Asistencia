@@ -520,7 +520,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.02.2';
+  const VERSION = '2026.11.03.1';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -655,6 +655,9 @@
     $('vista-login').hidden = true;
     $('vista-panel').hidden = false;
     $('usuario-nombre').textContent = usuario.nombre + ' · ' + usuario.roles.map(r => r.charAt(0) + r.slice(1).toLowerCase()).join(', ');
+    const soloEquipo = !!(usuario.area && usuario.area.soloEquipo);
+    document.querySelector('.tab[data-vista="documentos"]').hidden = soloEquipo;
+    document.querySelector('.tab[data-vista="puntos"]').hidden = soloEquipo && usuario.roles.indexOf('OPERACIONES') < 0;
     const chips = $('chips-pais');
     chips.innerHTML = '';
     const opciones = usuario.paises.length > 1 ? [''].concat(usuario.paises) : usuario.paises;
@@ -689,7 +692,9 @@
     $('as-fecha').value = hoyISO(hoy);
     $('ev-fecha').value = hoyISO(hoy);
     pintarFiltroGlobal();
-    const inicial = ['revision', 'puntos', 'documentos', 'accesos'].indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'hoy';
+    const pedida = location.hash.slice(1);
+    const pestana = document.querySelector('.tab[data-vista="' + pedida + '"]');
+    const inicial = ['revision', 'puntos', 'documentos', 'accesos'].indexOf(pedida) >= 0 && pestana && !pestana.hidden ? pedida : 'hoy';
     mostrarVista(inicial, true);
     contadores();
     cargarDirectorio();
