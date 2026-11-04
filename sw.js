@@ -1,4 +1,4 @@
-const CACHE = 'samsara-app-2026.11.03.2';
+const CACHE = 'samsara-app-2026.11.03.3';
 const BASE = ['./', './index.html', './manifest.webmanifest', './icono-192.png', './icono-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

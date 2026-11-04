@@ -411,13 +411,17 @@
     .mark-btn.alterna { background: var(--cream-dim); color: var(--cream); border: 1px solid var(--border-soft); box-shadow: none; margin-top: -4px; }
     .mark-btn.alterna svg { fill: var(--cream); }
     .imp-boton { display: block; width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; border: 1px dashed var(--border); background: none; color: var(--gold-light); font-family: inherit; font-weight: 600; font-size: 14px; cursor: pointer; }
-    .imp-cuerpo { align-items: stretch; padding: 16px; gap: 12px; }
+    .visor-cuerpo.imp-cuerpo { align-items: stretch; padding: 16px; gap: 12px; }
     .imp-opcion { text-align: left; background: var(--night-mid); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px 16px; color: var(--cream); font-family: inherit; cursor: pointer; }
     .imp-opcion.activa { border-color: var(--gold); background: var(--gold-dim); }
     .imp-opcion b { display: block; font-size: 15px; margin-bottom: 3px; }
     .imp-opcion span { font-size: 12.5px; color: var(--text-secondary); line-height: 1.4; }
     .imp-check { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--text-secondary); }
     .imp-nota { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
+    .imp-cuerpo { text-align: left; justify-content: flex-start; }
+    .imp-cuerpo .form-group { width: 100%; }
+    .imp-cuerpo .form-input { width: 100%; box-sizing: border-box; }
+    .imp-cuerpo .form-label { text-align: left; }
     .mark-btn svg { fill: var(--night); }
 
     .section-label {
@@ -1312,7 +1316,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.03.2';
+  const VERSION = '2026.11.03.3';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
