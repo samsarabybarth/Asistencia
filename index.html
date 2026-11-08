@@ -418,6 +418,8 @@
     .imp-opcion span { font-size: 12.5px; color: var(--text-secondary); line-height: 1.4; }
     .imp-check { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--text-secondary); }
     .imp-nota { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
+    .aviso-acceso { background: var(--gold-dim); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin: 0 0 16px; font-size: 13px; line-height: 1.45; color: var(--text-secondary); }
+    .aviso-acceso strong { display: block; color: var(--gold-light); font-size: 13.5px; margin-bottom: 3px; }
     .imp-cuerpo { text-align: left; justify-content: flex-start; }
     .imp-cuerpo .form-group { width: 100%; }
     .imp-cuerpo .form-input { width: 100%; box-sizing: border-box; }
@@ -883,6 +885,7 @@
     <section class="screen" id="screen-registro">
       <div class="screen-title">Registro inicial</div>
       <div class="screen-subtitle">Solo la primera vez. Vincula este dispositivo a tu perfil.</div>
+      <div class="aviso-acceso" id="reg-aviso" hidden><strong>Este acceso se reemplazó</strong>Hay un registro más reciente tuyo en otro navegador o pestaña. Volvé a registrarte aquí para seguir marcando.</div>
 
       <div class="form-group">
         <label class="form-label" for="reg-pais">País</label>
@@ -1059,6 +1062,7 @@
       </button>
       <div class="error-inline" id="marca-error"></div>
       <button class="imp-boton" id="btn-imprevisto" hidden>Tengo un imprevisto</button>
+      <div class="aviso-acceso" id="aviso-privado" hidden><strong>Te registraste varias veces esta semana</strong>Revisá que Safari no esté en navegación privada: tocá el botón de pestañas y elegí las pestañas normales. Así la app te recuerda y no tenés que registrarte de nuevo.</div>
 
       <div class="section-label" style="margin-top: 8px;">Marcas de hoy</div>
       <div id="marcar-historial"></div>
@@ -1316,7 +1320,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.03.3';
+  const VERSION = '2026.11.08.1';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1520,7 +1524,10 @@
     return cargarPerfil()
       .then(data => {
         if (data.ok) repintar();
-        else if (data.codigo === 'DISPOSITIVO_NO_REGISTRADO' && !ID_TIENDA) mostrar('screen-sin-registro');
+        else if ((data.codigo === 'DISPOSITIVO_NO_REGISTRADO' || data.codigo === 'DISPOSITIVO_INACTIVO') && !ID_TIENDA) {
+          estado.reemplazado = data.codigo === 'DISPOSITIVO_INACTIVO';
+          mostrar('screen-sin-registro');
+        }
       })
       .catch(() => {})
       .finally(() => { document.getElementById('estado-actualizado').textContent = ''; });
@@ -1547,6 +1554,10 @@
     try {
       const data = await cargarPerfil();
       if (data.codigo === 'DISPOSITIVO_NO_REGISTRADO') return mostrar('screen-sin-registro');
+      if (data.codigo === 'DISPOSITIVO_INACTIVO') {
+        estado.reemplazado = true;
+        return mostrar('screen-sin-registro');
+      }
       if (!data.ok) return mostrarError(data.mensaje || 'No se pudo cargar tu información.', false);
       pintarInicio();
       pintarEstados();
@@ -1567,7 +1578,8 @@
     const perfil = cargarPerfil().catch(() => null);
     try {
       const verificacion = await llamar({ accion: 'verificar_dispositivo', token: estado.dispositivo, id_tienda: ID_TIENDA, kiosco: KIOSCO, timestamp_dispositivo: new Date().toISOString() });
-      if (verificacion.codigo === 'DISPOSITIVO_NO_REGISTRADO') return mostrar('screen-registro');
+      if (verificacion.codigo === 'DISPOSITIVO_NO_REGISTRADO') return mostrarRegistro(false);
+      if (verificacion.codigo === 'DISPOSITIVO_INACTIVO') return mostrarRegistro(true);
       if (!verificacion.ok) return mostrarError(verificacion.mensaje || 'No se pudo verificar el dispositivo.', true);
       estado.verificacion = verificacion;
       pintarMarcar();
@@ -1606,13 +1618,26 @@
         user_agent: navigator.userAgent,
         timestamp_dispositivo: new Date().toISOString()
       });
-      if (data.ok) return flujoTarjeta();
+      if (data.ok) {
+        estado.avisoPrivado = !!data.aviso_privado;
+        document.getElementById('reg-aviso').hidden = true;
+        return flujoTarjeta();
+      }
       mostrar('screen-registro');
       error.textContent = data.mensaje || 'No se pudo registrar el dispositivo.';
     } catch (e) {
       mostrar('screen-registro');
       error.textContent = 'Sin conexión. Intentá de nuevo.';
     }
+  }
+
+  function mostrarRegistro(reemplazado) {
+    document.getElementById('reg-aviso').hidden = !reemplazado;
+    if (reemplazado) {
+      estado.perfil = null;
+      guardar(CLAVE_PERFIL, null);
+    }
+    mostrar('screen-registro');
   }
 
   function diaDeHoy() {
@@ -1795,6 +1820,7 @@
     alterna.hidden = !(tipo === 'VISITA' && v.tipo_marca_alterna);
     if (!alterna.hidden) document.getElementById('btn-alterna-texto').textContent = 'Registrar ' + (NOMBRES_MARCA[v.tipo_marca_alterna] || 'marca').toLowerCase();
     document.getElementById('btn-imprevisto').hidden = !v.imprevistos || !!v.offline;
+    document.getElementById('aviso-privado').hidden = !estado.avisoPrivado;
     document.getElementById('marcar-offline').hidden = !v.offline;
     pintarHorario('marcar', dia);
     pintarHistorial('marcar-historial', dia);
@@ -2067,6 +2093,7 @@
   }
 
   function mostrarResultado(data, ubicacion) {
+    if (!data.ok && data.codigo === 'DISPOSITIVO_INACTIVO') return mostrarRegistro(true);
     if (!data.ok) return mostrarError(data.mensaje || 'No se pudo registrar la marca.', true);
 
     const nombre = (estado.verificacion && estado.verificacion.nombre_corto) || '';
@@ -2327,6 +2354,9 @@
       document.getElementById('sin-registro-texto').textContent = iconoIos
         ? 'En iPhone, las marcas se hacen en Safari al acercar el celular a la tarjeta NFC. Registrate ahí primero y después vinculá este ícono.'
         : 'Para registrarte la primera vez, acercá el celular a la tarjeta NFC de tu tienda.';
+      if (estado.reemplazado) document.getElementById('sin-registro-texto').textContent = 'Este acceso se reemplazó por un registro más reciente. ' + (iconoIos
+        ? 'Volvé a vincular este ícono desde Safari con un código nuevo.'
+        : 'Acercá el celular a la tarjeta de tu tienda para registrarte de nuevo.');
     }
     if (texto) {
       const el = document.getElementById(id === 'screen-procesando' ? 'procesando-texto' : 'cargando-texto');
