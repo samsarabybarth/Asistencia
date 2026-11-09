@@ -1320,7 +1320,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.08.1';
+  const VERSION = '2026.11.09.1';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1967,12 +1967,12 @@
       const ss = Math.floor((abs % 60000) / 1000);
       const texto = String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
       tarjeta.classList.toggle('excedido', restante < 0);
-      tarjeta.classList.toggle('alerta', restante >= 0 && restante <= 5 * 60000);
+      tarjeta.classList.toggle('alerta', restante >= 0 && restante <= 10 * 60000);
 
       if (restante >= 0) {
         document.getElementById('almuerzo-cuenta').textContent = texto;
         document.getElementById('almuerzo-unidad').textContent = 'restantes';
-        document.getElementById('almuerzo-titulo').textContent = restante <= 5 * 60000 ? 'Ya casi es hora de volver' : 'Disfrutá tu almuerzo';
+        document.getElementById('almuerzo-titulo').textContent = restante <= 10 * 60000 ? 'Te quedan menos de 10 minutos' : 'Disfrutá tu almuerzo';
         anillo.setAttribute('stroke-dashoffset', (circ * (1 - restante / (datos.duracion * 60000))).toFixed(1));
       } else {
         document.getElementById('almuerzo-cuenta').textContent = '+' + texto;
