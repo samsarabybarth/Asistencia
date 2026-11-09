@@ -1320,7 +1320,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.09.1';
+  const VERSION = '2026.11.09.2';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1448,6 +1448,7 @@
   window.addEventListener('load', iniciar);
 
   function iniciar() {
+    estado.diag = leerDiagnostico();
     estado.dispositivo = leer(CLAVE_DISPOSITIVO);
     if (!estado.dispositivo) {
       estado.dispositivo = 'T' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 7).toUpperCase();
@@ -1467,6 +1468,20 @@
     setInterval(() => { if (leerCola().length) enviarCola(); }, 60000);
     setInterval(revisarVersion, 900000);
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  function leerDiagnostico() {
+    const d = { habia_datos: !!leer(CLAVE_DISPOSITIVO), primera_vez: leer('samsara_primera_vez') || '' };
+    d.cookie_previa = /(?:^|;\s*)smv=1/.test(document.cookie);
+    try { document.cookie = 'smv=1; max-age=31536000; path=/; SameSite=Lax; Secure'; } catch (e) {}
+    try { d.misma_pestana = !!sessionStorage.getItem('samsara_sesion'); sessionStorage.setItem('samsara_sesion', '1'); } catch (e) { d.misma_pestana = null; }
+    if (!d.primera_vez) guardar('samsara_primera_vez', new Date().toISOString());
+    d.ventana = ES_ICONO ? 'ICONO' : 'NAVEGADOR';
+    d.historial = history.length;
+    d.referencia = String(document.referrer || '').slice(0, 80);
+    d.datos_listos = (navigator.storage && navigator.storage.estimate ? navigator.storage.estimate().then(e => { d.cuota_mb = Math.round((e.quota || 0) / 1048576); }).catch(() => {}) : Promise.resolve())
+      .then(() => navigator.storage && navigator.storage.persisted ? navigator.storage.persisted().then(v => { d.persistente = v; }).catch(() => {}) : null);
+    return d;
   }
 
   function leer(clave) {
@@ -1608,6 +1623,8 @@
     mostrar('screen-procesando', 'Vinculando dispositivo…');
 
     try {
+      const diag = estado.diag || {};
+      await Promise.race([diag.datos_listos || Promise.resolve(), new Promise(r => setTimeout(r, 800))]);
       const data = await llamar({
         accion: 'registrar_dispositivo',
         token: estado.dispositivo,
@@ -1616,7 +1633,8 @@
         documento: documento,
         id_tienda: ID_TIENDA,
         user_agent: navigator.userAgent,
-        timestamp_dispositivo: new Date().toISOString()
+        timestamp_dispositivo: new Date().toISOString(),
+        diag: { habia_datos: diag.habia_datos, primera_vez: diag.primera_vez, cookie_previa: diag.cookie_previa, misma_pestana: diag.misma_pestana, ventana: diag.ventana, historial: diag.historial, referencia: diag.referencia, cuota_mb: diag.cuota_mb, persistente: diag.persistente }
       });
       if (data.ok) {
         estado.avisoPrivado = !!data.aviso_privado;
