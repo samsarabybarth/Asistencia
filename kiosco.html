@@ -98,6 +98,7 @@
   </div>
   <div class="pie">
     <span>El código cambia cada 15 segundos</span>
+    <button class="btn ghost" id="btn-sonido" hidden>Activar sonido</button>
     <button class="btn ghost" id="btn-pantalla">Pantalla completa</button>
   </div>
 </section>
@@ -117,7 +118,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE = 'samsara_kiosco';
   const VENTANA_MS = 15000;
-  const VERSION = '2026.11.09.2';
+  const VERSION = '2026.11.09.3';
   const estado = { kiosco: null, desfase: 0, ventana: null, clave: null, timer: null, ping: null, feed: null, desde: Date.now() };
 
   function $(id) { return document.getElementById(id); }
@@ -190,7 +191,56 @@
     } catch (e) {}
   }
 
+  const audio = { ctx: null };
+
+  function desbloquearAudio() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!audio.ctx) audio.ctx = new AC();
+      if (audio.ctx.state === 'suspended') audio.ctx.resume();
+      const b = audio.ctx.createBuffer(1, 1, 22050);
+      const s = audio.ctx.createBufferSource();
+      s.buffer = b;
+      s.connect(audio.ctx.destination);
+      s.start(0);
+    } catch (e) {}
+  }
+
+  function tono(frecuencia, inicio, duracion, volumen) {
+    const c = audio.ctx;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = 'sine';
+    o.frequency.value = frecuencia;
+    g.gain.setValueAtTime(0.0001, c.currentTime + inicio);
+    g.gain.exponentialRampToValueAtTime(volumen, c.currentTime + inicio + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + inicio + duracion);
+    o.connect(g);
+    g.connect(c.destination);
+    o.start(c.currentTime + inicio);
+    o.stop(c.currentTime + inicio + duracion + 0.02);
+  }
+
+  function sonido(tipo) {
+    try {
+      if (!audio.ctx || audio.ctx.state !== 'running') return;
+      if (tipo === 'error') {
+        tono(330, 0, 0.18, 0.25);
+        tono(220, 0.2, 0.28, 0.25);
+      } else {
+        tono(880, 0, 0.16, 0.22);
+        tono(1318.5, 0.11, 0.32, 0.18);
+      }
+    } catch (e) {}
+  }
+
+  function revisarSonido() {
+    $('btn-sonido').hidden = !!(audio.ctx && audio.ctx.state === 'running');
+  }
+
   function mostrarConfirmacion(m) {
+    sonido('ok');
     const item = document.createElement('div');
     item.className = 'feed-item';
     item.innerHTML = '<div class="feed-check">✓</div><div><div class="feed-nombre"></div><div class="feed-detalle"></div></div>';
@@ -231,6 +281,8 @@
     estado.desde = Date.now();
     estado.feed = setInterval(revisarRecientes, 6000);
     revisarEstado();
+    desbloquearAudio();
+    setTimeout(revisarSonido, 500);
     try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
   }
 
@@ -254,6 +306,8 @@
   });
   $('codigo').addEventListener('keydown', e => { if (e.key === 'Enter') $('btn-activar').click(); });
   $('btn-reactivar').addEventListener('click', () => mostrar('p-activar'));
+  ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, () => { desbloquearAudio(); setTimeout(revisarSonido, 300); }));
+  $('btn-sonido').addEventListener('click', () => { desbloquearAudio(); setTimeout(() => { sonido('ok'); revisarSonido(); }, 150); });
   $('btn-pantalla').addEventListener('click', () => {
     const el = document.documentElement;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
