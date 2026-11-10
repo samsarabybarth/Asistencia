@@ -309,7 +309,7 @@
 
     <section id="v-incidencias" hidden>
       <div class="titulo">Incidencias</div>
-      <div class="sub">Tardías, almuerzos extendidos y ausencias. La justificación no anula la incidencia: Talento decide.</div>
+      <div class="sub">Tardías, almuerzos extendidos y ausencias. La justificación no anula la incidencia: la coordinadora decide.</div>
       <div class="filtros">
         <div class="campo"><label for="inc-desde">Desde</label><input class="input" type="date" id="inc-desde"></div>
         <div class="campo"><label for="inc-hasta">Hasta</label><input class="input" type="date" id="inc-hasta"></div>
@@ -525,7 +525,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.09.3';
+  const VERSION = '2026.11.09.4';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -946,7 +946,7 @@
         '<td>' + esc(i.tipoNombre) + (i.minutos ? ' <span class="muted">' + i.minutos + ' min</span>' : '') + '<div class="muted wrap">' + esc(i.detalle) + '</div></td>' +
         '<td>' + just + '</td><td>' + pill(i.estado, COLOR_ESTADO[i.estado] || '') + '</td><td>' + decision + '</td></tr>';
     }).join('');
-    $('inc-contenido').innerHTML = '<div class="tabla-wrap"><table><thead><tr><th>Fecha</th><th>Colaboradora</th><th>Incidencia</th><th>Justificación</th><th>Estado</th><th>Decisión de Talento</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
+    $('inc-contenido').innerHTML = '<div class="tabla-wrap"><table><thead><tr><th>Fecha</th><th>Colaboradora</th><th>Incidencia</th><th>Justificación</th><th>Estado</th><th>Decisión</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
     $('inc-contenido').querySelectorAll('.acciones').forEach(caja => {
       caja.querySelector('button').addEventListener('click', async () => {
         const b = caja.querySelector('button');
