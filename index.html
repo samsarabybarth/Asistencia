@@ -756,6 +756,24 @@
     .hist-estado.red { background: var(--red-bg); color: var(--red); }
     .hist-estado.amber { background: var(--amber-bg); color: var(--amber); }
     .hist-estado.muted { background: var(--cream-dim); color: var(--text-muted); }
+    .marcas-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .marcas-cab .section-label { margin: 0; }
+    .marcas-cab .form-input { width: auto; padding: 8px 12px; font-size: 13px; text-transform: capitalize; }
+    .marcas-cab + .historial-dias { margin-top: 12px; }
+    .marcas-dia { padding: 12px 14px; border-radius: 12px; background: var(--cream-dim); border-left: 3px solid var(--border); }
+    .marcas-dia.green { border-left-color: var(--green); }
+    .marcas-dia.red { border-left-color: var(--red); }
+    .marcas-dia.amber { border-left-color: var(--amber); }
+    .marcas-dia.gold { border-left-color: var(--gold); }
+    .dia-cab { display: flex; align-items: center; gap: 10px; }
+    .dia-tienda { font-size: 11.5px; color: var(--text-muted); }
+    .dia-filas { margin-top: 9px; display: flex; flex-direction: column; gap: 5px; }
+    .dia-fila { display: flex; width: 100%; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--text-secondary); }
+    .dia-fila .hora { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text-primary); min-width: 42px; }
+    .dia-fila .nota { margin-left: auto; font-size: 11.5px; text-align: right; }
+    .dia-fila .nota.red { color: var(--red); }
+    .dia-fila .nota.amber { color: var(--amber); }
+    .dia-fila .nota.green { color: var(--green); }
     .actualizando { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 4px; min-height: 14px; }
 
     .sol-card { background: var(--cream-dim); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
@@ -1102,7 +1120,10 @@
       <div class="metricas" id="estado-horas"></div>
       <div class="politica" id="estado-politica" hidden></div>
 
-      <div class="section-label">Últimos días</div>
+      <div class="marcas-cab">
+        <div class="section-label">Mis marcas</div>
+        <select class="form-input" id="marcas-mes" aria-label="Mes" hidden></select>
+      </div>
       <div class="historial-dias" id="estado-historial"></div>
       <div class="actualizando" id="estado-actualizado"></div>
     </section>
@@ -1333,7 +1354,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.09.4';
+  const VERSION = '2026.11.10.1';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1441,6 +1462,7 @@
   window.addEventListener('popstate', () => { if (!document.getElementById('visor').hidden) cerrarVisor(); });
   document.getElementById('btn-sol-volver').addEventListener('click', () => navegar('screen-solicitudes'));
   document.getElementById('sol-tipo').addEventListener('change', ajustarFormulario);
+  document.getElementById('marcas-mes').addEventListener('change', e => cargarMarcas(e.target.value));
   document.getElementById('sol-desde').addEventListener('change', () => {
     const hasta = document.getElementById('sol-hasta');
     if (!hasta.value || hasta.value < document.getElementById('sol-desde').value) hasta.value = document.getElementById('sol-desde').value;
@@ -2570,6 +2592,8 @@
     polEst.hidden = !(nm && nm.tardias);
     if (nm && nm.tardias) polEst.textContent = '⚠ ' + nm.tardias + (nm.tardias === 1 ? ' tardía' : ' tardías') + ' este mes (' + nm.minutosTardias + ' min). ' + estado.nomina.politica;
 
+    cargarMarcas();
+    if (estado.marcas) { pintarMarcas(); if (pantallaActual() === 'screen-estados') animarAnillo(); return; }
     const hist = document.getElementById('estado-historial');
     hist.innerHTML = '';
     if (!e.historial.length) {
@@ -2591,6 +2615,97 @@
       hist.appendChild(fila);
     });
     if (pantallaActual() === 'screen-estados') animarAnillo();
+  }
+
+  function cargarMarcas(mes) {
+    if (estado.cargandoMarcas) return;
+    const reciente = estado.marcas && !mes && Date.now() - (estado.marcasLeidas || 0) < 60000;
+    if (reciente || !estado.dispositivo) return;
+    estado.cargandoMarcas = true;
+    const pedido = mes || (estado.marcas && estado.marcas.mes !== estado.marcas.meses[0] ? estado.marcas.mes : '');
+    llamar({ accion: 'nomina_marcas', token: estado.dispositivo, mes: pedido })
+      .then(data => {
+        if (!data.ok) return;
+        estado.marcas = data;
+        estado.marcasLeidas = Date.now();
+        pintarMarcas();
+      })
+      .catch(() => {})
+      .finally(() => { estado.cargandoMarcas = false; });
+  }
+
+  function notaDecision(texto, decision) {
+    if (decision === 'Justificada') return [texto + ' · justificada', 'green'];
+    if (decision === 'Pendiente') return [texto + ' · en revisión', 'amber'];
+    return [texto, 'red'];
+  }
+
+  function pintarMarcas() {
+    const m = estado.marcas;
+    if (!m) return;
+    const selector = document.getElementById('marcas-mes');
+    selector.hidden = false;
+    selector.innerHTML = '';
+    m.meses.forEach(x => {
+      const o = document.createElement('option');
+      o.value = x;
+      o.textContent = new Date(x + '-15T12:00:00').toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
+      selector.appendChild(o);
+    });
+    selector.value = m.mes;
+
+    const hist = document.getElementById('estado-historial');
+    hist.innerHTML = '';
+    if (!m.dias.length) {
+      hist.innerHTML = '<div class="vacio">No hay marcas en este mes.</div>';
+      return;
+    }
+    m.dias.forEach(d => {
+      const tipos = d.marcas.map(x => x.tipo);
+      const incompleta = d.sin_salida || (!d.es_hoy && tipos.includes('ALMUERZO_SALIDA') && !tipos.includes('ALMUERZO_REGRESO'));
+      let info;
+      if (d.estado === 'AUSENCIA') info = d.ausencia_decision === 'Justificada' ? ['Ausencia justificada', 'amber'] : ['Ausencia', 'red'];
+      else if (d.es_hoy && !tipos.includes('SALIDA')) info = [d.marcas.length ? 'Hoy · en curso' : 'Hoy', 'muted'];
+      else if (incompleta) info = ['Marca incompleta', 'red'];
+      else if (d.tarde > 0 || d.exceso_almuerzo > 0) info = ['Con incidencias', 'amber'];
+      else if (d.estado === 'A_TIEMPO') info = ['Al día', 'green'];
+      else info = ESTADOS_HISTORIAL[d.estado] || [ESTADOS_DIA[d.estado] || titulo(String(d.estado || '').replace(/_/g, ' ')), 'gold'];
+
+      const caja = document.createElement('div');
+      caja.className = 'marcas-dia' + (info[1] === 'muted' ? '' : ' ' + info[1]);
+      caja.innerHTML = '<div class="dia-cab"><div style="flex:1;min-width:0"><div class="hist-fecha"></div><div class="dia-tienda"></div></div><span class="hist-estado ' + info[1] + '"></span></div>';
+      caja.querySelector('.hist-fecha').textContent = new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'short' });
+      const horario = d.entrada_programada && d.salida_programada ? 'Horario ' + d.entrada_programada + ' – ' + d.salida_programada : '';
+      caja.querySelector('.dia-tienda').textContent = [d.tienda ? titulo(d.tienda) : '', horario].filter(Boolean).join(' · ');
+      caja.querySelector('.hist-estado').textContent = info[0];
+
+      if (d.marcas.length) {
+        const filas = document.createElement('div');
+        filas.className = 'dia-filas';
+        d.marcas.forEach(x => {
+          const fila = document.createElement('div');
+          fila.className = 'dia-fila';
+          fila.innerHTML = '<span class="hora"></span><span class="que"></span><span class="nota"></span>';
+          fila.querySelector('.hora').textContent = x.hora;
+          fila.querySelector('.que').textContent = (NOMBRES_MARCA[x.tipo] || titulo(x.tipo.replace(/_/g, ' '))) + (x.tipo === 'VISITA' && x.tienda ? ' · ' + titulo(x.tienda) : '');
+          let nota = null;
+          if (x.tipo === 'ENTRADA' && d.tarde > 0) nota = notaDecision(d.tarde + ' min tarde', d.tarde_decision);
+          else if (x.tipo === 'ENTRADA' && d.estado === 'A_TIEMPO') nota = ['A tiempo', 'green'];
+          else if (x.tipo === 'ALMUERZO_REGRESO' && d.exceso_almuerzo > 0) nota = notaDecision(d.exceso_almuerzo + ' min de exceso', d.exceso_decision);
+          else if (x.tipo === 'ALMUERZO_REGRESO' && d.almuerzo !== null) nota = [d.almuerzo + ' min de almuerzo', ''];
+          if (nota) { fila.querySelector('.nota').textContent = nota[0]; if (nota[1]) fila.querySelector('.nota').classList.add(nota[1]); }
+          filas.appendChild(fila);
+        });
+        caja.appendChild(filas);
+      }
+      if (d.sin_salida) {
+        const nota = document.createElement('div');
+        nota.className = 'dia-nota';
+        nota.textContent = 'Falta la marca de salida.';
+        caja.appendChild(nota);
+      }
+      hist.appendChild(caja);
+    });
   }
 
   function animarAnillo() {
