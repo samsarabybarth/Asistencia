@@ -525,13 +525,13 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.10.1';
+  const VERSION = '2026.11.10.2';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
   const COLOR_ESTADO = {
     'En plazo': 'blue', 'En revisión': 'amber', 'Procede': 'red', 'Justificada': 'green', 'No justificada': 'red',
-    'Pendiente': 'amber', 'Aprobada': 'green', 'Rechazada': 'red', 'Recibido': 'gold', 'Revisado': 'green'
+    'Pendiente': 'amber', 'Aprobada': 'green', 'Rechazada': 'red', 'Compensada': 'blue', 'Revisada': '', 'Recibido': 'gold', 'Revisado': 'green'
   };
 
   const st = { foco: null, sesion: null, usuario: null, pais: '', vista: 'hoy', datos: {}, solFiltro: 'pendientes', orden: {}, timer: null, filtro: { tienda: '', persona: '' }, dir: null, docSel: {} };
@@ -1043,11 +1043,14 @@
     const filas = lista.map(x => {
       let accion;
       if (x.puede) {
-        const pideMotivo = x.tipo !== 'DESPUES';
-        accion = '<div class="acciones" data-clave="' + esc(x.clave) + '" data-tipo="' + esc(x.tipo) + '">' +
+        const solicitud = x.motivo && x.motivo.indexOf('Solicitud: ') === 0;
+        const pideMotivo = x.tipo === 'DIA_LIBRE' || (x.tipo === 'ANTES' && !solicitud);
+        accion = '<div class="acciones" data-clave="' + esc(x.clave) + '" data-tipo="' + esc(x.tipo) + '" data-motivo="' + (pideMotivo ? '1' : '') + '">' +
+          (solicitud ? '<div class="wrap muted">' + esc(x.motivo) + '</div>' : '') +
           '<div class="fila"><input class="input" type="number" min="1" max="' + x.calculados + '" value="' + x.calculados + '" style="width:90px" title="Minutos a aprobar"><span class="muted" style="align-self:center">de ' + x.calculados + ' min</span></div>' +
           '<input class="input" placeholder="' + (pideMotivo ? 'Motivo (obligatorio): capacitación, inventario…' : 'Motivo (opcional)') + '">' +
-          '<div class="fila"><button class="btn ok mini" data-d="Aprobada">Aprobar</button><button class="btn no mini" data-d="Rechazada">Rechazar</button></div></div>';
+          (x.tipo === 'DIA_LIBRE' ? '<div class="fila"><input class="input compensa" type="date" title="Día que queda libre a cambio"><button class="btn mini" data-d="Compensada">Cambiar día libre</button></div>' : '') +
+          '<div class="fila"><button class="btn ok mini" data-d="Aprobada">' + (x.tipo === 'DIA_LIBRE' ? 'Aprobar el día' : 'Aprobar') + '</button><button class="btn no mini" data-d="Rechazada">Rechazar</button></div></div>';
       } else {
         accion = (x.estado === 'Aprobada' ? '<strong>' + duracionTexto(x.aprobados) + '</strong> aprobadas' : '') + (x.motivo ? '<div class="wrap muted">' + esc(x.motivo) + '</div>' : '') + (x.aprobo ? '<div class="muted">' + esc(x.aprobo) + '</div>' : '');
       }
@@ -1060,11 +1063,13 @@
       caja.querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
         const d = b.dataset.d;
         const motivo = caja.querySelectorAll('input')[1].value.trim();
-        if ((d === 'Rechazada' || caja.dataset.tipo !== 'DESPUES') && motivo.length < 3) return toast(d === 'Rechazada' ? 'Escribí el motivo del rechazo' : 'Escribí el motivo de la aprobación');
+        const compensa = caja.querySelector('.compensa') ? caja.querySelector('.compensa').value : '';
+        if (d === 'Compensada' && !compensa) return toast('Elegí el día que queda libre a cambio');
+        if ((d === 'Rechazada' || (d === 'Aprobada' && caja.dataset.motivo)) && motivo.length < 3) return toast(d === 'Rechazada' ? 'Escribí el motivo del rechazo' : 'Escribí el motivo de la aprobación');
         caja.querySelectorAll('button').forEach(x => { x.disabled = true; });
         try {
-          const res = await llamar({ accion: 'panel_extra_resolver', clave: caja.dataset.clave, decision: d, minutos: caja.querySelector('input').value, motivo: motivo });
-          toast(res.ok ? (d === 'Aprobada' ? 'Aprobadas ' + duracionTexto(res.minutos) : 'Hora extra rechazada') : res.mensaje);
+          const res = await llamar({ accion: 'panel_extra_resolver', clave: caja.dataset.clave, decision: d, minutos: caja.querySelector('input').value, motivo: motivo, fecha_compensa: compensa });
+          toast(res.ok ? (d === 'Aprobada' ? 'Aprobadas ' + duracionTexto(res.minutos) : d === 'Compensada' ? 'Día libre cambiado' : 'Hora extra rechazada') : res.mensaje);
           if (res.ok) { await cargarExtras(); contadores(); return; }
         } catch (e) { toast('Sin conexión'); }
         caja.querySelectorAll('button').forEach(x => { x.disabled = false; });

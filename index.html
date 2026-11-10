@@ -1079,6 +1079,7 @@
         <span id="btn-alterna-texto">Registrar marca</span>
       </button>
       <div class="error-inline" id="marca-error"></div>
+      <button class="imp-boton" id="btn-antes" hidden>Me pidieron entrar antes</button>
       <button class="imp-boton" id="btn-imprevisto" hidden>Tengo un imprevisto</button>
       <div class="aviso-acceso" id="aviso-privado" hidden><strong>Te registraste varias veces esta semana</strong>Revisá que Safari no esté en navegación privada: tocá el botón de pestañas y elegí las pestañas normales. Así la app te recuerda y no tenés que registrarte de nuevo.</div>
 
@@ -1291,6 +1292,31 @@
     <button class="btn-primary" id="bv-siguiente">Siguiente</button>
   </div>
 
+  <div class="visor" id="antes" hidden role="dialog" aria-modal="true" aria-labelledby="antes-titulo">
+    <div class="visor-cab">
+      <div class="visor-titulo" id="antes-titulo">Tiempo extra antes de tu jornada<div class="visor-de">Tu coordinación lo revisa y lo aprueba</div></div>
+      <button class="visor-cerrar" id="antes-cerrar" aria-label="Cerrar">×</button>
+    </div>
+    <div class="visor-cuerpo imp-cuerpo">
+      <div class="imp-nota" id="antes-nota"></div>
+      <div class="form-group" id="antes-campo-desde" hidden>
+        <label class="form-label" for="antes-desde">¿Desde qué hora empezaste a trabajar?</label>
+        <input class="form-input" type="time" id="antes-desde">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="antes-motivo">¿Quién te pidió entrar antes y para qué?</label>
+        <textarea class="form-input" id="antes-motivo" rows="3" maxlength="300" placeholder="Ejemplo: Jennifer me pidió abrir la tienda"></textarea>
+      </div>
+    </div>
+    <div class="visor-pie">
+      <div class="error-inline" id="antes-error"></div>
+      <div class="visor-botones">
+        <button class="visor-descargar" id="antes-cancelar">Cancelar</button>
+        <button class="visor-confirmar" id="antes-confirmar">Solicitar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="visor" id="imp" hidden role="dialog" aria-modal="true" aria-labelledby="imp-titulo">
     <div class="visor-cab">
       <div class="visor-titulo" id="imp-titulo">Registrar un imprevisto<div class="visor-de">Tu coordinación recibe el aviso al instante</div></div>
@@ -1354,7 +1380,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.10.1';
+  const VERSION = '2026.11.10.2';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1441,6 +1467,10 @@
   document.getElementById('btn-marcar').addEventListener('click', () => confirmarMarca(estado.verificacion && estado.verificacion.tipo_marca_siguiente === 'VISITA' ? 'VISITA' : undefined));
   document.getElementById('btn-marcar-alterna').addEventListener('click', () => confirmarMarca('MARCA'));
   document.getElementById('btn-imprevisto').addEventListener('click', abrirImprevisto);
+  document.getElementById('btn-antes').addEventListener('click', abrirAntes);
+  document.getElementById('antes-cerrar').addEventListener('click', cerrarAntes);
+  document.getElementById('antes-cancelar').addEventListener('click', cerrarAntes);
+  document.getElementById('antes-confirmar').addEventListener('click', confirmarAntes);
   document.getElementById('imp-cerrar').addEventListener('click', cerrarImprevisto);
   document.getElementById('imp-cancelar').addEventListener('click', cerrarImprevisto);
   document.getElementById('imp-confirmar').addEventListener('click', confirmarImprevisto);
@@ -1922,6 +1952,7 @@
     alterna.hidden = !(tipo === 'VISITA' && v.tipo_marca_alterna);
     if (!alterna.hidden) document.getElementById('btn-alterna-texto').textContent = 'Registrar ' + (NOMBRES_MARCA[v.tipo_marca_alterna] || 'marca').toLowerCase();
     document.getElementById('btn-imprevisto').hidden = !v.imprevistos || !!v.offline;
+    document.getElementById('btn-antes').hidden = !antesDisponible() || !!cerrada || !!v.offline;
     document.getElementById('aviso-privado').hidden = !estado.avisoPrivado;
     document.getElementById('marcar-offline').hidden = !v.offline;
     pintarHorario('marcar', dia);
@@ -2147,6 +2178,8 @@
         guardar(CLAVE_ALMUERZO, null);
       }
       if (data.ok) agregarMarcaLocal(data);
+      if (data.ok && data.tipo_marca === 'ENTRADA' && estado.antesMotivo) await solicitarAntes(estado.antesMotivo, '');
+      estado.antesMotivo = '';
       mostrarResultado(data, ubicacion);
     } catch (e) {
       if (!estado.perfil) mostrarError('Sin conexión. Tu marca no se registró; intentá de nuevo.', true);
@@ -2334,6 +2367,84 @@
         filaUbicacion
       ]
     });
+  }
+
+  function minutosDe(hora) {
+    const m = /^(\d{1,2}):(\d{2})/.exec(String(hora || ''));
+    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+  }
+
+  function antesDisponible() {
+    const dia = diaDeHoy();
+    const v = estado.verificacion || {};
+    if (!dia || dia.extra_antes || estado.antesHecho === fechaLocal()) return '';
+    const programada = minutosDe(dia.entrada);
+    if (programada === null) return '';
+    const t = ahora();
+    const actual = t.getHours() * 60 + t.getMinutes();
+    const entrada = dia.marcas.find(m => m.tipo === 'ENTRADA');
+    if (!entrada) return (v.tipo_marca_siguiente || 'ENTRADA') === 'ENTRADA' && programada - actual >= 15 ? 'MARCAR' : '';
+    const real = minutosDe(entrada.hora);
+    return real !== null && programada - real >= 15 && actual <= programada + 60 ? 'SOLICITAR' : '';
+  }
+
+  function abrirAntes() {
+    const modo = antesDisponible();
+    if (!modo) return;
+    const dia = diaDeHoy();
+    const entrada = dia.marcas.find(m => m.tipo === 'ENTRADA');
+    estado.antesModo = modo;
+    document.getElementById('antes-motivo').value = '';
+    document.getElementById('antes-error').textContent = '';
+    document.getElementById('antes-campo-desde').hidden = modo !== 'SOLICITAR';
+    if (entrada) {
+      const campo = document.getElementById('antes-desde');
+      campo.value = String(entrada.hora).slice(0, 5);
+      campo.min = campo.value;
+      campo.max = String(dia.entrada).slice(0, 5);
+    }
+    document.getElementById('antes-nota').textContent = modo === 'MARCAR'
+      ? 'Se registra tu entrada ahora y se pide el tiempo hasta tu hora programada (' + hora12(dia.entrada) + ') como extra. Usalo solo si te pidieron entrar antes.'
+      : 'Tu hora programada es ' + hora12(dia.entrada) + '. Se pide como extra el tiempo desde la hora que indiqués hasta esa hora.';
+    document.getElementById('antes-confirmar').textContent = modo === 'MARCAR' ? 'Marcar entrada y solicitar' : 'Solicitar';
+    document.getElementById('antes').hidden = false;
+  }
+
+  function cerrarAntes() {
+    document.getElementById('antes').hidden = true;
+  }
+
+  async function solicitarAntes(motivo, desde) {
+    try {
+      const r = await llamar({ accion: 'nomina_extra_antes', token: estado.dispositivo, motivo: motivo, desde: desde });
+      if (r.ok || r.codigo === 'YA_EXISTE') estado.antesHecho = fechaLocal();
+      return r;
+    } catch (e) {
+      return { ok: false, mensaje: 'Sin conexión. Intentá de nuevo.' };
+    }
+  }
+
+  async function confirmarAntes() {
+    const error = document.getElementById('antes-error');
+    const motivo = document.getElementById('antes-motivo').value.trim();
+    error.textContent = '';
+    if (motivo.length < 5) return (error.textContent = 'Indicá quién te pidió entrar antes.');
+    if (estado.antesModo === 'MARCAR') {
+      estado.antesMotivo = motivo;
+      cerrarAntes();
+      return confirmarMarca();
+    }
+    const boton = document.getElementById('antes-confirmar');
+    boton.disabled = true;
+    const r = await solicitarAntes(motivo, document.getElementById('antes-desde').value);
+    boton.disabled = false;
+    if (!r.ok) return (error.textContent = r.mensaje || 'No se pudo enviar la solicitud.');
+    cerrarAntes();
+    document.getElementById('btn-antes').hidden = true;
+    const aviso = document.getElementById('marca-error');
+    aviso.textContent = r.mensaje;
+    aviso.style.color = 'var(--green)';
+    setTimeout(() => { aviso.textContent = ''; aviso.style.color = ''; }, 6000);
   }
 
   function abrirImprevisto() {
