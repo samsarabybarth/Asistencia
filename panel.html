@@ -198,6 +198,10 @@
     .aviso-version { position: fixed; right: 16px; bottom: 16px; z-index: 60; display: flex; align-items: center; gap: 10px; background: var(--gold); color: var(--night); border: none; border-radius: 12px; padding: 11px 14px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
     .puntuales { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
     .puntual { display: flex; align-items: center; gap: 8px; background: var(--gold-dim); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px 6px 6px; font-size: 12.5px; }
+    .modos { margin-bottom: 14px; }
+    .tabla-dias td { white-space: nowrap; }
+    .dia-notas { display: flex; flex-direction: column; gap: 3px; min-width: 220px; max-width: 340px; white-space: normal; line-height: 1.4; font-size: 12.5px; }
+    .persona-cab { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 15px; }
     .puntual b { width: 24px; height: 24px; border-radius: 50%; background: var(--gold); color: var(--night); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
     @media (max-width: 900px) { .doc-grid { grid-template-columns: 1fr; } }
     @media (max-width: 640px) {
@@ -279,6 +283,7 @@
       <button class="tab" data-vista="extras">Horas extra<span class="contador" id="cont-extras" hidden></span></button>
       <button class="tab" data-vista="metricas">Métricas</button>
       <button class="tab" data-vista="planilla">Planilla</button>
+      <button class="tab" data-vista="historial">Historial</button>
       <button class="tab" data-vista="revision">Revisión<span class="contador" id="cont-revision" hidden></span></button>
       <button class="tab" data-vista="documentos">Documentos</button>
       <button class="tab" data-vista="puntos">Puntos de marca</button>
@@ -389,6 +394,27 @@
         <button class="btn" id="btn-pla-generar">Generar</button>
       </div>
       <div id="pla-contenido"></div>
+    </section>
+
+    <section id="v-historial" hidden>
+      <div class="titulo">Historial</div>
+      <div class="sub">Visitas de ruta, asistencia día por día e insignias de puntualidad.</div>
+      <div class="chips modos" id="his-modos">
+        <button class="chip activa" data-m="visitas">Visitas</button>
+        <button class="chip" data-m="asistencia">Asistencia por persona</button>
+        <button class="chip" data-m="insignias">Insignias</button>
+      </div>
+      <div class="filtros" id="his-f-visitas">
+        <div class="campo"><label for="his-desde">Desde</label><input class="input" type="date" id="his-desde"></div>
+        <div class="campo"><label for="his-hasta">Hasta</label><input class="input" type="date" id="his-hasta"></div>
+        <button class="btn" id="btn-his-buscar">Buscar</button>
+      </div>
+      <div class="filtros" id="his-f-asistencia" hidden>
+        <div class="campo"><label for="his-persona">Persona</label><select class="input" id="his-persona"></select></div>
+        <div class="campo"><label for="his-mes">Mes</label><input class="input" type="month" id="his-mes"></div>
+        <button class="btn" id="btn-his-ver">Ver</button>
+      </div>
+      <div id="his-contenido"></div>
     </section>
 
     <section id="v-revision" hidden>
@@ -525,7 +551,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.10.2';
+  const VERSION = '2026.11.18.1';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -687,6 +713,10 @@
     $('ext-hasta').value = hoyISO(hoy);
     $('ext-desde').value = hoyISO(new Date(hoy.getTime() - 31 * 86400000));
     $('met-mes').value = hoyISO(hoy).slice(0, 7);
+    $('his-hasta').value = hoyISO(hoy);
+    $('his-desde').value = hoyISO(new Date(hoy.getTime() - 6 * 86400000));
+    $('his-mes').value = hoyISO(hoy).slice(0, 7);
+    $('his-persona').innerHTML = '';
     presetPlanilla(hoy.getDate() <= 15 ? 'q1' : 'q2');
     st.filtro = { tienda: '', persona: '' };
     st.docSel = {};
@@ -712,7 +742,7 @@
   function mostrarVista(v, forzar) {
     st.vista = v;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activa', t.dataset.vista === v));
-    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'revision', 'documentos', 'puntos', 'accesos'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'historial', 'revision', 'documentos', 'puntos', 'accesos'].forEach(x => { $('v-' + x).hidden = x !== v; });
     $('filtro-global').hidden = v === 'documentos' || v === 'puntos' || v === 'accesos';
     if (v === 'accesos') cargarAccesos();
     if (v === 'revision' && (forzar || !st.datos.revision)) cargarRevision();
@@ -728,6 +758,7 @@
     if (v === 'solicitudes' && (forzar || !st.datos.solicitudes)) cargarSolicitudes();
     if (v === 'metricas' && (forzar || !st.datos.metricas)) cargarMetricas();
     if (v === 'planilla' && st.datos.planilla && forzar) $('pla-contenido').innerHTML = '';
+    if (v === 'historial') modoHistorial(his.modo, forzar);
     if (v === 'planilla' && st.datos.planilla && !forzar) pintarPlanilla();
   }
 
@@ -1082,7 +1113,11 @@
   async function cargarMetricas() {
     cargando('met-contenido');
     try {
-      const r = await llamar({ accion: 'panel_metricas', pais: st.pais, mes: $('met-mes').value });
+      const [r, ins] = await Promise.all([
+        llamar({ accion: 'panel_metricas', pais: st.pais, mes: $('met-mes').value }),
+        st.datos.insignias ? Promise.resolve(st.datos.insignias) : llamar({ accion: 'hist_reconocimientos', pais: st.pais }).catch(() => null)
+      ]);
+      if (ins && ins.ok) st.datos.insignias = ins;
       if (!r.ok) return ($('met-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
       st.datos.metricas = r;
       pintarMetricas();
@@ -1134,8 +1169,14 @@
       '<div class="kpi"><div class="kpi-v">' + r.personas.length + '</div><div class="kpi-l">Personas con datos</div></div></div>';
     const perfectas = r.personas.filter(p => p.resumen.puntualidad === 100 && !p.resumen.ausencias && !p.resumen.tardanzas && p.resumen.trabajados >= 1)
       .sort((a, b) => b.resumen.trabajados - a.resumen.trabajados || a.nombre.localeCompare(b.nombre));
-    const mesTexto = new Date(($('met-mes').value || hoyISO().slice(0, 7)) + '-15T12:00:00').toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
-    html += '<div class="seccion">🏅 Puntualidad perfecta · ' + esc(mesTexto) + '</div>' + (perfectas.length
+    const mesSel = $('met-mes').value || hoyISO().slice(0, 7);
+    const mesTexto = mesLargo(mesSel);
+    const oficial = st.datos.insignias ? st.datos.insignias.meses.find(m => m.mes === mesSel) : null;
+    const entregadas = oficial ? oficial.personas.filter(p => pasa(p.tienda, '', p.nombre, p.id)) : [];
+    if (oficial) html += '<div class="seccion">🏅 Insignia de puntualidad perfecta · ' + esc(mesTexto) + '</div>' + (entregadas.length
+      ? chipsPuntuales(entregadas) + '<div class="sub">Insignia entregada al cierre del mes. El número es la cantidad de días trabajados.</div>'
+      : '<div class="sub">' + sinResultados('Nadie recibió la insignia este mes.') + '</div>');
+    else html += '<div class="seccion">🏅 Puntualidad perfecta · ' + esc(mesTexto) + '</div>' + (perfectas.length
       ? '<div class="puntuales">' + perfectas.map(p => '<span class="puntual"><b>' + p.resumen.trabajados + '</b>' + esc(nombreCorto(p.nombre)) + ' <span class="muted">· ' + esc(p.tienda) + '</span></span>').join('') + '</div><div class="sub">El número es la cantidad de días trabajados. Al cierre del mes, quienes tengan 12 días o más reciben la insignia de Artista puntual en la app.</div>'
       : '<div class="sub">Todavía nadie tiene puntualidad perfecta en este período.</div>');
     html += '<div class="seccion">Por tienda</div>' + tablaOrdenable('met-t', [
@@ -1158,6 +1199,217 @@
     ], r.personas);
     $('met-contenido').innerHTML = html;
     activarOrden($('met-contenido'), pintarMetricas);
+  }
+
+  function mesLargo(m) { return new Date(m + '-15T12:00:00').toLocaleDateString('es-CR', { month: 'long', year: 'numeric' }); }
+
+  function chipsPuntuales(lista) {
+    return '<div class="puntuales">' + lista.map(p => '<span class="puntual"><b>' + p.trabajados + '</b>' + esc(nombreCorto(p.nombre)) + ' <span class="muted">· ' + esc(p.tienda) + '</span></span>').join('') + '</div>';
+  }
+
+  const his = { modo: 'visitas' };
+  const ORIGEN_VISITA = { NFC: 'Tarjeta', KIOSCO: 'QR' };
+  const ESTADO_DIA_HIS = { DESCANSO: 'Libre', VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', DIA_FAMILIA: 'Día de la familia', CUMPLEANOS: 'Cumpleaños', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce', LICENCIA: 'Licencia', ASUNTOS_PROPIOS: 'Asuntos propios', FESTIVO: 'Festivo', CITA_MEDICA: 'Cita médica', TRABAJADO: 'Trabajado', PENDIENTE: 'Hoy' };
+
+  document.querySelectorAll('#his-modos .chip').forEach(c => c.addEventListener('click', () => modoHistorial(c.dataset.m)));
+  $('btn-his-buscar').addEventListener('click', cargarVisitas);
+  $('btn-his-ver').addEventListener('click', cargarAsistencia);
+  $('his-persona').addEventListener('change', cargarAsistencia);
+  $('his-mes').addEventListener('change', () => { if ($('his-persona').value) cargarAsistencia(); });
+
+  function modoHistorial(m, forzar) {
+    his.modo = m;
+    document.querySelectorAll('#his-modos .chip').forEach(c => c.classList.toggle('activa', c.dataset.m === m));
+    $('his-f-visitas').hidden = m !== 'visitas';
+    $('his-f-asistencia').hidden = m !== 'asistencia';
+    if (m === 'visitas') { if (forzar || !st.datos.visitas) cargarVisitas(); else pintarVisitas(); }
+    if (m === 'insignias') { if (forzar || !st.datos.insignias) cargarInsignias(); else pintarInsignias(); }
+    if (m === 'asistencia') {
+      pintarSelectPersonas();
+      if (st.datos.asistencia && !forzar && st.datos.asistencia.persona.id === $('his-persona').value) pintarAsistencia();
+      else cargarAsistencia();
+    }
+  }
+
+  function repintarHistorial() {
+    if (his.modo === 'visitas' && st.datos.visitas) pintarVisitas();
+    if (his.modo === 'insignias' && st.datos.insignias) pintarInsignias();
+    if (his.modo === 'asistencia') {
+      const antes = $('his-persona').value;
+      pintarSelectPersonas();
+      if ($('his-persona').value !== antes) cargarAsistencia();
+    }
+  }
+
+  function pintarSelectPersonas() {
+    const sel = $('his-persona');
+    const actual = sel.value;
+    const personas = st.dir ? st.dir.personas
+      .filter(p => (!st.pais || p.pais === st.pais) && (!st.filtro.tienda || p.idTienda === st.filtro.tienda) && coincideTexto(st.filtro.persona, p.nombre, p.id))
+      .map(p => Object.assign({ corto: nombreCorto(p.nombre) }, p))
+      .sort((a, b) => a.corto.localeCompare(b.corto)) : [];
+    sel.innerHTML = '<option value="">' + (st.dir ? (personas.length ? 'Elegí una persona' : 'Sin personas con este filtro') : 'Cargando personas…') + '</option>' +
+      personas.map(p => '<option value="' + esc(p.id) + '">' + (st.pais ? '' : BANDERA[p.pais] + ' ') + esc(p.corto) + (p.tienda ? ' · ' + esc(p.tienda) : '') + '</option>').join('');
+    if (personas.some(p => p.id === actual)) sel.value = actual;
+    else if (personas.length === 1) sel.value = personas[0].id;
+  }
+
+  async function cargarVisitas() {
+    cargando('his-contenido');
+    try {
+      const r = await llamar({ accion: 'hist_visitas', pais: st.pais, desde: $('his-desde').value, hasta: $('his-hasta').value });
+      if (his.modo !== 'visitas') return;
+      if (!r.ok) return ($('his-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.visitas = r;
+      $('his-desde').value = r.desde;
+      $('his-hasta').value = r.hasta;
+      pintarVisitas();
+    } catch (e) { if (his.modo === 'visitas') $('his-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function pintarVisitas() {
+    const r = st.datos.visitas;
+    const lista = r.visitas.filter(v => pasa(v.tienda, v.idTienda, v.nombre, v.id));
+    if (!lista.length) return ($('his-contenido').innerHTML = '<div class="vacio">' + sinResultados('No hay visitas registradas entre el ' + fechaCorta(r.desde) + ' y el ' + fechaCorta(r.hasta) + '.') + '</div>');
+    const porPersona = {};
+    lista.forEach(v => {
+      const p = porPersona[v.id] = porPersona[v.id] || { id: v.id, nombre: v.nombre, pais: v.pais, visitas: 0, tiendas: {}, dias: {}, ultima: '' };
+      p.visitas++;
+      p.tiendas[v.idTienda || v.tienda] = true;
+      p.dias[v.fecha] = true;
+      if (v.fecha + ' ' + v.hora > p.ultima) p.ultima = v.fecha + ' ' + v.hora;
+    });
+    const resumen = Object.keys(porPersona).map(k => Object.assign(porPersona[k], { nTiendas: Object.keys(porPersona[k].tiendas).length, nDias: Object.keys(porPersona[k].dias).length }));
+    const cuenta = campo => new Set(lista.map(v => v[campo])).size;
+    let html = '<div class="kpis">' +
+      '<div class="kpi"><div class="kpi-v">' + lista.length + '</div><div class="kpi-l">Visitas</div></div>' +
+      '<div class="kpi"><div class="kpi-v">' + resumen.length + '</div><div class="kpi-l">Personas</div></div>' +
+      '<div class="kpi"><div class="kpi-v">' + cuenta('idTienda') + '</div><div class="kpi-l">Tiendas visitadas</div></div>' +
+      '<div class="kpi"><div class="kpi-v">' + cuenta('fecha') + '</div><div class="kpi-l">Días con visitas</div></div></div>' +
+      '<div class="filtros"><button class="btn ghost" id="btn-his-csv">Descargar visitas (CSV)</button></div>';
+    if (!st.orden.visitas) st.orden.visitas = { col: 0, dir: -1 };
+    html += '<div class="seccion">Visitas · de la más reciente a la más antigua</div>' + tablaOrdenable('visitas', [
+      { t: 'Fecha', v: v => v.fecha + ' ' + v.hora, h: v => esc(fechaCorta(v.fecha)) },
+      { t: 'Hora', num: 1, v: v => v.hora, h: v => esc(hora12(v.hora)) },
+      { t: 'Persona', v: v => nombreCorto(v.nombre), h: v => '<strong>' + esc(nombreCorto(v.nombre)) + '</strong>' },
+      { t: 'Tienda visitada', v: v => v.tienda, h: v => BANDERA[v.pais] + ' ' + esc(v.tienda) },
+      { t: 'Con', v: v => v.origen, h: v => esc(ORIGEN_VISITA[v.origen] || v.origen || '—') }
+    ], lista);
+    if (!st.orden.visitasPersona) st.orden.visitasPersona = { col: 1, dir: -1 };
+    html += '<div class="seccion">Resumen por persona</div>' + tablaOrdenable('visitasPersona', [
+      { t: 'Persona', v: p => nombreCorto(p.nombre), h: p => '<strong>' + esc(nombreCorto(p.nombre)) + '</strong>' },
+      { t: 'Visitas', num: 1, v: p => p.visitas, h: p => p.visitas },
+      { t: 'Tiendas distintas', num: 1, v: p => p.nTiendas, h: p => p.nTiendas },
+      { t: 'Días en ruta', num: 1, v: p => p.nDias, h: p => p.nDias },
+      { t: 'Última visita', v: p => p.ultima, h: p => esc(fechaCorta(p.ultima.slice(0, 10)) + ' · ' + hora12(p.ultima.slice(11))) }
+    ], resumen);
+    $('his-contenido').innerHTML = html;
+    activarOrden($('his-contenido'), pintarVisitas);
+    $('btn-his-csv').addEventListener('click', () => descargarCSV('visitas_' + r.desde + '_' + r.hasta + (filtroActivo() ? '_filtrado' : '') + '.csv',
+      [['Fecha', v => v.fecha], ['Hora', v => v.hora], ['ID', v => v.id], ['Persona', v => v.nombre], ['País', v => v.pais], ['Tienda visitada', v => v.tienda], ['Con', v => ORIGEN_VISITA[v.origen] || v.origen]], lista));
+  }
+
+  async function cargarAsistencia() {
+    const id = $('his-persona').value;
+    if (!id) return ($('his-contenido').innerHTML = '<div class="vacio">Elegí una persona para ver su asistencia del mes, día por día.</div>');
+    cargando('his-contenido');
+    try {
+      const r = await llamar({ accion: 'hist_asistencia', id: id, mes: $('his-mes').value });
+      if (his.modo !== 'asistencia' || $('his-persona').value !== id) return;
+      if (!r.ok) return ($('his-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      st.datos.asistencia = r;
+      $('his-mes').value = r.mes;
+      pintarAsistencia();
+    } catch (e) { if (his.modo === 'asistencia') $('his-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function estadoDiaHistorial(d) {
+    const tipos = d.marcas.map(x => x.tipo);
+    const incompleta = d.sin_salida || (!d.es_hoy && tipos.includes('ALMUERZO_SALIDA') && !tipos.includes('ALMUERZO_REGRESO'));
+    if (d.cubierto) return pill(CUBIERTO[d.cubierto] || d.cubierto, 'gold');
+    if (d.estado === 'AUSENCIA') return d.ausencia_decision === 'Justificada' ? pill('Ausencia justificada', 'amber') : pill('Ausencia', 'red');
+    if (d.es_hoy && !tipos.includes('SALIDA')) return pill(d.marcas.length ? 'En curso' : 'Hoy', '');
+    if (incompleta) return pill('Marca incompleta', 'red');
+    if (d.tarde > 0) return pill('Tardía', 'red');
+    if (d.exceso_almuerzo > 0) return pill('Almuerzo excedido', 'amber');
+    if (d.estado === 'A_TIEMPO') return pill('A tiempo', 'green');
+    return pill(ESTADO_DIA_HIS[d.estado] || String(d.estado || '').replace(/_/g, ' ').toLowerCase(), d.estado === 'TRABAJADO' ? 'gold' : '');
+  }
+
+  function notasDia(d) {
+    const conDecision = (texto, decision) => texto + (decision ? ' · ' + decision : '');
+    const notas = [];
+    if (d.tarde > 0) notas.push(conDecision(d.tarde + ' min tarde', d.tarde_decision));
+    if (d.exceso_almuerzo > 0) notas.push(conDecision(d.exceso_almuerzo + ' min de exceso en almuerzo', d.exceso_decision));
+    if (d.estado === 'AUSENCIA' && d.ausencia_decision) notas.push('Ausencia · ' + d.ausencia_decision);
+    if (d.sin_salida) notas.push('Sin marca de salida');
+    d.imprevistos.forEach(x => notas.push(x.tipo + (x.hora ? ' ' + hora12(x.hora) : '') + (x.regreso ? ' – ' + hora12(x.regreso) : '') + (x.destino ? ' → ' + x.destino : '') + (x.decision ? ' · ' + x.decision : '')));
+    if (d.visitas.length) notas.push('Visitas: ' + d.visitas.map(v => v.tienda + ' ' + hora12(v.hora)).join(', '));
+    return notas;
+  }
+
+  function pintarAsistencia() {
+    const r = st.datos.asistencia;
+    const p = r.persona;
+    const cab = '<div class="persona-cab"><strong>' + BANDERA[p.pais] + ' ' + esc(nombreCorto(p.nombre)) + '</strong><span class="muted">' + esc([p.id, p.tienda, mesLargo(r.mes)].filter(Boolean).join(' · ')) + '</span></div>';
+    if (!r.dias.length) return ($('his-contenido').innerHTML = cab + '<div class="vacio">No hay jornadas registradas en ' + esc(mesLargo(r.mes)) + '. El historial cuenta desde que la persona registró su celular.</div>');
+    const s = r.resumen || {};
+    const trabajados = r.dias.reduce((a, d) => a + d.minutos_trabajados, 0);
+    const pct = s.puntualidad === null || s.puntualidad === undefined ? null : s.puntualidad;
+    let html = cab + '<div class="kpis">' +
+      '<div class="kpi"><div class="kpi-v ' + (pct === null ? '' : pct >= 95 ? 'green' : pct >= 80 ? 'amber' : 'red') + '">' + (pct === null ? '—' : pct + '%') + '</div><div class="kpi-l">Puntualidad</div></div>' +
+      '<div class="kpi"><div class="kpi-v amber">' + (s.tardanzas || 0) + '</div><div class="kpi-l">Tardías · ' + (s.minutos_tarde || 0) + ' min</div></div>' +
+      '<div class="kpi"><div class="kpi-v red">' + (s.ausencias || 0) + '</div><div class="kpi-l">Ausencias' + (s.ausencias_justificadas ? ' · ' + s.ausencias_justificadas + ' justificadas' : '') + '</div></div>' +
+      '<div class="kpi"><div class="kpi-v">' + (s.almuerzos_excedidos || 0) + '</div><div class="kpi-l">Almuerzos excedidos · ' + (s.minutos_excedidos || 0) + ' min</div></div>' +
+      '<div class="kpi"><div class="kpi-v">' + (s.trabajados || 0) + (s.programados ? '<span class="muted"> / ' + s.programados + '</span>' : '') + '</div><div class="kpi-l">Días trabajados</div></div>' +
+      '<div class="kpi"><div class="kpi-v">' + esc(duracionTexto(trabajados)) + '</div><div class="kpi-l">Tiempo trabajado</div></div></div>' +
+      '<div class="filtros"><button class="btn ghost" id="btn-his-asis-csv">Descargar mes (CSV)</button></div>';
+    const hora = (d, tipo) => { const m = d.marcas.find(x => x.tipo === tipo); return m ? m.hora : ''; };
+    const filas = r.dias.map(d => {
+      const turno = d.cubierto ? (CUBIERTO[d.cubierto] || d.cubierto) : d.entrada_programada && d.salida_programada ? hora12(d.entrada_programada) + ' – ' + hora12(d.salida_programada) : (ESTADO_DIA_HIS[d.estado] || '—');
+      const alm = hora(d, 'ALMUERZO_SALIDA') ? hora12(hora(d, 'ALMUERZO_SALIDA')) + ' – ' + (hora(d, 'ALMUERZO_REGRESO') ? hora12(hora(d, 'ALMUERZO_REGRESO')) : '…') + (d.almuerzo !== null && d.almuerzo !== undefined ? ' <span class="muted">(' + d.almuerzo + ' min)</span>' : '') : '<span class="muted">—</span>';
+      const notas = notasDia(d);
+      return '<tr><td><strong>' + esc(fechaCorta(d.fecha)) + '</strong>' + (d.tienda ? '<div class="muted">' + esc(d.tienda) + '</div>' : '') + '</td>' +
+        '<td>' + esc(turno) + '</td>' +
+        '<td class="num">' + (hora(d, 'ENTRADA') ? esc(hora12(hora(d, 'ENTRADA'))) : '<span class="muted">—</span>') + '</td>' +
+        '<td class="num">' + alm + '</td>' +
+        '<td class="num">' + (hora(d, 'SALIDA') ? esc(hora12(hora(d, 'SALIDA'))) : '<span class="muted">—</span>') + '</td>' +
+        '<td class="num">' + (d.minutos_trabajados ? esc(duracionTexto(d.minutos_trabajados)) : '<span class="muted">—</span>') + '</td>' +
+        '<td>' + estadoDiaHistorial(d) + '</td>' +
+        '<td>' + (notas.length ? '<div class="dia-notas">' + notas.map(n => '<span>' + esc(n) + '</span>').join('') + '</div>' : '<span class="muted">—</span>') + '</td></tr>';
+    }).join('');
+    html += '<div class="seccion">Día por día · del más reciente al más antiguo</div><div class="tabla-wrap"><table class="tabla-dias"><thead><tr><th>Fecha</th><th>Turno</th><th class="num">Entrada</th><th class="num">Almuerzo</th><th class="num">Salida</th><th class="num">Trabajado</th><th>Estado</th><th>Detalle</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
+    $('his-contenido').innerHTML = html;
+    $('btn-his-asis-csv').addEventListener('click', () => descargarCSV('asistencia_' + p.id + '_' + r.mes + '.csv', [
+      ['Fecha', d => d.fecha], ['Tienda', d => d.tienda], ['Entrada programada', d => d.entrada_programada], ['Salida programada', d => d.salida_programada],
+      ['Entrada', d => hora(d, 'ENTRADA')], ['Salida almuerzo', d => hora(d, 'ALMUERZO_SALIDA')], ['Regreso almuerzo', d => hora(d, 'ALMUERZO_REGRESO')], ['Salida', d => hora(d, 'SALIDA')],
+      ['Minutos trabajados', d => d.minutos_trabajados], ['Minutos de tardía', d => d.tarde], ['Minutos de almuerzo', d => d.almuerzo === null ? '' : d.almuerzo], ['Exceso de almuerzo (min)', d => d.exceso_almuerzo],
+      ['Estado', d => estadoDiaHistorial(d).replace(/<[^>]+>/g, '')], ['Detalle', d => notasDia(d).join(' | ')]
+    ], r.dias));
+  }
+
+  async function cargarInsignias() {
+    cargando('his-contenido');
+    try {
+      const r = await llamar({ accion: 'hist_reconocimientos', pais: st.pais });
+      if (!r.ok) { if (his.modo === 'insignias') $('his-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>'; return; }
+      st.datos.insignias = r;
+      if (his.modo === 'insignias') pintarInsignias();
+    } catch (e) { if (his.modo === 'insignias') $('his-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+  }
+
+  function pintarInsignias() {
+    const meses = st.datos.insignias.meses
+      .map(m => ({ mes: m.mes, personas: m.personas.filter(p => pasa(p.tienda, '', p.nombre, p.id)) }))
+      .filter(m => m.personas.length);
+    if (!meses.length) return ($('his-contenido').innerHTML = '<div class="vacio">' + sinResultados('Todavía no se entregaron insignias. El sistema las calcula el 1 de cada mes con el mes anterior: las primeras salen el 1 de diciembre.') + '</div>');
+    const todas = [];
+    meses.forEach(m => m.personas.forEach(p => todas.push(Object.assign({ mes: m.mes }, p))));
+    $('his-contenido').innerHTML = '<div class="filtros"><button class="btn ghost" id="btn-his-ins-csv">Descargar insignias (CSV)</button></div>' +
+      meses.map(m => '<div class="seccion">🏅 ' + esc(mesLargo(m.mes)) + ' · ' + m.personas.length + (m.personas.length === 1 ? ' persona' : ' personas') + '</div>' + chipsPuntuales(m.personas)).join('') +
+      '<div class="sub">El número es la cantidad de días trabajados en el mes. La insignia se entrega con 12 días o más sin tardías ni ausencias.</div>';
+    $('btn-his-ins-csv').addEventListener('click', () => descargarCSV('insignias' + (filtroActivo() ? '_filtrado' : '') + '.csv',
+      [['Mes', p => p.mes], ['País', p => p.pais], ['ID', p => p.id], ['Persona', p => p.nombre], ['Tienda', p => p.tienda], ['Días trabajados', p => p.trabajados], ['Racha', p => p.racha]], todas));
   }
 
   document.querySelectorAll('#pla-presets .chip').forEach(c => c.addEventListener('click', () => presetPlanilla(c.dataset.p)));
@@ -1258,6 +1510,7 @@
     if (v === 'metricas' && st.datos.metricas) pintarMetricas();
     if (v === 'planilla' && st.datos.planilla) pintarPlanilla();
     if (v === 'revision' && st.datos.revision) pintarRevision();
+    if (v === 'historial') repintarHistorial();
   }
 
   $('fg-tienda').addEventListener('change', () => { st.filtro.tienda = $('fg-tienda').value; pintarFiltroGlobal(); repintarVista(); });
