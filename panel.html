@@ -39,6 +39,10 @@
     body { margin: 0; background: var(--night-deep); color: var(--cream); font-family: 'DM Sans', system-ui, -apple-system, sans-serif; font-size: 14px; }
     [hidden] { display: none !important; }
     button, input, select, textarea { font: inherit; color: inherit; }
+    select { color-scheme: dark; }
+    select option, select optgroup { background-color: #1A1A2E; color: #F5F0E8; }
+    select option:checked { background-color: #2E2E4C; color: #E0C98A; }
+    select option:disabled { color: #8E8A98; }
     a { color: var(--gold-light); }
 
     .login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
@@ -551,7 +555,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.18.1';
+  const VERSION = '2026.11.19.1';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };

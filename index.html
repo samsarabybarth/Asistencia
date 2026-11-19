@@ -870,6 +870,10 @@
       .screen { transition: none; }
       .marca-dot, .spinner { animation-duration: 3s; }
     }
+      select { color-scheme: dark; }
+    select option, select optgroup { background-color: #1A1A2E; color: #F5F0E8; }
+    select option:checked { background-color: #2E2E4C; color: #E0C98A; }
+    select option:disabled { color: #8E8A98; }
   </style>
 </head>
 <body>
@@ -1380,7 +1384,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.18.1';
+  const VERSION = '2026.11.19.1';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
