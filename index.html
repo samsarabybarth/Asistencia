@@ -420,6 +420,8 @@
     .imp-nota { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
     .aviso-acceso { background: var(--gold-dim); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin: 0 0 16px; font-size: 13px; line-height: 1.45; color: var(--text-secondary); }
     .aviso-acceso strong { display: block; color: var(--gold-light); font-size: 13.5px; margin-bottom: 3px; }
+    .pasos-guia { margin: 4px 0 18px; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.5; color: var(--text-secondary); text-align: left; }
+    .pasos-guia strong { color: var(--text-primary); }
     .imp-cuerpo { text-align: left; justify-content: flex-start; }
     .imp-cuerpo .form-group { width: 100%; }
     .imp-cuerpo .form-input { width: 100%; box-sizing: border-box; }
@@ -909,6 +911,19 @@
       <div class="screen-subtitle">Solo la primera vez. Vincula este dispositivo a tu perfil.</div>
       <div class="aviso-acceso" id="reg-aviso" hidden><strong>Este acceso se reemplazó</strong>Hay un registro más reciente tuyo en otro navegador o pestaña. Volvé a registrarte aquí para seguir marcando.</div>
 
+      <div id="reg-privado" hidden>
+        <div class="aviso-acceso"><strong>Safari está en navegación privada</strong>En modo privado Safari borra todo al cerrar la pestaña, y la app te pediría registrarte cada vez. Para registrarte, cambiá a una pestaña normal:</div>
+        <ol class="pasos-guia">
+          <li>Tocá el botón de <strong>pestañas</strong> (los dos cuadrados, abajo a la derecha).</li>
+          <li>Abajo vas a ver <strong>«Privada»</strong>. Deslizá o tocá <strong>«Pestañas»</strong> para volver a las pestañas normales.</li>
+          <li>Cerrá esta pestaña privada y volvé a <strong>acercar el celular a la tarjeta</strong> (o escaneá el QR de la tienda).</li>
+        </ol>
+        <button class="btn-primary" id="btn-reg-privado">Ya lo cambié</button>
+        <div class="error-inline" id="reg-privado-error"></div>
+      </div>
+
+      <div id="reg-formulario">
+
       <div class="form-group">
         <label class="form-label" for="reg-pais">País</label>
         <select class="form-input" id="reg-pais">
@@ -931,6 +946,7 @@
 
       <button class="btn-primary" id="btn-registro">Vincular dispositivo →</button>
       <div class="error-inline" id="reg-error"></div>
+      </div>
 
       <div class="nfc-note" style="margin-top: 6px;">
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 18H4V6h2v12zm4 0H8V6h2l4 6.7V6h2v12h-2l-4-6.7V18zm10 0h-2V6h2v12z"/></svg>
@@ -1384,7 +1400,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.20.1';
+  const VERSION = '2026.11.21.1';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1479,6 +1495,7 @@
   };
 
   document.getElementById('btn-registro').addEventListener('click', enviarRegistro);
+  document.getElementById('btn-reg-privado').addEventListener('click', revisarPrivado);
   document.getElementById('btn-marcar').addEventListener('click', () => confirmarMarca(estado.verificacion && estado.verificacion.tipo_marca_siguiente === 'VISITA' ? 'VISITA' : undefined));
   document.getElementById('btn-marcar-alterna').addEventListener('click', () => confirmarMarca('MARCA'));
   document.getElementById('btn-imprevisto').addEventListener('click', abrirImprevisto);
@@ -1771,6 +1788,7 @@
         document.getElementById('reg-aviso').hidden = true;
         return flujoTarjeta();
       }
+      if (data.codigo === 'NAVEGACION_PRIVADA') return mostrarRegistro(false, true);
       mostrar('screen-registro');
       error.textContent = data.mensaje || 'No se pudo registrar el dispositivo.';
     } catch (e) {
@@ -1779,13 +1797,37 @@
     }
   }
 
-  function mostrarRegistro(reemplazado) {
+  function navegacionPrivada() {
+    const cuota = Number(estado.diag && estado.diag.cuota_mb) || 0;
+    return ES_IOS && cuota > 0 && cuota <= 1100;
+  }
+
+  async function mostrarRegistro(reemplazado, privada) {
     document.getElementById('reg-aviso').hidden = !reemplazado;
     if (reemplazado) {
       estado.perfil = null;
       guardar(CLAVE_PERFIL, null);
     }
+    if (!privada && estado.diag && estado.diag.datos_listos) await Promise.race([estado.diag.datos_listos, new Promise(r => setTimeout(r, 800))]);
+    const bloquear = privada || navegacionPrivada();
+    document.getElementById('reg-privado').hidden = !bloquear;
+    document.getElementById('reg-formulario').hidden = bloquear;
+    if (bloquear) document.getElementById('reg-aviso').hidden = true;
     mostrar('screen-registro');
+  }
+
+  async function revisarPrivado() {
+    const boton = document.getElementById('btn-reg-privado');
+    boton.disabled = true;
+    try {
+      if (navigator.storage && navigator.storage.estimate) {
+        const e = await navigator.storage.estimate();
+        if (estado.diag) estado.diag.cuota_mb = Math.round((e.quota || 0) / 1048576);
+      }
+    } catch (e) {}
+    boton.disabled = false;
+    document.getElementById('reg-privado-error').textContent = navegacionPrivada() ? 'Seguís en una pestaña privada. Seguí los pasos y volvé a acercar el celular a la tarjeta.' : '';
+    if (!navegacionPrivada()) mostrarRegistro(false, false);
   }
 
   function diaDeHoy() {
@@ -2147,15 +2189,55 @@
     estado.intervaloReloj = setInterval(tick, 1000);
   }
 
-  function prepararUbicacion() {
+  function prepararUbicacion(espera) {
+    estado.ubicacionError = 0;
     estado.ubicacion = new Promise(resolve => {
-      if (!navigator.geolocation) return resolve({ lat: '', lng: '' });
+      if (!navigator.geolocation) { estado.ubicacionError = 2; return resolve({ lat: '', lng: '' }); }
       navigator.geolocation.getCurrentPosition(
         pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => resolve({ lat: '', lng: '' }),
-        { timeout: 8000, maximumAge: 120000, enableHighAccuracy: false }
+        err => { estado.ubicacionError = (err && err.code) || 2; resolve({ lat: '', lng: '' }); },
+        { timeout: espera || 8000, maximumAge: 120000, enableHighAccuracy: false }
       );
     });
+  }
+
+  function requiereUbicacion() {
+    return !KIOSCO && !!ID_TIENDA && !/-(RES|TEL)$/.test(ID_TIENDA);
+  }
+
+  async function ubicacionParaMarcar() {
+    if (!requiereUbicacion()) return obtenerUbicacion();
+    if (!estado.ubicacion) prepararUbicacion(12000);
+    mostrar('screen-procesando', 'Obteniendo tu ubicación…');
+    const esperar = () => Promise.race([estado.ubicacion, new Promise(resolve => setTimeout(() => resolve({ lat: '', lng: '' }), 13000))]);
+    let ubicacion = await esperar();
+    if (ubicacion.lat === '' && estado.ubicacionError !== 1) {
+      prepararUbicacion(12000);
+      ubicacion = await esperar();
+    }
+    return ubicacion;
+  }
+
+  function mostrarUbicacionRequerida(modo) {
+    sonido('error');
+    const denegada = estado.ubicacionError === 1;
+    configurarResultado({
+      claseIcono: 'warning', icono: '⌖', color: 'red', etiqueta: 'Falta tu ubicación',
+      titulo: denegada ? 'Activá la ubicación' : 'No encontramos tu ubicación',
+      desc: denegada
+        ? (ES_IOS
+          ? 'Para marcar con la tarjeta necesitamos tu ubicación. En Safari tocá «aA» en la barra de direcciones › Configuración del sitio web › Ubicación › Permitir. Si no aparece, andá a Ajustes › Privacidad y seguridad › Localización › Sitios web de Safari › Mientras se usa la app.'
+          : 'Para marcar con la tarjeta necesitamos tu ubicación. Tocá el candado junto a la dirección › Permisos › Ubicación › Permitir, y revisá que la ubicación del celular esté encendida.')
+        : 'Para marcar con la tarjeta necesitamos tu ubicación. Revisá que la ubicación del celular esté encendida y volvé a intentarlo. Si la tienda tiene la computadora con el código QR, también podés marcar escaneándolo.',
+      boton: 'Intentar de nuevo'
+    });
+    document.getElementById('btn-res-principal').onclick = () => {
+      document.getElementById('btn-res-principal').onclick = null;
+      prepararUbicacion(12000);
+      pintarMarcar();
+      navegar('screen-marcar');
+      confirmarMarca(modo);
+    };
   }
 
   function obtenerUbicacion() {
@@ -2167,10 +2249,15 @@
   async function confirmarMarca(modo) {
     const boton = document.getElementById('btn-marcar');
     boton.disabled = true;
+    estado.ultimoModo = modo;
     document.getElementById('marca-error').textContent = '';
+    const enLinea = !(estado.verificacion && estado.verificacion.offline && !navigator.onLine);
+    const ubicacion = enLinea && modo !== 'VISITA' ? await ubicacionParaMarcar() : await obtenerUbicacion();
+    if (enLinea && modo !== 'VISITA' && requiereUbicacion() && ubicacion.lat === '') {
+      boton.disabled = false;
+      return mostrarUbicacionRequerida(modo);
+    }
     mostrar('screen-procesando', 'Registrando tu marca…');
-
-    const ubicacion = await obtenerUbicacion();
     const momento = new Date(ahora().getTime());
     try {
       if (estado.verificacion && estado.verificacion.offline && !navigator.onLine) throw new Error('sin red');
@@ -2246,6 +2333,7 @@
   function mostrarResultado(data, ubicacion) {
     if (!data.ok && data.codigo === 'DISPOSITIVO_INACTIVO') return mostrarRegistro(true);
     if (!data.ok && data.codigo === 'QR_VENCIDO') return mostrarQRVencido();
+    if (!data.ok && data.codigo === 'UBICACION_REQUERIDA') return mostrarUbicacionRequerida(estado.ultimoModo);
     if (!data.ok) return mostrarError(data.mensaje || 'No se pudo registrar la marca.', true);
     sonido(data.codigo === 'DIA_LIBRE' ? 'error' : 'ok');
 
