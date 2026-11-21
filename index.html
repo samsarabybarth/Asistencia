@@ -1384,7 +1384,7 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.19.1';
+  const VERSION = '2026.11.20.1';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1409,6 +1409,17 @@
   };
   const ID_TIENDA = (new URLSearchParams(location.search).get('tienda') || '').trim().toUpperCase();
   const KIOSCO = (new URLSearchParams(location.search).get('k') || '').trim();
+  const KIOSCO_MINUTOS = (() => {
+    const ventana = parseInt(KIOSCO.split('.')[1], 10);
+    return isNaN(ventana) ? 0 : Math.max(0, Math.round((Date.now() - ventana * 15000) / 60000));
+  })();
+  if (KIOSCO) {
+    try {
+      const limpia = new URLSearchParams(location.search);
+      limpia.delete('k');
+      history.replaceState(history.state, '', location.pathname + (limpia.toString() ? '?' + limpia.toString() : '') + location.hash);
+    } catch (e) {}
+  }
   const ES_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const ES_ICONO = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 
@@ -1713,6 +1724,7 @@
       const verificacion = await llamar({ accion: 'verificar_dispositivo', token: estado.dispositivo, id_tienda: ID_TIENDA, kiosco: KIOSCO, timestamp_dispositivo: new Date().toISOString() });
       if (verificacion.codigo === 'DISPOSITIVO_NO_REGISTRADO') return mostrarRegistro(false);
       if (verificacion.codigo === 'DISPOSITIVO_INACTIVO') return mostrarRegistro(true);
+      if (verificacion.codigo === 'QR_VENCIDO') return mostrarQRVencido();
       if (!verificacion.ok) return mostrarError(verificacion.mensaje || 'No se pudo verificar el dispositivo.', true);
       estado.verificacion = verificacion;
       pintarMarcar();
@@ -2233,6 +2245,7 @@
 
   function mostrarResultado(data, ubicacion) {
     if (!data.ok && data.codigo === 'DISPOSITIVO_INACTIVO') return mostrarRegistro(true);
+    if (!data.ok && data.codigo === 'QR_VENCIDO') return mostrarQRVencido();
     if (!data.ok) return mostrarError(data.mensaje || 'No se pudo registrar la marca.', true);
     sonido(data.codigo === 'DIA_LIBRE' ? 'error' : 'ok');
 
@@ -2532,6 +2545,23 @@
       document.getElementById('btn-res-principal').onclick = null;
       if (desdeTarjeta && ID_TIENDA) flujoTarjeta();
       else flujoInicio();
+    };
+  }
+
+  function mostrarQRVencido() {
+    sonido('error');
+    const viejo = KIOSCO_MINUTOS >= 10;
+    configurarResultado({
+      claseIcono: 'warning', icono: '✕', color: 'red', etiqueta: 'Código QR vencido',
+      titulo: viejo ? 'Ese código ya no sirve' : 'Escaneá el código otra vez',
+      desc: viejo
+        ? 'Abriste un enlace de un código QR anterior. Para marcar, escaneá con la cámara el código que aparece ahora en la pantalla de la tienda.'
+        : 'El código cambia cada pocos segundos y este ya venció. Volvé a escanear con la cámara el código que aparece ahora en la pantalla.',
+      boton: 'Entendido'
+    });
+    document.getElementById('btn-res-principal').onclick = () => {
+      document.getElementById('btn-res-principal').onclick = null;
+      flujoInicio();
     };
   }
 
@@ -2878,6 +2908,7 @@
   function actualizarVersion() {
     const conTarjeta = ID_TIENDA && pantallaActual() === 'screen-marcar';
     const params = new URLSearchParams(conTarjeta ? location.search : '');
+    if (conTarjeta && KIOSCO) params.set('k', KIOSCO);
     params.set('v', String(Date.now()));
     location.replace(location.pathname + '?' + params.toString());
   }
