@@ -226,12 +226,56 @@
     .persona-cab { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 15px; }
     .puntual b { width: 24px; height: 24px; border-radius: 50%; background: var(--gold); color: var(--night); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
     @media (max-width: 900px) { .doc-grid { grid-template-columns: 1fr; } }
+    .s-gorro { position: relative; display: inline-block; }
+    .gorro { display: none; position: absolute; width: 0.92em; height: auto; left: -0.2em; top: -0.14em; transform: rotate(-16deg); pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35)); }
+    html.navidad .gorro { display: block; }
+    .escena { display: none; }
+    html.navidad .escena { display: block; position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    html.navidad #vista-panel, html.navidad .login { position: relative; z-index: 1; }
+    .escena-izq, .escena-der { position: absolute; bottom: 0; display: flex; align-items: flex-end; }
+    .escena-izq { left: 6px; }
+    .escena-der { right: 6px; flex-direction: row-reverse; }
+    .arbol { width: 150px; height: auto; }
+    .arbol.chico { width: 104px; margin: 0 -18px; }
+    .santa { width: 150px; height: auto; }
+    .saludo { transform-origin: 140px 112px; animation: saludar 2.6s ease-in-out infinite; }
+    .luz { animation: titilar 1.8s ease-in-out infinite alternate; }
+    .luz.l2 { animation-delay: 0.6s; }
+    .luz.l3 { animation-delay: 1.2s; }
+    .estrella { transform-origin: 85px 28px; animation: brillar 3s ease-in-out infinite; }
+    .nieve-panel span { position: absolute; top: -12px; border-radius: 50%; background: rgba(255,255,255,0.7); animation: nevar linear infinite; }
+    html.navidad .barra { border-bottom: none; }
+    html.navidad .barra::after { content: ""; position: absolute; left: 0; right: 0; bottom: -7px; height: 12px; pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 70%, #E85D5D 0 3.2px, transparent 4px) 0 0 / 64px 12px repeat-x,
+        radial-gradient(circle at 50% 70%, #F2C94C 0 3.2px, transparent 4px) 16px 0 / 64px 12px repeat-x,
+        radial-gradient(circle at 50% 70%, #4CAF7D 0 3.2px, transparent 4px) 32px 0 / 64px 12px repeat-x,
+        radial-gradient(circle at 50% 70%, #7FA7E8 0 3.2px, transparent 4px) 48px 0 / 64px 12px repeat-x,
+        linear-gradient(rgba(200,169,110,0.35), rgba(200,169,110,0.35)) 0 4px / 100% 1px no-repeat;
+      animation: guirnalda 2.4s ease-in-out infinite alternate; }
+    @keyframes titilar { from { opacity: 1; } to { opacity: 0.45; } }
+    @keyframes brillar { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+    @keyframes saludar { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-14deg); } }
+    @keyframes guirnalda { from { filter: brightness(1); } to { filter: brightness(1.45) saturate(1.2); } }
+    @keyframes nevar { to { transform: translate3d(var(--deriva, 20px), 105vh, 0); } }
+    @media (prefers-reduced-motion: reduce) { .nieve-panel, .luz, .saludo, .estrella, html.navidad .barra::after { animation: none !important; } .nieve-panel { display: none; } }
+    @media (max-width: 1899px) { .escena-izq, .escena-der { display: none; } }
+    .escena-barra { display: none; }
+    html.navidad .escena-barra { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 0; height: 58px; margin: -6px 0 -12px; pointer-events: none; }
+    .arbol.mini { width: 44px; margin: 0 -2px; }
+    .arbol.mini.b { width: 38px; }
+    .santa.mini { width: 52px; }
+    @media (max-width: 1000px) { html.navidad .escena-barra { display: none; } }
+    @media (min-width: 641px) { .tab { padding: 10px 11px 12px; } .tabs { gap: 2px; } }
+    @media (min-width: 641px) { .tabs { flex-wrap: wrap; row-gap: 0; } .barra .marca { font-size: 24px; } .barra .firma { font-size: 13.5px; } }
+    @media (min-width: 1200px) { body { zoom: 1.1; } }
+    @media (min-width: 1680px) { body { zoom: 1.2; } }
     @media (max-width: 640px) {
       .barra-in { padding: 10px 12px; gap: 10px; }
       .barra .marca { font-size: 16px; }
       #chips-pais { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
       #chips-pais .chip { white-space: nowrap; padding: 6px 12px; }
-      .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-width: none; margin: 0; padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)); gap: 2px; background: rgba(20,20,42,0.97); border-top: 1px solid var(--border-soft); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+      .tabs { flex-wrap: nowrap; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-width: none; margin: 0; padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)); gap: 2px; background: rgba(20,20,42,0.97); border-top: 1px solid var(--border-soft); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
       .tab { position: relative; flex-direction: column; gap: 3px; min-width: 68px; padding: 6px 6px 5px; font-size: 10.5px; font-weight: 600; border-bottom: none; border-top: 2px solid transparent; }
       .tab.activa { border-bottom-color: transparent; border-top-color: var(--gold); }
       .tab .ti { width: 21px; height: 21px; }
@@ -266,7 +310,7 @@
 
 <section class="login" id="vista-login">
   <div class="login-card">
-    <div class="marca">SAMSARA</div>
+    <div class="marca"><span class="s-gorro">S<svg class="gorro" viewBox="0 0 64 52" aria-hidden="true"><path d="M13 40C15 29 20 20 28 14 21 14 14 18 9 26 10 16 20 7 35 6 49 5 58 15 57 40Z" fill="#D42A3C"/><path d="M35 6C49 5 58 15 57 40H48C49 22 44 11 35 6Z" fill="#A81C2E"/><rect x="8" y="36" width="54" height="13" rx="6.5" fill="#F7F2EA"/><path d="M12 39h46" stroke="#E2DACB" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/><circle cx="9" cy="27" r="7" fill="#F7F2EA"/><circle cx="7" cy="25" r="2.4" fill="#fff"/></svg></span>AMSARA</div>
     <div class="firma">by Barth</div>
     <h1>Panel de asistencia</h1>
     <div id="paso-email">
@@ -291,14 +335,16 @@
   </div>
 </section>
 
+<div class="escena" id="escena" aria-hidden="true"><div class="nieve-panel" id="nieve-panel"></div><div class="escena-izq"><svg class="arbol" viewBox="0 0 170 210" aria-hidden="true"><rect x="76" y="176" width="18" height="24" rx="3" fill="#6B4528"/><path d="M85 30 140 104H112L152 150H118L160 184H10L52 150H18L58 104H30Z" fill="#1F6B45"/><path d="M85 30 140 104H112L152 150H118L160 184H85Z" fill="#185A39"/><path d="M40 120Q85 140 128 112M30 164Q85 186 140 156" stroke="#E0C98A" stroke-width="2.5" fill="none" stroke-dasharray="2 6" stroke-linecap="round"/><circle class="luz" cx="70" cy="96" r="6" fill="#D42A3C"/><circle class="luz l2" cx="104" cy="118" r="6" fill="#E0C98A"/><circle class="luz l3" cx="58" cy="140" r="6.5" fill="#E0C98A"/><circle class="luz" cx="96" cy="150" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="128" cy="170" r="6.5" fill="#7FA7E8"/><circle class="luz l3" cx="44" cy="174" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="86" cy="76" r="5" fill="#7FA7E8"/><path class="estrella" d="M85 8l6.5 13.5 14.5 2-10.5 10 2.6 14.5L85 41l-13 7 2.6-14.5-10.5-10 14.5-2Z" fill="#F2C94C"/></svg><svg class="arbol chico" viewBox="0 0 170 210" aria-hidden="true"><rect x="76" y="176" width="18" height="24" rx="3" fill="#6B4528"/><path d="M85 30 140 104H112L152 150H118L160 184H10L52 150H18L58 104H30Z" fill="#1F6B45"/><path d="M85 30 140 104H112L152 150H118L160 184H85Z" fill="#185A39"/><path d="M40 120Q85 140 128 112M30 164Q85 186 140 156" stroke="#E0C98A" stroke-width="2.5" fill="none" stroke-dasharray="2 6" stroke-linecap="round"/><circle class="luz" cx="70" cy="96" r="6" fill="#D42A3C"/><circle class="luz l2" cx="104" cy="118" r="6" fill="#E0C98A"/><circle class="luz l3" cx="58" cy="140" r="6.5" fill="#E0C98A"/><circle class="luz" cx="96" cy="150" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="128" cy="170" r="6.5" fill="#7FA7E8"/><circle class="luz l3" cx="44" cy="174" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="86" cy="76" r="5" fill="#7FA7E8"/><path class="estrella" d="M85 8l6.5 13.5 14.5 2-10.5 10 2.6 14.5L85 41l-13 7 2.6-14.5-10.5-10 14.5-2Z" fill="#F2C94C"/></svg></div><div class="escena-der"><svg class="santa" viewBox="0 0 190 220" aria-hidden="true"><ellipse cx="95" cy="212" rx="62" ry="6" fill="rgba(0,0,0,.3)"/><rect x="62" y="186" width="24" height="22" rx="6" fill="#1E1E28"/><rect x="104" y="186" width="24" height="22" rx="6" fill="#1E1E28"/><path d="M95 92c-38 0-56 40-52 96h104c4-56-14-96-52-96Z" fill="#D42A3C"/><path d="M95 92c20 0 40 30 44 96h8c4-56-14-96-52-96Z" fill="#A81C2E"/><rect x="88" y="100" width="14" height="88" fill="#F7F2EA"/><rect x="45" y="146" width="100" height="14" fill="#1E1E28"/><rect x="84" y="143" width="22" height="20" rx="3" fill="none" stroke="#F2C94C" stroke-width="4"/><rect x="44" y="180" width="102" height="10" rx="5" fill="#F7F2EA"/><path d="M52 112C34 116 26 132 30 150" stroke="#D42A3C" stroke-width="18" stroke-linecap="round" fill="none"/><circle cx="31" cy="156" r="10" fill="#1E1E28"/><g class="saludo"><path d="M138 110C156 100 164 82 160 62" stroke="#D42A3C" stroke-width="18" stroke-linecap="round" fill="none"/><circle cx="160" cy="56" r="10" fill="#1E1E28"/></g><circle cx="95" cy="66" r="26" fill="#F4C7A8"/><path d="M66 70c0 30 12 50 29 50s29-20 29-50c-6 8-14 10-29 10s-23-2-29-10Z" fill="#F7F2EA"/><path d="M80 82c5-6 10-6 15-2 5-4 10-4 15 2-6 4-11 3-15 0-4 3-9 4-15 0Z" fill="#E8E1D4"/><circle cx="86" cy="64" r="3" fill="#2A2A35"/><circle cx="104" cy="64" r="3" fill="#2A2A35"/><circle cx="95" cy="72" r="4.5" fill="#E58E7A"/><circle cx="80" cy="73" r="5" fill="#F2A08F" opacity=".55"/><circle cx="110" cy="73" r="5" fill="#F2A08F" opacity=".55"/><path d="M68 50C70 26 90 14 112 20c14 4 22 18 20 30-8-12-18-16-26-14" fill="#D42A3C"/><path d="M112 20c14 4 22 18 20 30-3-5-6-8-10-10 0-8-4-15-10-20Z" fill="#A81C2E"/><rect x="64" y="44" width="62" height="13" rx="6.5" fill="#F7F2EA"/><circle cx="134" cy="54" r="8" fill="#F7F2EA"/></svg><svg class="arbol chico" viewBox="0 0 170 210" aria-hidden="true"><rect x="76" y="176" width="18" height="24" rx="3" fill="#6B4528"/><path d="M85 30 140 104H112L152 150H118L160 184H10L52 150H18L58 104H30Z" fill="#1F6B45"/><path d="M85 30 140 104H112L152 150H118L160 184H85Z" fill="#185A39"/><path d="M40 120Q85 140 128 112M30 164Q85 186 140 156" stroke="#E0C98A" stroke-width="2.5" fill="none" stroke-dasharray="2 6" stroke-linecap="round"/><circle class="luz" cx="70" cy="96" r="6" fill="#D42A3C"/><circle class="luz l2" cx="104" cy="118" r="6" fill="#E0C98A"/><circle class="luz l3" cx="58" cy="140" r="6.5" fill="#E0C98A"/><circle class="luz" cx="96" cy="150" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="128" cy="170" r="6.5" fill="#7FA7E8"/><circle class="luz l3" cx="44" cy="174" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="86" cy="76" r="5" fill="#7FA7E8"/><path class="estrella" d="M85 8l6.5 13.5 14.5 2-10.5 10 2.6 14.5L85 41l-13 7 2.6-14.5-10.5-10 14.5-2Z" fill="#F2C94C"/></svg></div></div>
 <div id="vista-panel" hidden>
   <header class="barra">
     <div class="barra-in">
       <div>
-        <div class="marca">SAMSARA</div>
+        <div class="marca"><span class="s-gorro">S<svg class="gorro" viewBox="0 0 64 52" aria-hidden="true"><path d="M13 40C15 29 20 20 28 14 21 14 14 18 9 26 10 16 20 7 35 6 49 5 58 15 57 40Z" fill="#D42A3C"/><path d="M35 6C49 5 58 15 57 40H48C49 22 44 11 35 6Z" fill="#A81C2E"/><rect x="8" y="36" width="54" height="13" rx="6.5" fill="#F7F2EA"/><path d="M12 39h46" stroke="#E2DACB" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/><circle cx="9" cy="27" r="7" fill="#F7F2EA"/><circle cx="7" cy="25" r="2.4" fill="#fff"/></svg></span>AMSARA</div>
         <div class="firma">Panel de asistencia</div>
       </div>
       <div class="chips" id="chips-pais"></div>
+      <div class="escena-barra" aria-hidden="true"><svg class="arbol mini" viewBox="0 0 170 210" aria-hidden="true"><rect x="76" y="176" width="18" height="24" rx="3" fill="#6B4528"/><path d="M85 30 140 104H112L152 150H118L160 184H10L52 150H18L58 104H30Z" fill="#1F6B45"/><path d="M85 30 140 104H112L152 150H118L160 184H85Z" fill="#185A39"/><path d="M40 120Q85 140 128 112M30 164Q85 186 140 156" stroke="#E0C98A" stroke-width="2.5" fill="none" stroke-dasharray="2 6" stroke-linecap="round"/><circle class="luz" cx="70" cy="96" r="6" fill="#D42A3C"/><circle class="luz l2" cx="104" cy="118" r="6" fill="#E0C98A"/><circle class="luz l3" cx="58" cy="140" r="6.5" fill="#E0C98A"/><circle class="luz" cx="96" cy="150" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="128" cy="170" r="6.5" fill="#7FA7E8"/><circle class="luz l3" cx="44" cy="174" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="86" cy="76" r="5" fill="#7FA7E8"/><path class="estrella" d="M85 8l6.5 13.5 14.5 2-10.5 10 2.6 14.5L85 41l-13 7 2.6-14.5-10.5-10 14.5-2Z" fill="#F2C94C"/></svg><svg class="santa mini" viewBox="0 0 190 220" aria-hidden="true"><ellipse cx="95" cy="212" rx="62" ry="6" fill="rgba(0,0,0,.3)"/><rect x="62" y="186" width="24" height="22" rx="6" fill="#1E1E28"/><rect x="104" y="186" width="24" height="22" rx="6" fill="#1E1E28"/><path d="M95 92c-38 0-56 40-52 96h104c4-56-14-96-52-96Z" fill="#D42A3C"/><path d="M95 92c20 0 40 30 44 96h8c4-56-14-96-52-96Z" fill="#A81C2E"/><rect x="88" y="100" width="14" height="88" fill="#F7F2EA"/><rect x="45" y="146" width="100" height="14" fill="#1E1E28"/><rect x="84" y="143" width="22" height="20" rx="3" fill="none" stroke="#F2C94C" stroke-width="4"/><rect x="44" y="180" width="102" height="10" rx="5" fill="#F7F2EA"/><path d="M52 112C34 116 26 132 30 150" stroke="#D42A3C" stroke-width="18" stroke-linecap="round" fill="none"/><circle cx="31" cy="156" r="10" fill="#1E1E28"/><g class="saludo"><path d="M138 110C156 100 164 82 160 62" stroke="#D42A3C" stroke-width="18" stroke-linecap="round" fill="none"/><circle cx="160" cy="56" r="10" fill="#1E1E28"/></g><circle cx="95" cy="66" r="26" fill="#F4C7A8"/><path d="M66 70c0 30 12 50 29 50s29-20 29-50c-6 8-14 10-29 10s-23-2-29-10Z" fill="#F7F2EA"/><path d="M80 82c5-6 10-6 15-2 5-4 10-4 15 2-6 4-11 3-15 0-4 3-9 4-15 0Z" fill="#E8E1D4"/><circle cx="86" cy="64" r="3" fill="#2A2A35"/><circle cx="104" cy="64" r="3" fill="#2A2A35"/><circle cx="95" cy="72" r="4.5" fill="#E58E7A"/><circle cx="80" cy="73" r="5" fill="#F2A08F" opacity=".55"/><circle cx="110" cy="73" r="5" fill="#F2A08F" opacity=".55"/><path d="M68 50C70 26 90 14 112 20c14 4 22 18 20 30-8-12-18-16-26-14" fill="#D42A3C"/><path d="M112 20c14 4 22 18 20 30-3-5-6-8-10-10 0-8-4-15-10-20Z" fill="#A81C2E"/><rect x="64" y="44" width="62" height="13" rx="6.5" fill="#F7F2EA"/><circle cx="134" cy="54" r="8" fill="#F7F2EA"/></svg><svg class="arbol mini b" viewBox="0 0 170 210" aria-hidden="true"><rect x="76" y="176" width="18" height="24" rx="3" fill="#6B4528"/><path d="M85 30 140 104H112L152 150H118L160 184H10L52 150H18L58 104H30Z" fill="#1F6B45"/><path d="M85 30 140 104H112L152 150H118L160 184H85Z" fill="#185A39"/><path d="M40 120Q85 140 128 112M30 164Q85 186 140 156" stroke="#E0C98A" stroke-width="2.5" fill="none" stroke-dasharray="2 6" stroke-linecap="round"/><circle class="luz" cx="70" cy="96" r="6" fill="#D42A3C"/><circle class="luz l2" cx="104" cy="118" r="6" fill="#E0C98A"/><circle class="luz l3" cx="58" cy="140" r="6.5" fill="#E0C98A"/><circle class="luz" cx="96" cy="150" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="128" cy="170" r="6.5" fill="#7FA7E8"/><circle class="luz l3" cx="44" cy="174" r="6.5" fill="#D42A3C"/><circle class="luz l2" cx="86" cy="76" r="5" fill="#7FA7E8"/><path class="estrella" d="M85 8l6.5 13.5 14.5 2-10.5 10 2.6 14.5L85 41l-13 7 2.6-14.5-10.5-10 14.5-2Z" fill="#F2C94C"/></svg></div>
       <div class="usuario"><span id="usuario-nombre"></span><button class="btn ghost mini" id="btn-salir">Salir</button></div>
     </div>
     <nav class="tabs" id="tabs">
@@ -585,7 +631,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.28.2';
+  const VERSION = '2026.11.28.3';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -625,6 +671,21 @@
       else if (r.mensaje) toast(r.mensaje);
     } catch (e) {}
   }
+  function enNavidad(d) { const x = d || new Date(); const m = x.getMonth() + 1, dia = x.getDate(); return (m === 11 && dia >= 27) || m === 12; }
+
+  function decorarNavidad() {
+    const activa = enNavidad();
+    document.documentElement.classList.toggle('navidad', activa);
+    const nieve = $('nieve-panel');
+    if (!activa || nieve.childElementCount) return;
+    let html = '';
+    for (let i = 0; i < 34; i++) {
+      const t = 2 + Math.random() * 3.5;
+      html += '<span style="left:' + (Math.random() * 100).toFixed(1) + '%;width:' + t.toFixed(1) + 'px;height:' + t.toFixed(1) + 'px;opacity:' + (0.35 + Math.random() * 0.55).toFixed(2) + ';--deriva:' + (Math.random() * 60 - 30).toFixed(0) + 'px;animation-duration:' + (9 + Math.random() * 12).toFixed(1) + 's;animation-delay:-' + (Math.random() * 20).toFixed(1) + 's"></span>';
+    }
+    nieve.innerHTML = html;
+  }
+
   function hoyISO(d) { const x = d || new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); }
   function fechaCorta(f) { return f ? new Date(f + 'T12:00:00').toLocaleDateString('es-CR', { weekday: 'short', day: 'numeric', month: 'short' }) : ''; }
   function hora12(h) { if (!/^\d{1,2}:\d{2}$/.test(h || '')) return h || '—'; let [a, b] = h.split(':').map(Number); const s = a >= 12 ? 'p. m.' : 'a. m.'; a = a % 12 || 12; return a + ':' + String(b).padStart(2, '0') + ' ' + s; }
@@ -2157,6 +2218,8 @@
       } catch (e) { if (e.message !== 'sesion') toast('Sin conexión'); b.disabled = false; }
     }));
   }
+
+  decorarNavidad();
 
   (async function () {
     const s = leer();

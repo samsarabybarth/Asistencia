@@ -880,6 +880,9 @@
     .fiesta-mensaje .fiesta-tipo { display: block; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 3px; }
     .fiesta-pie { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: rgba(245,240,232,0.55); }
     .fiesta-sonido { position: relative; z-index: 2; background: rgba(26,26,46,0.5); border: 1px solid rgba(224,201,138,0.35); color: var(--cream); border-radius: 999px; padding: 4px 10px; font-family: inherit; font-size: 12px; cursor: pointer; }
+    .s-gorro { position: relative; display: inline-block; }
+    .gorro { display: none; position: absolute; width: 0.92em; height: auto; left: -0.2em; top: -0.2em; transform: rotate(-16deg); pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35)); }
+    html.navidad .gorro { display: block; }
     .nieve { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
     .nieve span { position: absolute; top: -12px; border-radius: 50%; background: rgba(255,255,255,0.75); animation: nevar linear infinite; }
     .nieve.cierre span { background: rgba(224,201,138,0.85); border-radius: 2px; }
@@ -899,7 +902,7 @@
 <body>
 <div class="app">
   <header class="app-header">
-    <div class="brand-name">Samsara</div>
+    <div class="brand-name"><span class="s-gorro">S<svg class="gorro" viewBox="0 0 64 52" aria-hidden="true"><path d="M13 40C15 29 20 20 28 14 21 14 14 18 9 26 10 16 20 7 35 6 49 5 58 15 57 40Z" fill="#D42A3C"/><path d="M35 6C49 5 58 15 57 40H48C49 22 44 11 35 6Z" fill="#A81C2E"/><rect x="8" y="36" width="54" height="13" rx="6.5" fill="#F7F2EA"/><path d="M12 39h46" stroke="#E2DACB" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/><circle cx="9" cy="27" r="7" fill="#F7F2EA"/><circle cx="7" cy="25" r="2.4" fill="#fff"/></svg></span>amsara</div>
     <div class="brand-firma">by Barth</div>
   </header>
 
@@ -1434,7 +1437,7 @@
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
   const CLAVE_SONIDO = 'samsara_sonido';
   const CLAVE_JINGLE = 'samsara_jingle';
-  const VERSION = '2026.11.28.2';
+  const VERSION = '2026.11.28.3';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1764,7 +1767,7 @@
     const p = estado.perfil;
     const hoy = p && p.hoy ? p.hoy : fechaLocal();
     const [anio, mes, dia] = hoy.split('-').map(Number);
-    if (mes === 11 && dia >= 28) return { hoy: hoy, fase: 'navidad', anio: anio, dias: Math.round((Date.UTC(anio, 11, 25) - Date.UTC(anio, mes - 1, dia)) / 86400000) };
+    if (mes === 11 && dia >= 27) return { hoy: hoy, fase: 'navidad', anio: anio, dias: Math.round((Date.UTC(anio, 11, 25) - Date.UTC(anio, mes - 1, dia)) / 86400000) };
     if (mes !== 12) return null;
     if (dia <= 24) return { hoy: hoy, fase: 'navidad', anio: anio, dias: 25 - dia };
     if (dia <= 26) return { hoy: hoy, fase: 'navidad_dia', anio: anio, dias: 0 };
@@ -1801,6 +1804,7 @@
   }
 
   function pintarNieve(temporada) {
+    document.documentElement.classList.toggle('navidad', !!temporada);
     const nieve = document.getElementById('nieve');
     if (!temporada) { nieve.hidden = true; nieve.innerHTML = ''; return; }
     nieve.className = 'nieve' + (temporada.fase === 'cierre' ? ' cierre' : '');
