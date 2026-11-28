@@ -868,6 +868,24 @@
     .bv-puntos span.activo { width: 22px; border-radius: 4px; background: var(--gold); }
     .volver { align-self: flex-start; background: none; border: none; color: var(--text-secondary); font-family: inherit; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 12px; }
 
+    .fiesta { position: relative; flex-shrink: 0; overflow: hidden; border-radius: 18px; padding: 16px 16px 14px; margin-bottom: 16px; border: 1px solid rgba(224,201,138,0.45); background: linear-gradient(135deg, rgba(160,32,48,0.42), rgba(22,92,62,0.34) 60%, rgba(26,26,46,0.6)); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .fiesta.cierre { background: linear-gradient(135deg, rgba(200,169,110,0.34), rgba(88,58,140,0.32) 60%, rgba(26,26,46,0.6)); }
+    .fiesta::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 88% 12%, rgba(255,255,255,0.14), transparent 45%); pointer-events: none; }
+    .fiesta-top { display: flex; align-items: center; gap: 12px; }
+    .fiesta-icono { width: 46px; height: 46px; border-radius: 50%; background: rgba(26,26,46,0.55); border: 1px solid rgba(224,201,138,0.5); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .fiesta-titulo { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 600; color: #F5E6BE; line-height: 1.15; }
+    .fiesta-titulo strong { color: #FFFFFF; font-weight: 700; }
+    .fiesta-sub { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(245,240,232,0.7); margin-top: 3px; }
+    .fiesta-mensaje { position: relative; z-index: 1; margin-top: 12px; padding-top: 11px; border-top: 1px solid rgba(224,201,138,0.25); font-size: 13.5px; line-height: 1.5; color: var(--cream); min-height: 40px; transition: opacity 0.25s; }
+    .fiesta-mensaje .fiesta-tipo { display: block; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 3px; }
+    .fiesta-pie { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: rgba(245,240,232,0.55); }
+    .fiesta-sonido { position: relative; z-index: 2; background: rgba(26,26,46,0.5); border: 1px solid rgba(224,201,138,0.35); color: var(--cream); border-radius: 999px; padding: 4px 10px; font-family: inherit; font-size: 12px; cursor: pointer; }
+    .nieve { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
+    .nieve span { position: absolute; top: -12px; border-radius: 50%; background: rgba(255,255,255,0.75); animation: nevar linear infinite; }
+    .nieve.cierre span { background: rgba(224,201,138,0.85); border-radius: 2px; }
+    @keyframes nevar { 0% { transform: translate3d(0, -12px, 0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate3d(28px, 105vh, 0); opacity: 0.2; } }
+    @media (prefers-reduced-motion: reduce) { .nieve { display: none; } }
+
     @media (prefers-reduced-motion: reduce) {
       .screen { transition: none; }
       .marca-dot, .spinner { animation-duration: 3s; }
@@ -885,6 +903,7 @@
     <div class="brand-firma">by Barth</div>
   </header>
 
+  <div class="nieve" id="nieve" aria-hidden="true" hidden></div>
   <main class="screens">
 
     <section class="screen centrada active" id="screen-cargando">
@@ -965,6 +984,18 @@
             <span id="inicio-tienda">—</span>
           </div>
         </div>
+      </div>
+
+      <div class="fiesta" id="fiesta" role="button" tabindex="0" aria-label="Mensaje de temporada, tocá para ver otro" hidden>
+        <div class="fiesta-top">
+          <div class="fiesta-icono" id="fiesta-icono">🎄</div>
+          <div>
+            <div class="fiesta-titulo" id="fiesta-titulo"></div>
+            <div class="fiesta-sub" id="fiesta-sub"></div>
+          </div>
+        </div>
+        <div class="fiesta-mensaje" id="fiesta-mensaje"></div>
+        <div class="fiesta-pie"><span>Tocá para ver otro</span><button class="fiesta-sonido" id="fiesta-sonido" type="button"></button></div>
       </div>
 
       <button class="pendiente-banner" id="inicio-pendientes" hidden>
@@ -1401,7 +1432,9 @@
   const CLAVE_COLA = 'samsara_cola';
   const CLAVE_BIENVENIDA = 'samsara_bienvenida';
   const CLAVE_RECONOCIMIENTOS = 'samsara_reconocimientos';
-  const VERSION = '2026.11.27.1';
+  const CLAVE_SONIDO = 'samsara_sonido';
+  const CLAVE_JINGLE = 'samsara_jingle';
+  const VERSION = '2026.11.28.1';
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
   const TIPOS_SOLICITUD = {
@@ -1557,6 +1590,13 @@
 
   window.addEventListener('load', iniciar);
   ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, desbloquearAudio, { passive: true }));
+  document.getElementById('fiesta').addEventListener('click', e => { if (!e.target.closest('#fiesta-sonido')) siguienteFiesta(); });
+  document.getElementById('fiesta').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); siguienteFiesta(); } });
+  document.getElementById('fiesta-sonido').addEventListener('click', () => {
+    guardar(CLAVE_SONIDO, sonidoActivo() ? '0' : '1');
+    pintarFiesta();
+    if (sonidoActivo()) setTimeout(() => sonido('ok'), 60);
+  });
 
   function iniciar() {
     estado.diag = leerDiagnostico();
@@ -1594,6 +1634,7 @@
       s.buffer = b;
       s.connect(audio.ctx.destination);
       s.start(0);
+      setTimeout(jingleFiesta, 150);
     } catch (e) {}
   }
 
@@ -1612,20 +1653,214 @@
     o.stop(c.currentTime + inicio + duracion + 0.02);
   }
 
+  function campana(frecuencia, inicio, duracion, volumen) {
+    tono(frecuencia, inicio, duracion, volumen);
+    tono(frecuencia * 2.76, inicio, duracion * 0.45, volumen * 0.28);
+    tono(frecuencia * 5.4, inicio, duracion * 0.2, volumen * 0.12);
+  }
+
+  function sonidoActivo() { return leer(CLAVE_SONIDO) !== '0'; }
+
   function sonido(tipo) {
     try {
       if (navigator.vibrate) navigator.vibrate(tipo === 'error' ? [120, 80, 120] : 60);
     } catch (e) {}
     try {
-      if (!audio.ctx || audio.ctx.state !== 'running') return;
+      if (!sonidoActivo() || !audio.ctx || audio.ctx.state !== 'running') return;
+      const temporada = temporadaFiesta();
       if (tipo === 'error') {
         tono(330, 0, 0.18, 0.25);
         tono(220, 0.2, 0.28, 0.25);
+      } else if (temporada && temporada.fase === 'cierre') {
+        campana(2093, 0, 0.35, 0.16);
+        campana(2637, 0.14, 0.5, 0.14);
+      } else if (temporada) {
+        campana(1568, 0, 0.4, 0.17);
+        campana(2093, 0.12, 0.6, 0.15);
       } else {
         tono(880, 0, 0.16, 0.22);
         tono(1318.5, 0.11, 0.32, 0.18);
       }
     } catch (e) {}
+  }
+
+  function jingleFiesta() {
+    const temporada = temporadaFiesta();
+    if (!temporada || !sonidoActivo() || !audio.ctx || audio.ctx.state !== 'running') return;
+    const clave = temporada.hoy;
+    if (leer(CLAVE_JINGLE) === clave || pantallaActual() !== 'screen-inicio') return;
+    guardar(CLAVE_JINGLE, clave);
+    try {
+      if (temporada.fase === 'cierre') {
+        [[1568, 0], [2093, 0.16], [2637, 0.32], [3136, 0.5]].forEach(([f, t]) => campana(f, t, 0.5, 0.12));
+        return;
+      }
+      const E = 659.25, G = 783.99, C = 523.25, D = 587.33;
+      [[E, 0, 0.18], [E, 0.2, 0.18], [E, 0.4, 0.36], [E, 0.8, 0.18], [E, 1.0, 0.18], [E, 1.2, 0.36], [E, 1.6, 0.18], [G, 1.8, 0.18], [C, 2.0, 0.24], [D, 2.26, 0.12], [E, 2.4, 0.6]]
+        .forEach(([f, t, d]) => campana(f * 2, t, d + 0.25, 0.1));
+    } catch (e) {}
+  }
+
+  const FIESTA = {
+    datos: [
+      ['', '"Jingle Bells" fue la primera canción transmitida desde el espacio: la tocaron los astronautas de la Gemini 6 en 1965.'],
+      ['', 'Rodolfo, el reno de la nariz roja, nació en 1939 como un cuento publicitario de una tienda en Estados Unidos.'],
+      ['', '"Noche de paz" se cantó por primera vez en 1818, en una pequeña iglesia de Oberndorf, Austria.'],
+      ['', 'El primer árbol de Navidad con luces eléctricas se encendió en 1882, en la casa de un socio de Thomas Edison.'],
+      ['', 'La flor de Pascua, la planta roja de diciembre, es originaria de México.'],
+      ['', 'Los villancicos se llaman así porque eran canciones populares que se cantaban en las villas de la España medieval.'],
+      ['', 'La costumbre de colgar medias viene de la leyenda de San Nicolás, que dejó monedas a escondidas para tres hermanas.'],
+      ['', 'El árbol de Navidad se popularizó en Alemania y llegó a Inglaterra de la mano de la reina Victoria y el príncipe Alberto.'],
+      ['CO', 'En Colombia, el 7 de diciembre es el Día de las Velitas: la noche que abre oficialmente la temporada navideña.'],
+      ['CO', 'La Novena de Aguinaldos se reza en Colombia del 16 al 24 de diciembre, con villancicos, natilla y buñuelos.'],
+      ['CR', 'En Costa Rica el portal es el gran protagonista de diciembre, y los tamales en hoja de plátano nunca faltan.'],
+      ['CR', 'El Festival de la Luz llena de carrozas, bandas y luces las calles de San José cada diciembre.'],
+      ['CR', 'El rompope y el queque navideño son infaltables en las reuniones ticas de fin de año.'],
+      ['ES', 'El Sorteo Extraordinario de Navidad de la Lotería se celebra en España cada 22 de diciembre desde 1812.'],
+      ['ES', 'En España los regalos tradicionales los traen los Reyes Magos, la noche del 5 al 6 de enero.'],
+      ['ES', 'El turrón, uno de los dulces más típicos de la Navidad española, tiene siglos de historia en Alicante y Jijona.']
+    ],
+    animo: [
+      'Cada sonrisa que regalás hoy es el mejor adorno de la tienda.',
+      'Tu puntualidad es un regalo para todo el equipo.',
+      'Diciembre es intenso, pero vos brillás más que las luces del árbol.',
+      'Las clientas se van felices gracias a tus manos. ¡Gracias!',
+      'Un día a la vez, una clienta a la vez. ¡Vamos con todo!',
+      'Respirá, sonreí y dale: hoy también va a salir bien.',
+      'Lo que hacés con cariño se nota. Y en diciembre, se nota el doble.',
+      'Equipo que se apoya, fiestas que se disfrutan.',
+      'Tu esfuerzo de hoy es el descanso merecido de mañana.',
+      'Gracias por hacer de Samsara un lugar especial en estas fiestas.',
+      'La mejor decoración de diciembre es un equipo unido.',
+      'Que nada te quite la energía: lo estás haciendo muy bien.'
+    ],
+    navidad: [
+      'Que estas fiestas te llenen de paz, salud y momentos bonitos con los tuyos.',
+      'Gracias por todo lo que diste este año. ¡Disfrutá cada momento!',
+      'Hoy celebramos también tu esfuerzo de todo el año.',
+      'Que la alegría de estos días te acompañe siempre.'
+    ],
+    cierre: [
+      ['', 'Gracias por cada jornada de este año. Fuiste parte de algo grande.'],
+      ['', 'Cerramos el año con orgullo. ¡Lo mejor está por venir!'],
+      ['', 'Cada clienta feliz de este año lleva tu sello.'],
+      ['', 'Que el año nuevo te traiga salud, crecimiento y muchas alegrías.'],
+      ['', 'Brindemos por lo aprendido, lo logrado y lo que viene.'],
+      ['', 'Gracias por tu compromiso. ¡Nos vemos en el año nuevo con todo!'],
+      ['', 'Dato curioso: en muchos países de Latinoamérica se usa ropa interior amarilla en Año Nuevo para atraer buena suerte.'],
+      ['', 'Dato curioso: dar la vuelta a la cuadra con una maleta en Año Nuevo promete un año lleno de viajes.'],
+      ['ES', 'Dato curioso: en España las doce uvas se comen al ritmo de las campanadas de la Puerta del Sol, en Madrid.'],
+      ['CR', 'Dato curioso: en Costa Rica, el Tope Nacional del 26 de diciembre y las fiestas de Zapote son clásicos de fin de año.'],
+      ['CO', 'Dato curioso: en Colombia, el "año viejo", un muñeco relleno, se quema a medianoche para despedir lo malo.']
+    ]
+  };
+  const fiestaEstado = { indice: null, clave: '' };
+
+  function esc(texto) {
+    return String(texto === null || texto === undefined ? '' : texto).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function temporadaFiesta() {
+    const p = estado.perfil;
+    const hoy = p && p.hoy ? p.hoy : fechaLocal();
+    const [anio, mes, dia] = hoy.split('-').map(Number);
+    if (mes === 11 && dia >= 28) return { hoy: hoy, fase: 'navidad', anio: anio, dias: Math.round((Date.UTC(anio, 11, 25) - Date.UTC(anio, mes - 1, dia)) / 86400000) };
+    if (mes !== 12) return null;
+    if (dia <= 24) return { hoy: hoy, fase: 'navidad', anio: anio, dias: 25 - dia };
+    if (dia <= 26) return { hoy: hoy, fase: 'navidad_dia', anio: anio, dias: 0 };
+    return { hoy: hoy, fase: 'cierre', anio: anio, dias: 32 - dia };
+  }
+
+  const FIESTA_ESPECIAL = {
+    'CO-12-07': ['Hoy es especial', 'Hoy es el Día de las Velitas: ¡que tu luz ilumine la tienda y a cada clienta!'],
+    'CO-12-16': ['Hoy es especial', 'Hoy empieza la Novena de Aguinaldos. ¡Que no falten la natilla, los buñuelos y la alegría!'],
+    'ES-12-22': ['Hoy es especial', 'Hoy se celebra el Sorteo de Navidad de la Lotería. ¡Que te toque mucha alegría!'],
+    '12-24': ['Nochebuena', 'Que esta noche esté llena de cariño y buenos momentos. ¡Gracias por tu trabajo de este año!'],
+    '12-31': ['Último día del año', 'Gracias por cerrar el año con todo el equipo. ¡Que el año nuevo te traiga todo lo bonito!']
+  };
+
+  function mensajesFiesta(temporada) {
+    const pais = String((estado.perfil && estado.perfil.pais) || '').toUpperCase();
+    const propio = x => !x[0] || x[0] === pais;
+    const especial = FIESTA_ESPECIAL[pais + '-' + temporada.hoy.slice(5)] || FIESTA_ESPECIAL[temporada.hoy.slice(5)];
+    const lista = mensajesBaseFiesta(temporada, pais, propio);
+    return especial ? [especial].concat(lista) : lista;
+  }
+
+  function mensajesBaseFiesta(temporada, pais, propio) {
+    if (temporada.fase === 'cierre') return FIESTA.cierre.filter(propio).map(x => ['Cierre de año', x[1]]);
+    if (temporada.fase === 'navidad_dia') return FIESTA.navidad.map(t => ['Felices fiestas', t]);
+    const datos = FIESTA.datos.filter(propio).map(x => ['¿Sabías que…?', x[1]]);
+    const lista = [];
+    const largo = Math.max(datos.length, FIESTA.animo.length);
+    for (let i = 0; i < largo; i++) {
+      if (datos[i]) lista.push(datos[i]);
+      if (FIESTA.animo[i]) lista.push(['Para hoy', FIESTA.animo[i]]);
+    }
+    return lista;
+  }
+
+  function pintarNieve(temporada) {
+    const nieve = document.getElementById('nieve');
+    if (!temporada) { nieve.hidden = true; nieve.innerHTML = ''; return; }
+    nieve.className = 'nieve' + (temporada.fase === 'cierre' ? ' cierre' : '');
+    if (!nieve.childElementCount) {
+      let html = '';
+      for (let i = 0; i < 18; i++) {
+        const tam = 2 + Math.random() * 4;
+        html += '<span style="left:' + (Math.random() * 100).toFixed(1) + '%;width:' + tam.toFixed(1) + 'px;height:' + tam.toFixed(1) + 'px;animation-duration:' + (9 + Math.random() * 9).toFixed(1) + 's;animation-delay:-' + (Math.random() * 16).toFixed(1) + 's"></span>';
+      }
+      nieve.innerHTML = html;
+    }
+    nieve.hidden = false;
+  }
+
+  function pintarFiesta() {
+    const temporada = temporadaFiesta();
+    const caja = document.getElementById('fiesta');
+    pintarNieve(temporada);
+    if (!temporada || !estado.perfil) { caja.hidden = true; return; }
+    const nombre = estado.perfil.nombre_corto || '';
+    const titulo = document.getElementById('fiesta-titulo');
+    const sub = document.getElementById('fiesta-sub');
+    caja.className = 'fiesta' + (temporada.fase === 'cierre' ? ' cierre' : '');
+    if (temporada.fase === 'navidad') {
+      document.getElementById('fiesta-icono').textContent = temporada.dias <= 1 ? '⭐' : '🎄';
+      titulo.innerHTML = temporada.dias === 1 ? esc(nombre) + ', <strong>mañana es Navidad</strong>' : esc(nombre) + ', faltan <strong>' + temporada.dias + ' días</strong> para Navidad';
+      sub.textContent = temporada.dias === 1 ? 'Nochebuena · 24 de diciembre' : 'Temporada navideña';
+    } else if (temporada.fase === 'navidad_dia') {
+      document.getElementById('fiesta-icono').textContent = '🎁';
+      titulo.innerHTML = '¡Feliz Navidad, <strong>' + esc(nombre) + '</strong>!';
+      sub.textContent = 'De parte de todo el equipo Samsara';
+    } else {
+      document.getElementById('fiesta-icono').textContent = '🥂';
+      titulo.innerHTML = temporada.dias === 1 ? esc(nombre) + ', <strong>hoy cerramos ' + temporada.anio + '</strong>' : esc(nombre) + ', faltan <strong>' + temporada.dias + ' días</strong> para ' + (temporada.anio + 1);
+      sub.textContent = 'Gracias por un gran año';
+    }
+    const lista = mensajesFiesta(temporada);
+    if (fiestaEstado.clave !== temporada.hoy || fiestaEstado.indice === null) {
+      const pais = String(estado.perfil.pais || '').toUpperCase();
+      const especial = FIESTA_ESPECIAL[pais + '-' + temporada.hoy.slice(5)] || FIESTA_ESPECIAL[temporada.hoy.slice(5)];
+      const base = Math.floor(Date.UTC(...temporada.hoy.split('-').map((v, i) => i === 1 ? Number(v) - 1 : Number(v))) / 86400000);
+      fiestaEstado.indice = especial ? 0 : base % lista.length;
+      fiestaEstado.clave = temporada.hoy;
+    }
+    const m = lista[fiestaEstado.indice % lista.length];
+    document.getElementById('fiesta-mensaje').innerHTML = '<span class="fiesta-tipo">' + esc(m[0]) + '</span>' + esc(m[1]);
+    document.getElementById('fiesta-sonido').textContent = sonidoActivo() ? '🔔 Sonido' : '🔕 Sin sonido';
+    caja.hidden = false;
+  }
+
+  function siguienteFiesta() {
+    const temporada = temporadaFiesta();
+    if (!temporada) return;
+    const msj = document.getElementById('fiesta-mensaje');
+    msj.style.opacity = 0;
+    setTimeout(() => {
+      fiestaEstado.indice = (fiestaEstado.indice || 0) + 1;
+      pintarFiesta();
+      msj.style.opacity = 1;
+    }, 200);
   }
 
   function leerDiagnostico() {
@@ -2017,6 +2252,7 @@
     pintarAvisoDocumentos();
     pintarCola();
     pintarInsignia();
+    pintarFiesta();
     if (estado.perfil && !leer(CLAVE_BIENVENIDA) && document.getElementById('bienvenida').hidden) abrirBienvenida();
     document.getElementById('btn-vincular').hidden = !(ES_IOS && !ES_ICONO && estado.perfil);
     pintarNomina();
