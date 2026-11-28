@@ -75,7 +75,24 @@
     .tabs { max-width: 1320px; margin: 0 auto; padding: 0 16px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
     .tab { background: none; border: none; color: var(--text-3); padding: 10px 14px 12px; cursor: pointer; font-weight: 600; border-bottom: 2px solid transparent; white-space: nowrap; }
     .tab.activa { color: var(--gold-light); border-bottom-color: var(--gold); }
-    .tab .contador { display: inline-block; min-width: 18px; padding: 1px 6px; border-radius: 10px; background: var(--red); color: #fff; font-size: 11px; margin-left: 6px; }
+    .tab .contador { display: inline-block; min-width: 18px; padding: 1px 6px; border-radius: 10px; background: var(--red); color: #fff; font-size: 11px; margin-left: 0; }
+    .tab { display: inline-flex; align-items: center; gap: 7px; transition: color 0.15s; }
+    .tab:hover { color: var(--text-2); }
+    .tab .ti { width: 16px; height: 16px; fill: currentColor; opacity: 0.85; flex-shrink: 0; }
+    [data-actualizando] { position: relative; }
+    [data-actualizando]::before { content: ""; position: absolute; left: 0; right: 0; top: -8px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: barrido 1.1s linear infinite; }
+    @keyframes barrido { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+    .pend-grupo { margin-bottom: 18px; }
+    .pend-cab { display: flex; align-items: center; gap: 8px; margin: 18px 0 8px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+    .pend-cab .ti { width: 15px; height: 15px; fill: var(--gold); }
+    .pend-item { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--night-mid); border: 1px solid var(--border-soft); border-radius: 12px; padding: 11px 14px; margin-bottom: 8px; color: inherit; font: inherit; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .pend-item:hover { border-color: var(--border); background: var(--night-soft); }
+    .pend-item .pend-txt { flex: 1; min-width: 0; }
+    .pend-item .pend-txt strong { display: block; }
+    .pend-item .pend-det { font-size: 12.5px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pend-item .pend-ir { color: var(--gold-light); font-size: 12.5px; white-space: nowrap; }
+    .pend-vacio { text-align: center; padding: 50px 20px; color: var(--text-2); }
+    .pend-vacio b { display: block; font-size: 30px; margin-bottom: 8px; }
 
     main { max-width: 1320px; margin: 0 auto; padding: 18px 16px 60px; }
     .filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
@@ -214,9 +231,12 @@
       .barra .marca { font-size: 16px; }
       #chips-pais { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
       #chips-pais .chip { white-space: nowrap; padding: 6px 12px; }
-      .tabs { padding: 0 8px; }
-      .tab { padding: 9px 10px 11px; font-size: 13px; }
-      main { padding: 14px 12px 70px; }
+      .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-width: none; margin: 0; padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)); gap: 2px; background: rgba(20,20,42,0.97); border-top: 1px solid var(--border-soft); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+      .tab { position: relative; flex-direction: column; gap: 3px; min-width: 68px; padding: 6px 6px 5px; font-size: 10.5px; font-weight: 600; border-bottom: none; border-top: 2px solid transparent; }
+      .tab.activa { border-bottom-color: transparent; border-top-color: var(--gold); }
+      .tab .ti { width: 21px; height: 21px; }
+      .tab .contador { position: absolute; top: 2px; left: calc(50% + 4px); font-size: 9.5px; min-width: 16px; padding: 0 4px; line-height: 15px; }
+      main { padding: 14px 12px calc(96px + env(safe-area-inset-bottom, 0px)); }
       .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .kpi { padding: 11px 12px; }
       .kpi-v { font-size: 22px; }
@@ -233,7 +253,7 @@
       .panel-caja { padding: 13px; }
       .codigo-grande { font-size: 36px; }
       .aviso-version { left: 12px; right: 12px; justify-content: space-between; }
-      .toast { left: 12px; right: 12px; transform: none; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+      .toast { left: 12px; right: 12px; transform: none; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); text-align: center; }
     }
     @media (max-width: 640px) {
       .tiendas { grid-template-columns: 1fr; }
@@ -282,17 +302,18 @@
       <div class="usuario"><span id="usuario-nombre"></span><button class="btn ghost mini" id="btn-salir">Salir</button></div>
     </div>
     <nav class="tabs" id="tabs">
-      <button class="tab activa" data-vista="hoy">En vivo</button>
-      <button class="tab" data-vista="incidencias">Incidencias<span class="contador" id="cont-incidencias" hidden></span></button>
-      <button class="tab" data-vista="solicitudes">Solicitudes<span class="contador" id="cont-solicitudes" hidden></span></button>
-      <button class="tab" data-vista="extras">Horas extra<span class="contador" id="cont-extras" hidden></span></button>
-      <button class="tab" data-vista="metricas">Métricas</button>
-      <button class="tab" data-vista="planilla">Planilla</button>
-      <button class="tab" data-vista="historial">Historial</button>
-      <button class="tab" data-vista="revision">Revisión<span class="contador" id="cont-revision" hidden></span></button>
-      <button class="tab" data-vista="documentos">Documentos</button>
-      <button class="tab" data-vista="puntos">Puntos de marca</button>
-      <button class="tab" data-vista="accesos">Accesos</button>
+      <button class="tab activa" data-vista="hoy"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg><span class="tl">En vivo</span></button>
+      <button class="tab" data-vista="pendientes"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg><span class="tl">Pendientes</span><span class="contador" id="cont-pendientes" hidden></span></button>
+      <button class="tab" data-vista="incidencias"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg><span class="tl">Incidencias</span><span class="contador" id="cont-incidencias" hidden></span></button>
+      <button class="tab" data-vista="solicitudes"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z"/></svg><span class="tl">Solicitudes</span><span class="contador" id="cont-solicitudes" hidden></span></button>
+      <button class="tab" data-vista="extras"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg><span class="tl">Horas extra</span><span class="contador" id="cont-extras" hidden></span></button>
+      <button class="tab" data-vista="metricas"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg><span class="tl">Métricas</span></button>
+      <button class="tab" data-vista="planilla"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"/></svg><span class="tl">Planilla</span></button>
+      <button class="tab" data-vista="historial"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg><span class="tl">Historial</span></button>
+      <button class="tab" data-vista="revision"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zM2 16h8v-2H2v2zm19.5-4.5L23 13l-6.99 7-4.51-4.5L13 14l3.01 3 5.49-5.5z"/></svg><span class="tl">Revisión</span><span class="contador" id="cont-revision" hidden></span></button>
+      <button class="tab" data-vista="documentos"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg><span class="tl">Documentos</span></button>
+      <button class="tab" data-vista="puntos"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2zM15 15h2v2h-2zM13 17h2v2h-2zM17 17h2v2h-2zM19 19h2v2h-2zM15 19h2v2h-2zM17 13h2v2h-2zM19 15h2v2h-2z"/></svg><span class="tl">Puntos de marca</span></button>
+      <button class="tab" data-vista="accesos"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg><span class="tl">Accesos</span></button>
     </nav>
   </header>
 
@@ -318,6 +339,12 @@
       <div class="tiendas" id="hoy-tiendas"></div>
     </section>
 
+    <section id="v-pendientes" hidden>
+      <div class="titulo">Mis pendientes</div>
+      <div class="sub">Todo lo que espera tu decisión, en un solo lugar. Tocá un caso para ir a resolverlo.</div>
+      <div id="pend-contenido"></div>
+    </section>
+
     <section id="v-incidencias" hidden>
       <div class="titulo">Incidencias</div>
       <div class="sub">Tardías, almuerzos extendidos y ausencias. La justificación no anula la incidencia: la coordinadora decide.</div>
@@ -326,6 +353,7 @@
         <div class="campo"><label for="inc-hasta">Hasta</label><input class="input" type="date" id="inc-hasta"></div>
         <div class="campo"><label for="inc-estado">Estado</label>
           <select class="input" id="inc-estado">
+            <option value="PENDIENTES" selected>Pendientes (en plazo y en revisión)</option>
             <option value="">Todos</option>
             <option value="En revisión">En revisión</option>
             <option value="En plazo">En plazo</option>
@@ -557,7 +585,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.28.1';
+  const VERSION = '2026.11.28.2';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -678,6 +706,7 @@
   $('btn-salir').addEventListener('click', salir);
 
   function salir() {
+    limpiarCache();
     guardar(null);
     st.sesion = null;
     if (st.timer) clearInterval(st.timer);
@@ -755,7 +784,7 @@
 
   function aplicarPerfil(usuario) {
     const vistas = usuario.vistas || ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'historial', 'revision'];
-    document.querySelectorAll('.tab').forEach(t => { t.hidden = vistas.indexOf(t.dataset.vista) < 0; });
+    document.querySelectorAll('.tab').forEach(t => { t.hidden = t.dataset.vista !== 'pendientes' && vistas.indexOf(t.dataset.vista) < 0; });
     const deptos = usuario.departamentos || [];
     const sel = $('fg-depto');
     sel.hidden = !deptos.length;
@@ -768,8 +797,9 @@
   function mostrarVista(v, forzar) {
     st.vista = v;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activa', t.dataset.vista === v));
-    ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'historial', 'revision', 'documentos', 'puntos', 'accesos'].forEach(x => { $('v-' + x).hidden = x !== v; });
-    $('filtro-global').hidden = v === 'documentos' || v === 'puntos' || v === 'accesos';
+    ['hoy', 'pendientes', 'incidencias', 'solicitudes', 'extras', 'metricas', 'planilla', 'historial', 'revision', 'documentos', 'puntos', 'accesos'].forEach(x => { $('v-' + x).hidden = x !== v; });
+    $('filtro-global').hidden = v === 'documentos' || v === 'puntos' || v === 'accesos' || v === 'pendientes';
+    if (v === 'pendientes') { pintarPendientesPanel(); contadores(); }
     if (v === 'accesos') cargarAccesos();
     if (v === 'revision' && (forzar || !st.datos.revision)) cargarRevision();
     if (v === 'puntos') { pintarSelectTiendas(); pintarParticipantes(); if (forzar || !st.datos.equipos) cargarPuntos(); }
@@ -791,7 +821,7 @@
   async function contadores() {
     try {
       const [inc, sol, ext, rev] = await Promise.all([
-        llamar({ accion: 'panel_incidencias', pais: st.pais }),
+        llamar({ accion: 'panel_incidencias', pais: st.pais, solo_pendientes: true }),
         llamar({ accion: 'panel_solicitudes', pais: st.pais }),
         llamar({ accion: 'panel_extras', pais: st.pais }),
         llamar({ accion: 'ctl_revision', pais: st.pais }).catch(() => ({})),
@@ -806,17 +836,87 @@
       const nSol = sol.ok ? sol.solicitudes.filter(s => s.puede_resolver || s.puede_revisar).length : 0;
       $('cont-incidencias').hidden = !nInc; $('cont-incidencias').textContent = nInc;
       $('cont-solicitudes').hidden = !nSol; $('cont-solicitudes').textContent = nSol;
+      st.pend = { inc: inc, sol: sol, ext: ext, rev: rev, imp: imp };
+      const nPend = listaPendientes().length;
+      $('cont-pendientes').hidden = !nPend; $('cont-pendientes').textContent = nPend;
+      if (st.vista === 'pendientes') pintarPendientesPanel();
     } catch (e) {}
   }
 
-  async function cargarHoy(silencioso) {
-    if (!silencioso || !st.datos.hoy) cargando('hoy-tiendas');
+  const NOMBRE_EXTRA = { DESPUES: 'Hora extra después de salida', ANTES: 'Entrada antes de hora', DIA_LIBRE: 'Día libre trabajado' };
+  const ICONO_PEND = { incidencias: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z', solicitudes: 'M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z', extras: 'M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z', revision: 'M14 10H2v2h12v-2zm0-4H2v2h12V6zM2 16h8v-2H2v2zm19.5-4.5L23 13l-6.99 7-4.51-4.5L13 14l3.01 3 5.49-5.5z' };
+
+  function unir(...partes) { return partes.filter(Boolean).join(' · '); }
+
+  function listaPendientes() {
+    const p = st.pend;
+    if (!p) return [];
+    const enPais = x => !st.pais || !x.pais || x.pais === st.pais;
+    const lista = [];
+    if (p.inc && p.inc.ok && p.inc.puede_decidir) p.inc.incidencias.filter(i => i.estado === 'En revisión' && enPais(i)).forEach(i => lista.push({ vista: 'incidencias', grupo: 'Incidencias por decidir', nombre: i.nombre, fecha: i.fecha, detalle: unir(i.tipoNombre || i.tipo, i.tienda, i.comentario && '"' + i.comentario + '"') }));
+    if (p.sol && p.sol.ok) p.sol.solicitudes.filter(x => (x.puede_resolver || x.puede_revisar) && enPais(x)).forEach(x => lista.push({ vista: 'solicitudes', grupo: 'Solicitudes', nombre: x.nombre, fecha: x.desde || String(x.enviada || '').slice(0, 10), detalle: x.tipo + (x.desde ? ' · ' + fechaCorta(x.desde) + (x.hasta && x.hasta !== x.desde ? ' al ' + fechaCorta(x.hasta) : '') : '') + (x.puede_revisar ? ' · por revisar' : '') }));
+    if (p.ext && p.ext.ok && p.ext.puede_aprobar) p.ext.extras.filter(x => x.estado === 'Pendiente' && x.puede !== false && enPais(x)).forEach(x => lista.push({ vista: 'extras', grupo: 'Horas extra por aprobar', nombre: x.nombre, fecha: x.fecha, detalle: unir(NOMBRE_EXTRA[x.tipo] || x.tipo, (x.calculados || 0) + ' min', x.tienda) }));
+    if (p.rev && p.rev.ok && p.rev.puede_revisar) p.rev.items.filter(x => x.estado === 'Pendiente' && enPais(x)).forEach(x => lista.push({ vista: 'revision', grupo: 'Revisión de jornadas', nombre: x.nombre, fecha: x.fecha, detalle: unir(x.detalle || x.tipo, x.tienda) }));
+    if (p.imp && p.imp.ok) p.imp.items.filter(x => x.puede && enPais(x)).forEach(x => lista.push({ vista: 'revision', grupo: 'Revisión de jornadas', nombre: x.nombre, fecha: x.fecha || '', detalle: unir('Imprevisto', x.tipo, x.tienda) }));
+    return lista.sort((a, b) => String(a.fecha) < String(b.fecha) ? -1 : 1);
+  }
+
+  function pintarPendientesPanel() {
+    const cont = $('pend-contenido');
+    if (!st.pend) return cargando('pend-contenido');
+    const lista = listaPendientes();
+    if (!lista.length) return (cont.innerHTML = '<div class="pend-vacio"><b>✓</b>¡Todo al día! No tenés nada pendiente por decidir.</div>');
+    const grupos = {};
+    lista.forEach(x => (grupos[x.grupo] = grupos[x.grupo] || []).push(x));
+    cont.innerHTML = Object.keys(grupos).map(g => {
+      const items = grupos[g];
+      return '<div class="pend-grupo"><div class="pend-cab"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="' + ICONO_PEND[items[0].vista] + '"/></svg>' + esc(g) + ' · ' + items.length + '</div>' +
+        items.map(x => '<button class="pend-item" data-vista="' + esc(x.vista) + '" data-nombre="' + esc(x.nombre) + '"><div class="pend-txt"><strong>' + esc(nombreCorto(x.nombre)) + '</strong><div class="pend-det">' + (x.fecha ? esc(fechaCorta(x.fecha)) + ' · ' : '') + esc(x.detalle) + '</div></div><span class="pend-ir">Resolver →</span></button>').join('') + '</div>';
+    }).join('');
+    cont.querySelectorAll('.pend-item').forEach(b => b.addEventListener('click', () => {
+      st.filtro.persona = b.dataset.nombre;
+      $('fg-persona').value = b.dataset.nombre;
+      if (b.dataset.vista === 'incidencias') $('inc-estado').value = 'PENDIENTES';
+      estadoFiltro();
+      mostrarVista(b.dataset.vista, true);
+      window.scrollTo(0, 0);
+    }));
+  }
+
+  function claveCache(datos) { return 'samsara_cache|' + (st.usuario ? st.usuario.email : '') + '|' + JSON.stringify(datos); }
+  function leerCache(datos) {
     try {
-      const r = await llamar({ accion: 'panel_hoy' });
-      if (!r.ok) return ($('hoy-tiendas').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
-      st.datos.hoy = r;
-      pintarHoy();
-    } catch (e) { if (!st.datos.hoy) $('hoy-tiendas').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+      const v = JSON.parse(localStorage.getItem(claveCache(datos)) || 'null');
+      return v && Date.now() - v.t < 12 * 3600000 ? v.r : null;
+    } catch (e) { return null; }
+  }
+  function guardarCache(datos, r) {
+    try { localStorage.setItem(claveCache(datos), JSON.stringify({ t: Date.now(), r: r })); }
+    catch (e) { limpiarCache(); }
+  }
+  function limpiarCache() {
+    try { Object.keys(localStorage).filter(k => k.indexOf('samsara_cache|') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  }
+  async function cargarRapido(datos, contenedor, clave, pintar, silencioso) {
+    const previo = st.datos[clave] && silencioso ? null : leerCache(datos);
+    const caja = $(contenedor);
+    if (previo) { st.datos[clave] = previo; pintar(); caja.setAttribute('data-actualizando', ''); }
+    else if (!silencioso || !st.datos[clave]) cargando(contenedor);
+    try {
+      const r = await llamar(datos);
+      caja.removeAttribute('data-actualizando');
+      if (!r.ok) { if (!previo && !st.datos[clave]) caja.innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>'; return; }
+      st.datos[clave] = r;
+      guardarCache(datos, r);
+      pintar();
+    } catch (e) {
+      caja.removeAttribute('data-actualizando');
+      if (e.message !== 'sesion' && !previo && !st.datos[clave]) caja.innerHTML = '<div class="vacio">Sin conexión.</div>';
+    }
+  }
+
+  async function cargarHoy(silencioso) {
+    return cargarRapido({ accion: 'panel_hoy' }, 'hoy-tiendas', 'hoy', pintarHoy, silencioso);
   }
 
   function estadoPersona(p, duracion) {
@@ -972,23 +1072,24 @@
   }
 
   $('btn-inc-buscar').addEventListener('click', cargarIncidencias);
-  $('inc-estado').addEventListener('change', pintarIncidencias);
+  $('inc-estado').addEventListener('change', () => {
+    if (($('inc-estado').value === 'PENDIENTES') !== !!st.incPendientes || !st.datos.incidencias) cargarIncidencias();
+    else pintarIncidencias();
+  });
   $('inc-tipo').addEventListener('change', pintarIncidencias);
 
   async function cargarIncidencias() {
-    cargando('inc-contenido');
-    try {
-      const r = await llamar({ accion: 'panel_incidencias', pais: st.pais, desde: $('inc-desde').value, hasta: $('inc-hasta').value });
-      if (!r.ok) return ($('inc-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
-      st.datos.incidencias = r;
-      pintarIncidencias();
-    } catch (e) { $('inc-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+    const datos = { accion: 'panel_incidencias', pais: st.pais, desde: $('inc-desde').value, hasta: $('inc-hasta').value };
+    if ($('inc-estado').value === 'PENDIENTES') datos.solo_pendientes = true;
+    st.incPendientes = !!datos.solo_pendientes;
+    return cargarRapido(datos, 'inc-contenido', 'incidencias', pintarIncidencias);
   }
 
   function pintarIncidencias() {
     const r = st.datos.incidencias;
     if (!r) return;
-    const lista = r.incidencias.filter(i => (!$('inc-estado').value || i.estado === $('inc-estado').value) && (!$('inc-tipo').value || i.tipo === $('inc-tipo').value) && pasa(i.tienda, i.idTienda, i.nombre, i.id));
+    const filtroEstado = $('inc-estado').value;
+    const lista = r.incidencias.filter(i => (!filtroEstado || (filtroEstado === 'PENDIENTES' ? i.estado === 'En plazo' || i.estado === 'En revisión' : i.estado === filtroEstado)) && (!$('inc-tipo').value || i.tipo === $('inc-tipo').value) && pasa(i.tienda, i.idTienda, i.nombre, i.id));
     if (!lista.length) return ($('inc-contenido').innerHTML = '<div class="vacio">No hay incidencias con esos filtros.</div>');
     const filas = lista.map((i, n) => {
       const just = i.justificacion === 'Sí'
@@ -1026,13 +1127,7 @@
   }));
 
   async function cargarSolicitudes() {
-    cargando('sol-contenido');
-    try {
-      const r = await llamar({ accion: 'panel_solicitudes', pais: st.pais });
-      if (!r.ok) return ($('sol-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
-      st.datos.solicitudes = r;
-      pintarSolicitudes();
-    } catch (e) { $('sol-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+    return cargarRapido({ accion: 'panel_solicitudes', pais: st.pais }, 'sol-contenido', 'solicitudes', pintarSolicitudes);
   }
 
   function pintarSolicitudes() {
@@ -1083,13 +1178,7 @@
   }));
 
   async function cargarExtras() {
-    cargando('ext-contenido');
-    try {
-      const r = await llamar({ accion: 'panel_extras', pais: st.pais, desde: $('ext-desde').value, hasta: $('ext-hasta').value });
-      if (!r.ok) return ($('ext-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
-      st.datos.extras = r;
-      pintarExtras();
-    } catch (e) { $('ext-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+    return cargarRapido({ accion: 'panel_extras', pais: st.pais, desde: $('ext-desde').value, hasta: $('ext-hasta').value }, 'ext-contenido', 'extras', pintarExtras);
   }
 
   function pintarExtras() {
@@ -1138,17 +1227,23 @@
   $('btn-met-buscar').addEventListener('click', cargarMetricas);
 
   async function cargarMetricas() {
-    cargando('met-contenido');
+    const datos = { accion: 'panel_metricas', pais: st.pais, mes: $('met-mes').value };
+    const caja = $('met-contenido');
+    const previo = leerCache(datos);
+    if (previo) { st.datos.metricas = previo; pintarMetricas(); caja.setAttribute('data-actualizando', ''); }
+    else cargando('met-contenido');
     try {
       const [r, ins] = await Promise.all([
-        llamar({ accion: 'panel_metricas', pais: st.pais, mes: $('met-mes').value }),
+        llamar(datos),
         st.datos.insignias ? Promise.resolve(st.datos.insignias) : llamar({ accion: 'hist_reconocimientos', pais: st.pais }).catch(() => null)
       ]);
+      caja.removeAttribute('data-actualizando');
       if (ins && ins.ok) st.datos.insignias = ins;
-      if (!r.ok) return ($('met-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
+      if (!r.ok) { if (!previo) caja.innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>'; return; }
       st.datos.metricas = r;
+      guardarCache(datos, r);
       pintarMetricas();
-    } catch (e) { $('met-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+    } catch (e) { caja.removeAttribute('data-actualizando'); if (!previo) caja.innerHTML = '<div class="vacio">Sin conexión.</div>'; }
   }
 
   function barraPct(v) {
@@ -1774,14 +1869,8 @@
   }
 
   async function cargarRevision() {
-    cargando('rev-contenido');
     cargarImprevistos();
-    try {
-      const r = await llamar({ accion: 'ctl_revision', pais: st.pais, desde: $('rev-desde').value, hasta: $('rev-hasta').value });
-      if (!r.ok) return ($('rev-contenido').innerHTML = '<div class="vacio">' + esc(r.mensaje) + '</div>');
-      st.datos.revision = r;
-      pintarRevision();
-    } catch (e) { if (e.message !== 'sesion') $('rev-contenido').innerHTML = '<div class="vacio">Sin conexión.</div>'; }
+    return cargarRapido({ accion: 'ctl_revision', pais: st.pais, desde: $('rev-desde').value, hasta: $('rev-hasta').value }, 'rev-contenido', 'revision', pintarRevision);
   }
 
   function pintarRevision() {
