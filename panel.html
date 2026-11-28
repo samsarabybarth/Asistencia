@@ -233,7 +233,9 @@
     .escena { display: none; }
     html.navidad .escena { display: block; position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .escena-frente { display: none; }
-    html.navidad .escena-frente { display: block; position: fixed; left: 0; right: 0; bottom: 0; height: 0; z-index: 6; pointer-events: none; }
+    html.navidad .escena-frente { display: block; position: fixed; left: 0; right: 0; bottom: 0; height: 0; z-index: 0; pointer-events: none; }
+    html.navidad { --night: rgba(26,26,46,0.8); }
+    html.navidad th, html.navidad .modal-caja, html.navidad .barra { background: #1A1A2E; }
     html.navidad main { padding-bottom: 170px; }
     html.navidad #vista-panel, html.navidad .login { position: relative; z-index: 1; }
     .escena-izq, .escena-der { position: absolute; bottom: 0; display: flex; align-items: flex-end; }
@@ -295,6 +297,11 @@
     .modal-caja .sub { margin: 0; line-height: 1.5; }
     .modal-botones { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
     .varias-progreso { font-size: 13px; color: var(--gold-light); min-height: 18px; }
+    .btn.elegido { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .cola-pill { align-self: flex-start; font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; color: var(--gold-light); background: var(--gold-dim); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; }
+    .rev-card.marcada { border-color: var(--gold); }
+    .resumen-fila { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border-soft); color: var(--cream); }
+    .rev-botones { flex-wrap: wrap; align-items: center; }
     #tip { position: fixed; z-index: 90; max-width: 280px; padding: 7px 11px; border-radius: 9px; background: #2B2B4A; border: 1px solid var(--border); color: var(--cream); font: 500 12.5px/1.4 'DM Sans', system-ui, sans-serif; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.45); opacity: 0; transform: translateY(-3px); transition: opacity 0.12s, transform 0.12s; }
     #tip.ver { opacity: 1; transform: none; }
     @media (max-width: 640px) { .varias-barra { margin-left: 0; width: 100%; } .btn.gestionar { flex: 1; justify-content: center; } }
@@ -447,6 +454,7 @@
           </select>
         </div>
         <button class="btn" id="btn-inc-buscar">Buscar</button>
+        <div class="varias-barra"><button class="btn ghost mini" id="inc-marcar" data-tip="Marca o desmarca el cuadrito «Varias» en todos los casos de esta lista">Marcar todas</button><button class="btn gestionar" id="inc-varias" data-tip="Envía de una sola vez todas las decisiones que dejaste en espera">Gestionar varias <span class="n" id="inc-varias-n">0</span></button></div>
       </div>
       <div id="inc-contenido"></div>
     </section>
@@ -459,7 +467,7 @@
           <button class="chip activa" data-f="pendientes">Por atender</button>
           <button class="chip" data-f="todas">Todas</button>
         </div>
-        <div class="varias-barra"><button class="btn ghost mini" id="sol-marcar" data-tip="Marca o desmarca todas las de esta lista que podés gestionar">Marcar todas</button><button class="btn gestionar" id="sol-varias" data-tip="Aprobá, rechazá o revisá de una sola vez todas las que marcaste">Gestionar varias <span class="n" id="sol-varias-n">0</span></button></div>
+        <div class="varias-barra"><button class="btn ghost mini" id="sol-marcar" data-tip="Marca o desmarca todas las de esta lista que podés gestionar">Marcar todas</button><button class="btn gestionar" id="sol-varias" data-tip="Envía de una sola vez todas las decisiones que dejaste en espera">Gestionar varias <span class="n" id="sol-varias-n">0</span></button></div>
       </div>
       <div id="sol-contenido"></div>
     </section>
@@ -475,7 +483,7 @@
         <div class="campo"><label for="ext-desde">Desde</label><input class="input" type="date" id="ext-desde"></div>
         <div class="campo"><label for="ext-hasta">Hasta</label><input class="input" type="date" id="ext-hasta"></div>
         <button class="btn" id="btn-ext-buscar">Buscar</button>
-        <div class="varias-barra"><button class="btn ghost mini" id="ext-marcar" data-tip="Marca o desmarca todas las de esta lista que podés gestionar">Marcar todas</button><button class="btn gestionar" id="ext-varias" data-tip="Aprobá o rechazá de una sola vez todas las horas extra que marcaste">Gestionar varias <span class="n" id="ext-varias-n">0</span></button></div>
+        <div class="varias-barra"><button class="btn ghost mini" id="ext-marcar" data-tip="Marca o desmarca todas las de esta lista que podés gestionar">Marcar todas</button><button class="btn gestionar" id="ext-varias" data-tip="Envía de una sola vez todas las decisiones que dejaste en espera">Gestionar varias <span class="n" id="ext-varias-n">0</span></button></div>
       </div>
       <div id="ext-contenido"></div>
     </section>
@@ -540,6 +548,7 @@
         <div class="campo"><label for="rev-hasta">Hasta</label><input class="input" type="date" id="rev-hasta"></div>
         <button class="btn" id="btn-rev-buscar">Buscar</button>
         <button class="btn ghost" id="btn-asistida">+ Registrar marca asistida</button>
+        <div class="varias-barra"><button class="btn ghost mini" id="rev-marcar" data-tip="Marca o desmarca el cuadrito «Varias» en todos los casos de esta lista">Marcar todas</button><button class="btn gestionar" id="rev-varias" data-tip="Envía de una sola vez todas las decisiones que dejaste en espera">Gestionar varias <span class="n" id="rev-varias-n">0</span></button></div>
       </div>
       <div class="panel-caja" id="asistida-caja" hidden style="margin-bottom:16px">
         <div class="seccion">Marca asistida</div>
@@ -671,7 +680,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.28.5';
+  const VERSION = '2026.11.28.6';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -1187,6 +1196,7 @@
   }
 
   function pintarIncidencias() {
+    setTimeout(() => contarVarias('inc'));
     const r = st.datos.incidencias;
     if (!r) return;
     const filtroEstado = $('inc-estado').value;
@@ -1200,7 +1210,7 @@
       if (r.puede_decidir) {
         decision = '<div class="acciones" data-clave="' + esc(i.clave) + '"><select class="input">' +
           ['Pendiente', 'Justificada', 'No justificada'].map(o => '<option' + (o === i.decision ? ' selected' : '') + '>' + o + '</option>').join('') +
-          '</select><input class="input" placeholder="Observación (opcional)" value="' + esc(i.observacion.replace(/ — [^—]+$/, '')) + '"><button class="btn mini">Guardar</button></div>';
+          '</select><input class="input" placeholder="Observación (opcional)" value="' + esc(i.observacion.replace(/ — [^—]+$/, '')) + '"><div class="fila"><button class="btn mini" data-d="GUARDAR">Guardar</button><label class="varias" data-tip="Marcalo y elegí la decisión: queda en espera hasta que toques «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
       }
       return '<tr><td>' + esc(fechaCorta(i.fecha)) + '</td><td><strong>' + esc(nombreCorto(i.nombre)) + '</strong><div class="muted">' + esc(i.tienda) + '</div></td>' +
         '<td>' + esc(i.tipoNombre) + (i.minutos ? ' <span class="muted">' + i.minutos + ' min</span>' : '') + '<div class="muted wrap">' + esc(i.detalle) + '</div></td>' +
@@ -1208,8 +1218,8 @@
     }).join('');
     $('inc-contenido').innerHTML = '<div class="tabla-wrap"><table><thead><tr><th>Fecha</th><th>Colaboradora</th><th>Incidencia</th><th>Justificación</th><th>Estado</th><th>Decisión</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
     $('inc-contenido').querySelectorAll('.acciones').forEach(caja => {
-      caja.querySelector('button').addEventListener('click', async () => {
-        const b = caja.querySelector('button');
+      caja.querySelector('button[data-d]').addEventListener('click', async () => {
+        const b = caja.querySelector('button[data-d]');
         b.disabled = true;
         try {
           const res = await llamar({ accion: 'panel_decidir', clave: caja.dataset.clave, decision: caja.querySelector('select').value, observacion: caja.querySelector('input').value });
@@ -1240,8 +1250,8 @@
     const filas = lista.map(s => {
       const fechas = s.desde ? fechaCorta(s.desde) + (s.hasta && s.hasta !== s.desde ? ' al ' + fechaCorta(s.hasta) : '') + (s.dias ? ' <span class="muted">(' + s.dias + ' d)</span>' : '') : '—';
       let acciones = s.respuesta ? '<div class="wrap muted">' + esc(s.respuesta) + '</div>' : '';
-      if (s.puede_resolver) acciones = '<div class="acciones" data-id="' + esc(s.id) + '"><textarea class="input" rows="2" placeholder="Comentario (obligatorio si rechazás)"></textarea><div class="fila"><button class="btn ok mini" data-d="APROBADA">Aprobar</button><button class="btn no mini" data-d="RECHAZADA">Rechazar</button><label class="varias" data-tip="Marcalo para gestionar varias a la vez con el botón «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
-      else if (s.puede_revisar) acciones = '<div class="acciones" data-id="' + esc(s.id) + '"><div class="fila"><button class="btn mini" data-d="REVISAR">Marcar revisado</button><label class="varias" data-tip="Marcalo para gestionar varias a la vez con el botón «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
+      if (s.puede_resolver) acciones = '<div class="acciones" data-id="' + esc(s.id) + '"><textarea class="input" rows="2" placeholder="Comentario (obligatorio si rechazás)"></textarea><div class="fila"><button class="btn ok mini" data-d="APROBADA">Aprobar</button><button class="btn no mini" data-d="RECHAZADA">Rechazar</button><label class="varias" data-tip="Marcalo y elegí la decisión: queda en espera hasta que toques «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
+      else if (s.puede_revisar) acciones = '<div class="acciones" data-id="' + esc(s.id) + '"><div class="fila"><button class="btn mini" data-d="REVISAR">Marcar revisado</button><label class="varias" data-tip="Marcalo y elegí la decisión: queda en espera hasta que toques «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
       else if (s.grupo === 'SOLICITUD' && s.estado === 'Pendiente') acciones = '<span class="muted">Responde ' + esc(s.responsable) + '</span>';
       const adj = s.archivos.length ? s.archivos.map((a, k) => '<a href="' + esc(a) + '" target="_blank" rel="noopener">Archivo ' + (k + 1) + '</a>').join(' · ') : '<span class="muted">—</span>';
       return '<tr><td>' + esc(new Date(s.enviada).toLocaleDateString('es-CR', { day: 'numeric', month: 'short' })) + '</td><td><strong>' + esc(nombreCorto(s.nombre)) + '</strong><div class="muted">' + BANDERA[s.pais] + ' ' + esc(s.tienda) + '</div></td>' +
@@ -1300,7 +1310,7 @@
           '<div class="fila"><input class="input" type="number" min="1" max="' + x.calculados + '" value="' + x.calculados + '" style="width:90px" title="Minutos a aprobar"><span class="muted" style="align-self:center">de ' + x.calculados + ' min</span></div>' +
           '<input class="input" placeholder="' + (pideMotivo ? 'Motivo (obligatorio): capacitación, inventario…' : 'Motivo (opcional)') + '">' +
           (x.tipo === 'DIA_LIBRE' ? '<div class="fila"><input class="input compensa" type="date" title="Día que queda libre a cambio"><button class="btn mini" data-d="Compensada">Cambiar día libre</button></div>' : '') +
-          '<div class="fila"><button class="btn ok mini" data-d="Aprobada">' + (x.tipo === 'DIA_LIBRE' ? 'Aprobar el día' : 'Aprobar') + '</button><button class="btn no mini" data-d="Rechazada">Rechazar</button><label class="varias" data-tip="Marcalo para gestionar varias a la vez con el botón «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
+          '<div class="fila"><button class="btn ok mini" data-d="Aprobada">' + (x.tipo === 'DIA_LIBRE' ? 'Aprobar el día' : 'Aprobar') + '</button><button class="btn no mini" data-d="Rechazada">Rechazar</button><label class="varias" data-tip="Marcalo y elegí la decisión: queda en espera hasta que toques «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
       } else {
         accion = (x.estado === 'Aprobada' ? '<strong>' + duracionTexto(x.aprobados) + '</strong> aprobadas' : '') + (x.motivo ? '<div class="wrap muted">' + esc(x.motivo) + '</div>' : '') + (x.aprobo ? '<div class="muted">' + esc(x.aprobo) + '</div>' : '');
       }
@@ -1951,7 +1961,7 @@
         const botones = x.tipo === 'TRASLADO'
           ? '<button class="btn ok mini" data-d="APROBADO">Aprobar</button><button class="btn no mini" data-d="RECHAZADO">Rechazar</button>'
           : '<button class="btn ok mini" data-d="CON_GOCE">Con goce</button><button class="btn no mini" data-d="SIN_GOCE">Sin goce</button>';
-        cuerpo += '<div class="rev-acciones" data-imp="' + esc(x.id) + '"><input class="input" maxlength="300" placeholder="Comentario (obligatorio si es sin goce o rechazo)"><div class="rev-botones">' + botones + '</div></div>';
+        cuerpo += '<div class="rev-acciones" data-imp="' + esc(x.id) + '"><input class="input" maxlength="300" placeholder="Comentario (obligatorio si es sin goce o rechazo)"><div class="rev-botones">' + botones + '<label class="varias" data-tip="Marcalo y elegí la decisión: queda en espera hasta que toques «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
       } else if (x.decision) {
         const d = DECISION_IMP[x.decision] || [x.decision, ''];
         cuerpo += '<div class="rev-linea muted">' + pill(d[0], d[1]) + ' ' + esc(x.decidio + (x.comentario ? ' · ' + x.comentario : '')) + '</div>';
@@ -1977,6 +1987,7 @@
   }
 
   function pintarRevision() {
+    setTimeout(() => contarVarias('rev'));
     pintarImprevistos();
     const r = st.datos.revision;
     if (!r) return;
@@ -1999,7 +2010,7 @@
           : '<button class="btn ok mini" data-a="VALIDAR">Validar</button><button class="btn no mini" data-a="RECHAZAR">Rechazar</button>';
         cuerpo += '<div class="rev-acciones" data-clave="' + esc(x.clave) + '">' + horas +
           '<input class="input" maxlength="500" placeholder="' + (x.tipo === 'INCOMPLETA' ? 'Motivo (obligatorio para completar o no validar)' : 'Motivo (obligatorio para rechazar)') + '">' +
-          '<div class="rev-botones">' + botones + '</div></div>';
+          '<div class="rev-botones">' + botones + '<label class="varias" data-tip="Marcalo y elegí la decisión: queda en espera hasta que toques «Gestionar varias»"><input type="checkbox" class="sel-varias"><span>Varias</span></label></div></div>';
       } else if (x.estado !== 'Pendiente' && x.estado !== 'Informativa') {
         cuerpo += '<div class="rev-linea muted">' + esc((x.reviso ? x.reviso + ' · ' : '') + (x.fechaRevision ? fechaHora(x.fechaRevision) + ' · ' : '') + x.resolucion) + '</div>';
       }
@@ -2264,32 +2275,110 @@
   decorarNavidad();
 
   const VARIAS = {
-    sol: { cont: 'sol-contenido', n: 'sol-varias-n', nombre: ['solicitud', 'solicitudes'] },
-    ext: { cont: 'ext-contenido', n: 'ext-varias-n', nombre: ['hora extra', 'horas extra'] }
+    sol: { conts: ['sol-contenido'], cargar: () => cargarSolicitudes() },
+    ext: { conts: ['ext-contenido'], cargar: () => cargarExtras() },
+    inc: { conts: ['inc-contenido'], cargar: () => cargarIncidencias() },
+    rev: { conts: ['rev-contenido', 'imp-contenido'], cargar: () => cargarRevision() }
   };
 
-  function seleccionadas(tipo) { return [...$(VARIAS[tipo].cont).querySelectorAll('.sel-varias:checked')].map(c => c.closest('.acciones')); }
+  function cajasDe(tipo) { return VARIAS[tipo].conts.flatMap(id => [...$(id).querySelectorAll('.sel-varias')].map(c => c.closest('.acciones, .rev-acciones'))); }
+  function tipoDe(el) { return Object.keys(VARIAS).find(t => VARIAS[t].conts.some(id => el.closest('#' + id))); }
+  function marcada(caja) { const c = caja.querySelector('.sel-varias'); return !!(c && c.checked); }
+
+  function armar(caja, b) {
+    const d = b.dataset.d || b.dataset.a;
+    const valor = sel => { const x = caja.querySelector(sel); return x ? x.value.trim() : ''; };
+    if (caja.closest('#sol-contenido')) {
+      const motivo = valor('textarea');
+      if (d === 'RECHAZADA' && motivo.length < 3) return { error: 'Escribí el motivo del rechazo' };
+      return { datos: d === 'REVISAR' ? { accion: 'panel_revisar', id: caja.dataset.id } : { accion: 'panel_resolver', id: caja.dataset.id, decision: d, motivo: motivo } };
+    }
+    if (caja.closest('#ext-contenido')) {
+      const motivo = caja.querySelectorAll('input')[1].value.trim();
+      const compensa = valor('.compensa');
+      if (d === 'Compensada' && !compensa) return { error: 'Elegí el día que queda libre a cambio' };
+      if ((d === 'Rechazada' || (d === 'Aprobada' && caja.dataset.motivo)) && motivo.length < 3) return { error: d === 'Rechazada' ? 'Escribí el motivo del rechazo' : 'Escribí el motivo de la aprobación' };
+      return { datos: { accion: 'panel_extra_resolver', clave: caja.dataset.clave, decision: d, minutos: caja.querySelector('input').value, motivo: motivo, fecha_compensa: compensa } };
+    }
+    if (caja.closest('#inc-contenido')) {
+      const decision = caja.querySelector('select').value;
+      if (decision === 'Pendiente') return { error: 'Elegí «Justificada» o «No justificada» antes' };
+      return { etiqueta: decision, datos: { accion: 'panel_decidir', clave: caja.dataset.clave, decision: decision, observacion: caja.querySelector('input').value } };
+    }
+    if (caja.dataset.imp) {
+      const comentario = valor('input');
+      if ((d === 'SIN_GOCE' || d === 'RECHAZADO') && comentario.length < 3) return { error: 'Escribí el motivo' };
+      return { datos: { accion: 'imp_decidir', id: caja.dataset.imp, decision: d, comentario: comentario } };
+    }
+    const motivo = valor('input:not([type=time])');
+    const marcas = [...caja.querySelectorAll('input[type=time]')].filter(i => i.value).map(i => ({ tipo: i.dataset.tipo, hora: i.value }));
+    if (d === 'COMPLETAR' && !marcas.length) return { error: 'Indicá la hora de al menos una marca faltante' };
+    if ((d === 'COMPLETAR' || d === 'RECHAZAR') && motivo.length < 3) return { error: 'Escribí el motivo' };
+    return { datos: { accion: 'ctl_resolver', clave: caja.dataset.clave, accion_revision: d, motivo: motivo, marcas: marcas } };
+  }
+
+  function quitarCola(caja) {
+    delete caja._boton;
+    caja.classList.remove('en-cola');
+    caja.querySelectorAll('.elegido').forEach(x => x.classList.remove('elegido'));
+    const p = caja.querySelector('.cola-pill');
+    if (p) p.remove();
+  }
+
+  function enCola(tipo) { return cajasDe(tipo).filter(c => c._boton && marcada(c)); }
 
   function contarVarias(tipo) {
-    const n = seleccionadas(tipo).length;
-    $(VARIAS[tipo].n).textContent = n;
+    const n = enCola(tipo).length;
+    $(tipo + '-varias-n').textContent = n;
     $(tipo + '-varias').classList.toggle('activo', n > 0);
   }
 
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button[data-d], button[data-a]');
+    if (!b) return;
+    const caja = b.closest('.acciones, .rev-acciones');
+    if (!caja || !marcada(caja)) return;
+    const tipo = tipoDe(caja);
+    if (!tipo) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (caja._boton === b) { quitarCola(caja); return contarVarias(tipo); }
+    const r = armar(caja, b);
+    if (r.error) return toast(r.error);
+    quitarCola(caja);
+    caja._boton = b;
+    caja.classList.add('en-cola');
+    b.classList.add('elegido');
+    const pill = document.createElement('div');
+    pill.className = 'cola-pill';
+    pill.textContent = 'En espera · ' + (r.etiqueta || b.textContent.trim());
+    caja.appendChild(pill);
+    contarVarias(tipo);
+  }, true);
+
   document.addEventListener('change', e => {
     if (!e.target.classList || !e.target.classList.contains('sel-varias')) return;
-    const fila = e.target.closest('tr');
-    if (fila) fila.classList.toggle('marcada', e.target.checked);
-    contarVarias(e.target.closest('#sol-contenido') ? 'sol' : 'ext');
+    const caja = e.target.closest('.acciones, .rev-acciones');
+    const marco = caja.closest('tr, .rev-card');
+    if (marco) marco.classList.toggle('marcada', e.target.checked);
+    if (!e.target.checked) quitarCola(caja);
+    contarVarias(tipoDe(caja));
   });
 
-  ['sol', 'ext'].forEach(tipo => {
+  Object.keys(VARIAS).forEach(tipo => {
     $(tipo + '-marcar').addEventListener('click', () => {
-      const cajas = [...$(VARIAS[tipo].cont).querySelectorAll('.sel-varias')];
+      const cajas = cajasDe(tipo);
       if (!cajas.length) return toast('No hay casos para gestionar en esta lista');
-      const marcar = !cajas.every(c => c.checked);
-      cajas.forEach(c => { c.checked = marcar; const f = c.closest('tr'); if (f) f.classList.toggle('marcada', marcar); });
+      const marcar = !cajas.every(marcada);
+      cajas.forEach(c => {
+        const ch = c.querySelector('.sel-varias');
+        ch.checked = marcar;
+        const marco = c.closest('tr, .rev-card');
+        if (marco) marco.classList.toggle('marcada', marcar);
+        if (!marcar) quitarCola(c);
+      });
       contarVarias(tipo);
+      if (marcar) toast('Ahora elegí la decisión de cada caso: queda en espera hasta enviar');
     });
     $(tipo + '-varias').addEventListener('click', () => abrirVarias(tipo));
   });
@@ -2306,54 +2395,40 @@
   function cerrarVarias() { $('varias-modal').hidden = true; }
 
   function abrirVarias(tipo) {
-    const cajas = seleccionadas(tipo);
-    if (!cajas.length) return toast('Marcá el cuadrito «Varias» en cada caso que quieras gestionar');
-    const revisar = tipo === 'sol' ? cajas.filter(c => c.querySelector('[data-d="REVISAR"]')) : [];
-    const resolver = cajas.filter(c => revisar.indexOf(c) < 0);
-    const [uno, varios] = VARIAS[tipo].nombre;
-    $('varias-titulo').textContent = cajas.length + ' ' + (cajas.length === 1 ? uno : varios) + ' ' + (cajas.length === 1 ? 'seleccionada' : 'seleccionadas');
-    const partes = [];
-    if (tipo === 'ext') partes.push('Se aprueban los minutos que tenga cada caso en su casilla.');
-    if (tipo === 'ext' && resolver.some(c => c.dataset.motivo)) partes.push('Algunas son llegadas antes de la entrada o días libres: para aprobarlas el motivo es obligatorio.');
-    if (resolver.length) partes.push('El motivo se guarda igual en todas. Para rechazar es obligatorio.');
-    if (revisar.length) partes.push(revisar.length + ' ' + (revisar.length === 1 ? 'es un documento' : 'son documentos') + ' para marcar como revisado.');
-    $('varias-sub').textContent = partes.join(' ');
-    $('varias-motivo').value = '';
-    $('varias-motivo').hidden = !resolver.length;
+    const cola = enCola(tipo);
+    const sinDecision = cajasDe(tipo).filter(c => marcada(c) && !c._boton).length;
+    if (!cola.length) return toast(sinDecision ? 'Elegí la decisión (aprobar, rechazar…) en cada caso marcado' : 'Marcá el cuadrito «Varias» y elegí la decisión en cada caso');
+    const resumen = {};
+    cola.forEach(c => { const r = armar(c, c._boton); const k = r.etiqueta || c._boton.textContent.trim(); resumen[k] = (resumen[k] || 0) + 1; });
+    $('varias-titulo').textContent = cola.length + (cola.length === 1 ? ' decisión en espera' : ' decisiones en espera');
+    $('varias-sub').innerHTML = Object.keys(resumen).map(k => '<div class="resumen-fila"><span>' + esc(k) + '</span><strong>' + resumen[k] + '</strong></div>').join('') +
+      (sinDecision ? '<div class="muted" style="margin-top:8px">' + sinDecision + (sinDecision === 1 ? ' caso marcado no tiene decisión y no se envía.' : ' casos marcados no tienen decisión y no se envían.') + '</div>' : '');
+    $('varias-motivo').hidden = true;
     $('varias-progreso').textContent = '';
     const caja = $('varias-botones');
     caja.innerHTML = '';
-    caja.appendChild(boton('Cancelar', 'ghost', 'Cierra sin cambiar nada', cerrarVarias));
-    if (revisar.length) caja.appendChild(boton('Marcar revisados (' + revisar.length + ')', '', 'Marca como revisados todos los documentos seleccionados', () => ejecutarVarias(tipo, 'REVISAR', revisar)));
-    if (resolver.length) {
-      caja.appendChild(boton('Rechazar (' + resolver.length + ')', 'no', 'Rechaza todas las seleccionadas con el mismo motivo', () => ejecutarVarias(tipo, tipo === 'sol' ? 'RECHAZADA' : 'Rechazada', resolver)));
-      caja.appendChild(boton('Aprobar (' + resolver.length + ')', 'ok', 'Aprueba todas las seleccionadas y avisa a cada colaboradora', () => ejecutarVarias(tipo, tipo === 'sol' ? 'APROBADA' : 'Aprobada', resolver)));
-    }
+    caja.appendChild(boton('Seguir editando', 'ghost', 'Vuelve a la lista sin enviar nada', cerrarVarias));
+    caja.appendChild(boton('Enviar todo (' + cola.length + ')', '', 'Guarda todas las decisiones en espera y avisa a cada persona', () => ejecutarVarias(tipo, cola)));
     $('varias-modal').hidden = false;
   }
 
-  async function ejecutarVarias(tipo, decision, cajas) {
-    const motivo = $('varias-motivo').value.trim();
-    const rechazo = decision === 'RECHAZADA' || decision === 'Rechazada';
-    if (rechazo && motivo.length < 3) return toast('Escribí el motivo del rechazo');
-    if (tipo === 'ext' && !rechazo && cajas.some(c => c.dataset.motivo) && motivo.length < 3) return toast('Escribí el motivo de la aprobación');
+  async function ejecutarVarias(tipo, cola) {
     const botones = $('varias-botones').querySelectorAll('button');
     botones.forEach(b => { b.disabled = true; });
     let bien = 0;
     const fallas = [];
-    for (let i = 0; i < cajas.length; i++) {
-      const c = cajas[i];
-      $('varias-progreso').textContent = 'Procesando ' + (i + 1) + ' de ' + cajas.length + '…';
+    for (let i = 0; i < cola.length; i++) {
+      $('varias-progreso').textContent = 'Enviando ' + (i + 1) + ' de ' + cola.length + '…';
+      const r = armar(cola[i], cola[i]._boton);
+      if (r.error) { fallas.push(r.error); continue; }
       try {
-        let res;
-        if (tipo === 'sol') res = decision === 'REVISAR' ? await llamar({ accion: 'panel_revisar', id: c.dataset.id }) : await llamar({ accion: 'panel_resolver', id: c.dataset.id, decision: decision, motivo: motivo });
-        else res = await llamar({ accion: 'panel_extra_resolver', clave: c.dataset.clave, decision: decision, minutos: c.querySelector('input').value, motivo: motivo, fecha_compensa: '' });
+        const res = await llamar(r.datos);
         if (res.ok) bien++; else fallas.push(res.mensaje);
       } catch (e) { fallas.push('Sin conexión'); }
     }
     cerrarVarias();
-    toast(bien + ' de ' + cajas.length + ' gestionadas' + (fallas.length ? ' · ' + fallas.length + ' no se pudieron: ' + fallas[0] : ''));
-    if (tipo === 'sol') await cargarSolicitudes(); else await cargarExtras();
+    toast(bien + ' de ' + cola.length + ' enviadas' + (fallas.length ? ' · ' + fallas.length + ' no se pudieron: ' + fallas[0] : ''));
+    await VARIAS[tipo].cargar();
     contadores();
   }
 

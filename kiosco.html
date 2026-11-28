@@ -74,14 +74,19 @@
     html.navidad .pantalla { position: relative; z-index: 1; }
     html.navidad .qr-marco svg, html.navidad .qr-marco img, html.navidad .barra { width: min(51vh, 78vw); }
     html.navidad .qr-marco svg, html.navidad .qr-marco img { height: min(51vh, 78vw); }
-    html.navidad body::before { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 14px; z-index: 2; pointer-events: none;
+    html.navidad body::before, html.navidad body::after { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 14px; z-index: 2; pointer-events: none; }
+    html.navidad body::before {
       background:
         radial-gradient(circle at 50% 60%, #E85D5D 0 4px, transparent 5px) 0 0 / 80px 14px repeat-x,
-        radial-gradient(circle at 50% 60%, #F2C94C 0 4px, transparent 5px) 20px 0 / 80px 14px repeat-x,
         radial-gradient(circle at 50% 60%, #4CAF7D 0 4px, transparent 5px) 40px 0 / 80px 14px repeat-x,
-        radial-gradient(circle at 50% 60%, #7FA7E8 0 4px, transparent 5px) 60px 0 / 80px 14px repeat-x,
         linear-gradient(rgba(200,169,110,0.4), rgba(200,169,110,0.4)) 0 3px / 100% 1px no-repeat;
-      animation: guirnalda 2.4s ease-in-out infinite alternate; }
+      animation: destello 2.2s ease-in-out infinite; }
+    html.navidad body::after {
+      background:
+        radial-gradient(circle at 50% 60%, #F2C94C 0 4px, transparent 5px) 20px 0 / 80px 14px repeat-x,
+        radial-gradient(circle at 50% 60%, #7FA7E8 0 4px, transparent 5px) 60px 0 / 80px 14px repeat-x;
+      animation: destello 2.2s ease-in-out -1.1s infinite; }
+    @keyframes destello { 0%, 100% { opacity: 1; filter: brightness(1.25) drop-shadow(0 0 4px rgba(255,236,170,0.9)); } 50% { opacity: 0.45; filter: brightness(0.85); } }
     .escena-izq, .escena-der { position: absolute; bottom: 0; display: flex; align-items: flex-end; }
     .escena-izq { left: 2vw; }
     .escena-der { right: 2vw; flex-direction: row-reverse; }
@@ -100,7 +105,7 @@
     @keyframes guirnalda { from { filter: brightness(1); } to { filter: brightness(1.45) saturate(1.2); } }
     @keyframes nevar { to { transform: translate3d(var(--deriva, 20px), 105vh, 0); } }
     @media (max-width: 760px) { .escena-izq, .escena-der { display: none; } }
-    @media (prefers-reduced-motion: reduce) { .nieve-k, .luz, .saludo, .estrella, html.navidad body::before { animation: none !important; } .nieve-k { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .nieve-k, .luz, .saludo, .estrella, html.navidad body::before, html.navidad body::after { animation: none !important; } .nieve-k { display: none; } }
   </style>
 </head>
 <body>
@@ -158,7 +163,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE = 'samsara_kiosco';
   const VENTANA_MS = 15000;
-  const VERSION = '2026.11.28.5';
+  const VERSION = '2026.11.28.6';
   const estado = { kiosco: null, desfase: 0, ventana: null, clave: null, timer: null, ping: null, feed: null, desde: Date.now() };
 
   function $(id) { return document.getElementById(id); }
