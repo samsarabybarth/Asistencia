@@ -299,6 +299,7 @@
   <main>
     <div class="filtro-global" id="filtro-global">
       <select class="input" id="fg-tienda" aria-label="Filtrar por tienda"><option value="">Todas las tiendas</option></select>
+      <select class="input" id="fg-depto" aria-label="Filtrar por departamento" hidden><option value="">Todos los departamentos</option></select>
       <div class="fg-buscar">
         <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         <input class="input" id="fg-persona" list="fg-personas" placeholder="Buscar colaborador por nombre o ID" autocomplete="off" aria-label="Buscar colaborador">
@@ -555,7 +556,7 @@
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJWFD4TGISMj0SgmTr_wAzlBMIajOBtervREZUQ47NKuLNRDJKcwSZZ1UaMzXtwqFZ/exec';
   const CLAVE_SESION = 'samsara_panel';
   const CLAVE_EQUIPO = 'samsara_panel_equipo';
-  const VERSION = '2026.11.24.1';
+  const VERSION = '2026.11.27.1';
   const NOMBRE_PAIS = { CR: 'Costa Rica', CO: 'Colombia', ES: 'España' };
   const BANDERA = { CR: '🇨🇷', CO: '🇨🇴', ES: '🇪🇸' };
   const CUBIERTO = { VACACIONES: 'Vacaciones', INCAPACIDAD: 'Incapacidad', PERMISO_CON_GOCE: 'Permiso', PERMISO_SIN_GOCE: 'Permiso sin goce' };
@@ -564,7 +565,7 @@
     'Pendiente': 'amber', 'Aprobada': 'green', 'Rechazada': 'red', 'Compensada': 'blue', 'Revisada': '', 'Recibido': 'gold', 'Revisado': 'green'
   };
 
-  const st = { foco: null, sesion: null, usuario: null, pais: '', vista: 'hoy', datos: {}, solFiltro: 'pendientes', orden: {}, timer: null, filtro: { tienda: '', persona: '' }, dir: null, docSel: {} };
+  const st = { foco: null, sesion: null, usuario: null, pais: '', vista: 'hoy', datos: {}, solFiltro: 'pendientes', orden: {}, timer: null, filtro: { tienda: '', persona: '', depto: '' }, dir: null, docSel: {}, deptoDe: {} };
 
   function $(id) { return document.getElementById(id); }
   function esc(t) { return String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -617,10 +618,14 @@
     const n = compacto(nombre);
     return !!n && [t.nombre, t.corto, t.id].some(x => compacto(x) === n);
   }
-  function pasa(nombreTienda, idTienda, nombre, idPersona) {
-    return coincideTienda(tiendaFiltro(), nombreTienda, idTienda) && coincideTexto(st.filtro.persona, nombre, idPersona);
+  function coincideDepto(idPersona) {
+    if (!st.filtro.depto) return true;
+    return (st.deptoDe[String(idPersona || '').toUpperCase()] || []).indexOf(st.filtro.depto) >= 0;
   }
-  function filtroActivo() { return !!(st.filtro.tienda || norm(st.filtro.persona)); }
+  function pasa(nombreTienda, idTienda, nombre, idPersona) {
+    return coincideTienda(tiendaFiltro(), nombreTienda, idTienda) && coincideTexto(st.filtro.persona, nombre, idPersona) && coincideDepto(idPersona);
+  }
+  function filtroActivo() { return !!(st.filtro.tienda || norm(st.filtro.persona) || st.filtro.depto); }
   function sinResultados(base) { return filtroActivo() ? 'No hay resultados con este filtro.' : base; }
 
   async function llamar(datos, reintento) {
@@ -690,9 +695,14 @@
     $('vista-login').hidden = true;
     $('vista-panel').hidden = false;
     $('usuario-nombre').textContent = usuario.nombre + ' · ' + usuario.roles.map(r => r.charAt(0) + r.slice(1).toLowerCase()).join(', ');
-    const soloEquipo = !!(usuario.area && usuario.area.soloEquipo);
-    document.querySelector('.tab[data-vista="documentos"]').hidden = soloEquipo;
-    document.querySelector('.tab[data-vista="puntos"]').hidden = soloEquipo && usuario.roles.indexOf('OPERACIONES') < 0;
+    aplicarPerfil(usuario);
+    llamar({ accion: 'panel_perfil' }).then(r => {
+      if (!r || !r.ok || !r.usuario || st.sesion !== sesion) return;
+      const firma = u => JSON.stringify([u.nombre, u.roles, u.paises, u.vistas, u.departamentos]);
+      const s = leer();
+      if (s) guardar(Object.assign(s, { usuario: r.usuario }));
+      if (firma(usuario) !== firma(r.usuario)) iniciarPanel(sesion, r.usuario);
+    }).catch(() => {});
     const chips = $('chips-pais');
     chips.innerHTML = '';
     const opciones = usuario.paises.length > 1 ? [''].concat(usuario.paises) : usuario.paises;
@@ -722,7 +732,8 @@
     $('his-mes').value = hoyISO(hoy).slice(0, 7);
     $('his-persona').innerHTML = '';
     presetPlanilla(hoy.getDate() <= 15 ? 'q1' : 'q2');
-    st.filtro = { tienda: '', persona: '' };
+    st.filtro = { tienda: '', persona: '', depto: '' };
+    $('fg-depto').value = '';
     st.docSel = {};
     st.evSel = {};
     $('fg-persona').value = '';
@@ -739,6 +750,16 @@
     cargarDirectorio();
     if (st.timer) clearInterval(st.timer);
     st.timer = setInterval(() => { if (st.vista === 'hoy' && !st.trasAbierto && document.visibilityState === 'visible') cargarHoy(true); }, 60000);
+  }
+
+  function aplicarPerfil(usuario) {
+    const vistas = usuario.vistas || ['hoy', 'incidencias', 'solicitudes', 'extras', 'metricas', 'historial', 'revision'];
+    document.querySelectorAll('.tab').forEach(t => { t.hidden = vistas.indexOf(t.dataset.vista) < 0; });
+    const deptos = usuario.departamentos || [];
+    const sel = $('fg-depto');
+    sel.hidden = !deptos.length;
+    if (deptos.indexOf(st.filtro.depto) < 0) st.filtro.depto = '';
+    sel.innerHTML = '<option value="">Todos los departamentos</option>' + deptos.map(d => '<option value="' + esc(d) + '"' + (d === st.filtro.depto ? ' selected' : '') + '>' + esc(d) + '</option>').join('');
   }
 
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => mostrarVista(t.dataset.vista)));
@@ -812,11 +833,12 @@
     const conPersona = !!norm(st.filtro.persona);
     const tiendas = r.tiendas
       .filter(t => (!st.pais || t.pais.toUpperCase() === st.pais) && coincideTienda(tf, t.nombre, t.id) && !(/-(RES|TEL)$/.test(t.id) && !t.personas.length))
-      .map(t => conPersona ? Object.assign({}, t, { personas: t.personas.filter(p => coincideTexto(st.filtro.persona, p.nombre, p.id)) }) : t)
-      .filter(t => !conPersona || t.personas.length);
+      .map(t => conPersona || st.filtro.depto ? Object.assign({}, t, { personas: t.personas.filter(p => coincideTexto(st.filtro.persona, p.nombre, p.id) && coincideDepto(p.id)) }) : t)
+      .filter(t => !(conPersona || st.filtro.depto) || t.personas.length);
     const personas = [].concat(...tiendas.map(t => t.personas));
-    const abiertas = tiendas.filter(t => t.abierta).length;
-    const conApertura = tiendas.filter(t => t.apertura).length;
+    const fisicas = tiendas.filter(t => !/-(TEL|RES|BOD|OFI)$/.test(t.id));
+    const abiertas = fisicas.filter(t => t.abierta).length;
+    const conApertura = fisicas.filter(t => t.apertura).length;
     const k = [
       ['tiendas', abiertas + ' / ' + conApertura, 'Tiendas abiertas', abiertas < conApertura && tiendas.some(t => t.alerta) ? 'red' : 'green'],
       ['en_tienda', personas.filter(FOCO_HOY.en_tienda.f).length, 'En tienda ahora', ''],
@@ -1249,7 +1271,7 @@
     const sel = $('his-persona');
     const actual = sel.value;
     const personas = st.dir ? st.dir.personas
-      .filter(p => (!st.pais || p.pais === st.pais) && (!st.filtro.tienda || p.idTienda === st.filtro.tienda) && coincideTexto(st.filtro.persona, p.nombre, p.id))
+      .filter(p => (!st.pais || p.pais === st.pais) && (!st.filtro.tienda || p.idTienda === st.filtro.tienda) && coincideTexto(st.filtro.persona, p.nombre, p.id) && coincideDepto(p.id))
       .map(p => Object.assign({ corto: nombreCorto(p.nombre) }, p))
       .sort((a, b) => a.corto.localeCompare(b.corto)) : [];
     sel.innerHTML = '<option value="">' + (st.dir ? (personas.length ? 'Elegí una persona' : 'Sin personas con este filtro') : 'Cargando personas…') + '</option>' +
@@ -1492,7 +1514,7 @@
     const tiendas = st.dir ? st.dir.tiendas.filter(t => !st.pais || t.pais === st.pais) : [];
     if (st.filtro.tienda && st.dir && !tiendas.some(t => t.id === st.filtro.tienda)) st.filtro.tienda = '';
     $('fg-tienda').innerHTML = '<option value="">Todas las tiendas</option>' + tiendas.map(t => '<option value="' + esc(t.id) + '"' + (t.id === st.filtro.tienda ? ' selected' : '') + '>' + (st.pais ? '' : BANDERA[t.pais] + ' ') + esc(t.nombre) + '</option>').join('');
-    const personas = st.dir ? st.dir.personas.filter(p => (!st.pais || p.pais === st.pais) && (!st.filtro.tienda || p.idTienda === st.filtro.tienda)) : [];
+    const personas = st.dir ? st.dir.personas.filter(p => (!st.pais || p.pais === st.pais) && (!st.filtro.tienda || p.idTienda === st.filtro.tienda) && coincideDepto(p.id)) : [];
     $('fg-personas').innerHTML = personas.map(p => '<option value="' + esc(p.nombre) + '">' + esc(p.id + (p.tienda ? ' · ' + p.tienda : '')) + '</option>').join('');
     estadoFiltro();
   }
@@ -1518,14 +1540,16 @@
   }
 
   $('fg-tienda').addEventListener('change', () => { st.filtro.tienda = $('fg-tienda').value; pintarFiltroGlobal(); repintarVista(); });
+  $('fg-depto').addEventListener('change', () => { st.filtro.depto = $('fg-depto').value; pintarFiltroGlobal(); repintarVista(); });
   let fgEspera;
   $('fg-persona').addEventListener('input', () => {
     clearTimeout(fgEspera);
     fgEspera = setTimeout(() => { st.filtro.persona = $('fg-persona').value; repintarVista(); }, 160);
   });
   $('fg-limpiar').addEventListener('click', () => {
-    st.filtro = { tienda: '', persona: '' };
+    st.filtro = { tienda: '', persona: '', depto: '' };
     $('fg-persona').value = '';
+    $('fg-depto').value = '';
     pintarFiltroGlobal();
     repintarVista();
   });
@@ -1535,6 +1559,8 @@
       const r = await llamar({ accion: 'doc_directorio' });
       if (!r.ok) return;
       st.dir = r;
+      st.deptoDe = {};
+      (r.personas || []).forEach(p => { st.deptoDe[String(p.id).toUpperCase()] = p.departamentos || []; });
       pintarFiltroGlobal();
       pintarDocTiendas();
       pintarDestinatarios();
